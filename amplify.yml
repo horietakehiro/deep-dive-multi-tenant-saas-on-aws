@@ -1,7 +1,7 @@
 applications:
   - appRoot: projects/control-plane
     frontend:
-      buildPath: '/'
+      # buildPath: '/'
       phases:
         preBuild:
           commands:
