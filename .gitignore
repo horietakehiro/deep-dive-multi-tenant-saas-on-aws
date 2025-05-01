@@ -1,8 +1,10 @@
 *.js
 !jest.config.js
 *.d.ts
+!projects/*/src/*.d.ts
+!projects/*/eslint.config.js
 node_modules
-
+dist
 # CDK asset staging directory
 .cdk.staging
 cdk.out
