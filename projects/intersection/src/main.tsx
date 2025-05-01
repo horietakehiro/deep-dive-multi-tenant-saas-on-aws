@@ -8,7 +8,13 @@ import outputs from "../amplify_outputs.json";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 
-Amplify.configure(outputs);
+import sharedOutputs from "../shared/amplify_outputs.json";
+// コントロールプレーン側から共有したい
+// リソース設定を上書きする
+Amplify.configure({
+  ...outputs,
+  auth: sharedOutputs.auth,
+});
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Authenticator>
