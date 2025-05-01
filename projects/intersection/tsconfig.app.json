@@ -20,7 +20,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/shared": ["../control-plane/src/share"]
+    }
   },
-  "include": ["src", "../control-plane/src", "../control-plane/amplify"]
+  "include": ["src", ],
 }
