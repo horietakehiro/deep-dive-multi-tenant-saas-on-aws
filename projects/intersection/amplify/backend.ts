@@ -1,6 +1,5 @@
 import { defineBackend, referenceAuth } from "@aws-amplify/backend";
-// import { auth } from './auth/resource';
-import { auth } from "../../control-plane/amplify/auth/resource";
+import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 
 /**
