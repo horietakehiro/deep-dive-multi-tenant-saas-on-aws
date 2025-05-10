@@ -3,7 +3,7 @@ title: "【第00回】Deep Dive マルチテナントSaaS on AWS - イントロ�
 emoji: "🤿"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas"]
-published: false
+published: true
 ---
 
 ## はじめに
@@ -50,3 +50,7 @@ published: false
 ## 記事一覧
 
 各記事へのリンクを順次追記していきます。
+
+- [【第 01 回】Deep Dive マルチテナント SaaS on AWS - 第 1 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-01)
+- [【第 02 回】Deep Dive マルチテナント SaaS on AWS - 第 2 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-02)
+- [【第 03 回】Deep Dive マルチテナント SaaS on AWS - 第 2 章幕間：初期環境構築](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-03)

@@ -3,13 +3,13 @@ title: "【第03回】Deep Dive マルチテナントSaaS on AWS - 第2章幕間
 emoji: "🤿"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas"]
-published: false
+published: true
 ---
 
 ## はじめに
 
-[第 02 章](TODO:)にて、マルチテナント SaaS アプリケーションはアプリケーションプレーンとコントロールプレーンの 2 つのプレーンから構成されるものであると学びました。
-[第 00 章](TODO:)でも述べた通り、この学習を通して簡易的なマルチテナント SaaS アプリケーション(`intersection`)及びそれを管理するためのコントロールプレーンを実際に開発していきます。ここではその初期検討 - 使用する技術スタックの選定やプロジェクト構成の検討 - を行い、初期環境を構築していきたいと思います。
+[第 02 章](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-02)にて、マルチテナント SaaS アプリケーションはアプリケーションプレーンとコントロールプレーンの 2 つのプレーンから構成されるものであると学びました。
+[第 00 章](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-00)でも述べた通り、この学習を通して簡易的なマルチテナント SaaS アプリケーション(`intersection`)及びそれを管理するためのコントロールプレーンを実際に開発していきます。ここではその初期検討 - 使用する技術スタックの選定やプロジェクト構成の検討 - を行い、初期環境を構築していきたいと思います。
 
 ## 使用する技術スタック
 
