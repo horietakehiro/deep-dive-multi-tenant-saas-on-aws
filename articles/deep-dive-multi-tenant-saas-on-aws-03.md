@@ -196,7 +196,7 @@ applications:
 
 まずは`1.`について対応していきます。
 
-- コントロールプレーン側に適当な形情報と関数を定義し、
+- コントロールプレーン側に適当な型情報と関数を定義し、
 
 ```js: projects/control-plane/src/share.ts
 export interface GreetProps {
@@ -301,8 +301,6 @@ Amplify.configure({
 ```
 
 - 上記の設定を施して intersection を Amplify にデプロイすると、無事コントロールプレーン側の Cognito 及び関数を使用出来ていることが確認出来ました。
-
-![](/images//00-interlude/intersection-deploy-success.png)
 
 ## まとめ
 
