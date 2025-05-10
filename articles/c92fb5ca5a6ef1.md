@@ -1,7 +1,7 @@
 ---
 title: "【第00回】Deep Dive マルチテナントSaaS on AWS - イントロダクション"
 emoji: "🤿"
-type: "tech" # tech: 技術記事 / idea: アイデア
+type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas"]
 published: false
 ---
