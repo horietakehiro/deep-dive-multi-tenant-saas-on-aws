@@ -35,5 +35,7 @@ cdk deploy ...(省略)...
 
 - まずは適当な空のページからスタートします。ここにテナントのオンボーディングに必要なロジックを実装していきます。
 
+![](/images/06/empty-control-plane.png)
+
 TODO:参考資料
 https://dev.classmethod.jp/articles/amplify-auth-get-user-info/
