@@ -12,4 +12,13 @@ export const auth = defineAuth({
     mode: "REQUIRED",
     totp: true,
   },
+  userAttributes: {
+    "custom:tenantId": {
+      dataType: "String",
+      mutable: false,
+    },
+  },
+  triggers: {
+    userMigration
+  }
 });
