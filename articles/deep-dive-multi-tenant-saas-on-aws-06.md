@@ -61,5 +61,9 @@ cdk deploy ...(省略)...
 
 ![](/images/06/full-silo-onboarding-flow.drawio.png)
 
+まずは`1.`のロジックを実装していきます。
+
+
+
 TODO:参考資料
 https://dev.classmethod.jp/articles/amplify-auth-get-user-info/

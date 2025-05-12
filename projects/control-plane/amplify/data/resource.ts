@@ -18,7 +18,7 @@ const schema = a.schema({
       displayName: a.string(),
       status: a.enum(["pending", "active", "inactive"]),
     })
-    .authorization((allow) => [allow.owner()]),
+    .authorization((allow) => [allow.guest()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
