@@ -3,7 +3,7 @@ import { generateClient } from "aws-amplify/data";
 import { Schema } from "../../data/resource";
 import outputs from "../../../amplify_outputs.json";
 import { Amplify } from "aws-amplify";
-import { type SignUpUserAttributes } from "../resource";
+import { type SignUpUserAttributes } from "../types";
 Amplify.configure(outputs);
 const client = generateClient<Schema>();
 

@@ -1,62 +1,87 @@
-import {v4 as uuidv4} from "uuid"
-import { useEffect, useState } from "react";
-import { getCurrentUser, GetCurrentUserOutput, signUp, SignUpInput } from "aws-amplify/auth";
+import * as React from "react";
+import { v4 as uuidv4 } from "uuid";
+import {
+  fetchUserAttributes,
+  FetchUserAttributesOutput,
+  signUp,
+  SignUpInput,
+} from "aws-amplify/auth";
 import "./App.css";
 import { Authenticator } from "@aws-amplify/ui-react";
 import {} from "aws-amplify/auth";
 import MyAppBar from "./components/AppBar";
-import {SIGNUP_CUSTOM_USER_ATTRIBUTES, SignUpUserAttributes} from "./../amplify/auth/resource"
+import {
+  type SignUpUserAttributes,
+  SIGNUP_CUSTOM_USER_ATTRIBUTES,
+} from "./../amplify/auth/types";
+import TenantInfo from "./components/Tenant";
+import { Hub } from "aws-amplify/utils";
+
 function App() {
-  const [user, setUser] = useState<GetCurrentUserOutput>();
-  const getCurrentUserAsync = async () => {
-    const res = await getCurrentUser();
-    setUser(res);
+  const [userAttributes, setUserAttributes] = React.useState<
+    FetchUserAttributesOutput | SignUpUserAttributes | undefined
+  >(undefined);
+
+  const getUserAttributes = async () => {
+    const res = await fetchUserAttributes();
+    console.log(res);
+    setUserAttributes(res);
   };
 
-  useEffect(() => {
-    getCurrentUserAsync();
-  }, []);
+  Hub.listen("auth", async ({ payload }) => {
+    switch (payload.event) {
+      case "signedIn":
+        console.log("signed in");
+        await getUserAttributes();
+        break;
+    }
+  });
+
   const services = {
-    async handleSignUp(input: SignUpInput) {
+    handleSignUp: async (input: SignUpInput) => {
       const userAttributes: SignUpUserAttributes = {
+        // テナントIDはUUIDを生成し、テナント名はユーザから入力してもらう
         "custom:tenantId": uuidv4(),
-        "custom:tenantName": input.options!.userAttributes[SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]!,
+        "custom:tenantName":
+          input.options!.userAttributes[
+            SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME
+          ]!,
         email: input.options!.userAttributes["email"]!,
-      }
-      console.log(input)
+      };
+      console.log(input);
       return signUp({
         ...input,
         options: {
           ...input.options,
           userAttributes: {
             ...input.options?.userAttributes,
-            ...userAttributes
-          }
-        }
-      })
-
-    }
-  }
+            ...userAttributes,
+          },
+        },
+      });
+    },
+  };
   return (
     <>
-      <Authenticator formFields={{
-        signUp: {
-          [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
-            label: "Tenant Name",
-            isRequired: true,
-            order: 1,
-          }
-        }
-      }} services={services}>
+      <Authenticator
+        formFields={{
+          signUp: {
+            [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
+              label: "Tenant Name",
+              isRequired: true,
+              order: 1,
+            },
+          },
+        }}
+        services={services}
+      >
         {({ signOut }) => (
           <main>
-            {user && user.signInDetails && user.signInDetails.loginId ? (
-              <MyAppBar
-                username={user.signInDetails.loginId}
-                signOut={signOut}
-              />
+            <MyAppBar signOut={signOut} />
+            {userAttributes && userAttributes["custom:tenantId"] ? (
+              <TenantInfo id={userAttributes["custom:tenantId"]} />
             ) : (
-              <div></div>
+              <></>
             )}
           </main>
         )}

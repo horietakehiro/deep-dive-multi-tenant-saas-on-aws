@@ -11,7 +11,6 @@ type SignOut = UseAuthenticator["signOut"];
 
 export interface MyAppBarProps {
   signOut: SignOut | undefined;
-  username: string;
 }
 export default function MyAppBar(props: MyAppBarProps) {
   return (
@@ -28,7 +27,7 @@ export default function MyAppBar(props: MyAppBarProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            WELCOM {props.username}
+            WELCOM
           </Typography>
           <Button color="inherit" onClick={props.signOut}>
             SIGNOUT
