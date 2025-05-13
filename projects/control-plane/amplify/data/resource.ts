@@ -14,10 +14,10 @@ const schema = a.schema({
   //   .authorization((allow) => [allow.guest()]),
   Tenant: a
     .model({
-      // ID(UUID)は自動採番される
-      displayName: a.string(),
+      id: a.id().required(),
+      name: a.string().required(),
       status: a.enum(["pending", "active", "inactive"]),
-      owner: a.email(),
+      owner: a.email().required(),
     })
     .authorization((allow) => [allow.guest()]),
 });
