@@ -16,7 +16,7 @@ export const auth = defineAuth({
   userAttributes: {
     "custom:tenantId": {
       dataType: "String",
-      mutable: false,
+      mutable: true,
     },
   },
   triggers: {

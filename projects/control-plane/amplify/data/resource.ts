@@ -17,6 +17,7 @@ const schema = a.schema({
       // ID(UUID)は自動採番される
       displayName: a.string(),
       status: a.enum(["pending", "active", "inactive"]),
+      owner: a.email(),
     })
     .authorization((allow) => [allow.guest()]),
 });
