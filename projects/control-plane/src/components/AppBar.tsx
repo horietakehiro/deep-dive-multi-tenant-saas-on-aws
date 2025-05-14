@@ -36,8 +36,8 @@ export default function AppBar(props: AppBarProps) {
     }
   }, [signedIn]);
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <MUIAppBar position="absolute">
+    <Box sx={{}}>
+      <MUIAppBar position="absolute" sx={{ width: "100%" }}>
         <Toolbar>
           <IconButton
             size="large"

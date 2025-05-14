@@ -29,13 +29,16 @@ export default function TenantInfo(props: TenantInfoProps) {
       props.stateRepository.set("tenant", res.data, setTenant);
     };
     getTenant();
-  }, [userAttributes]);
+  }, []);
   return (
     <React.Fragment>
-      <CssBaseline />
-      <Container maxWidth="sm">
-        <Box sx={{ height: "100vh" }}>
-          テナント情報 : {JSON.stringify(tenant)}
+      {/* <CssBaseline /> */}
+      <Container>
+        <Box sx={{ width: "100%" }}>
+          <p>テナントID : {tenant?.id}</p>
+          <p>テナント名 : {tenant?.name}</p>
+          <p>ステータス : {tenant?.status}</p>
+          <p>テナントURL : {tenant?.status}</p>
         </Box>
       </Container>
     </React.Fragment>
