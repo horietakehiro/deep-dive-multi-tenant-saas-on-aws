@@ -22,11 +22,6 @@ export default function TenantInfo(props: TenantInfoProps) {
         return;
       }
 
-      client.models.Todo.create({
-        content: "hogefuga",
-      });
-      const tds = client.models.Todo.list();
-      console.log(tds);
       const tenantId = userAttributes["custom:tenantId"];
       console.log(`テナントID[${tenantId}]の情報を取得`);
       const res = await client.models.Tenant.get({ id: tenantId });

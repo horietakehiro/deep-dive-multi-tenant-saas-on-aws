@@ -7,11 +7,6 @@ specifies that any unauthenticated user can "create", "read", "update",
 and "delete" any "Todo" records.
 =========================================================================*/
 const schema = a.schema({
-  Todo: a
-    .model({
-      content: a.string(),
-    })
-    .authorization((allow) => [allow.guest()]),
   Tenant: a
     .model({
       id: a.id().required(),
@@ -19,7 +14,12 @@ const schema = a.schema({
       status: a.enum(["pending", "active", "inactive"]),
       // owner: a.email().required(),
     })
-    .authorization((allow) => [allow.guest()]),
+    .authorization((allow) => [
+      allow.guest(),
+      allow.authenticated("identityPool"),
+      allow.authenticated("userPools"),
+      allow.publicApiKey(),
+    ]),
   // .authorization((allow) => [allow.owner()]),
 });
 
@@ -28,7 +28,7 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: "identityPool",
+    defaultAuthorizationMode: "apiKey",
   },
 });
 
