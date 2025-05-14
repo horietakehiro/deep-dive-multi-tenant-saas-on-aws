@@ -7,34 +7,32 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import { UseAuthenticator } from "@aws-amplify/ui-react-core";
-import { BaseProps, StateKey } from "./utils";
+import { BaseProps, State } from "./utils";
 import React from "react";
 import { fetchUserAttributes } from "aws-amplify/auth";
 type SignOut = UseAuthenticator["signOut"];
 
 export interface AppBarProps extends BaseProps {
   signOut: SignOut | undefined;
+  signedIn: boolean;
+  userAttributes: State["userAttributes"];
+  setUserAttributes: (u: State["userAttributes"]) => void;
 }
 export default function AppBar(props: AppBarProps) {
-  const [userAttributes, setUserAttributes] = React.useState<
-    StateKey["userAttributes"]
-  >(props.stateRepository.get("userAttributes", null));
-  const signedIn = props.stateRepository.get("signedIn", false);
-
   React.useEffect(() => {
     const getUserAttributes = async () => {
       const res = await fetchUserAttributes();
       console.log(res);
       props.stateRepository.set(
         "userAttributes",
-        res as StateKey["userAttributes"],
-        setUserAttributes
+        res as State["userAttributes"],
+        props.setUserAttributes
       );
     };
-    if (signedIn) {
+    if (props.signedIn) {
       getUserAttributes();
     }
-  }, [signedIn]);
+  }, [props.signedIn]);
   return (
     <Box sx={{}}>
       <MUIAppBar position="absolute" sx={{ width: "100%" }}>
@@ -49,7 +47,7 @@ export default function AppBar(props: AppBarProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            WELCOM {userAttributes?.email ?? ""}
+            WELCOM {props.userAttributes?.email ?? ""}
           </Typography>
           <Button color="inherit" onClick={props.signOut}>
             SIGNOUT

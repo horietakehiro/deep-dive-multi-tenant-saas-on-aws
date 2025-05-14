@@ -51,7 +51,7 @@ cdk deploy ...(省略)...
 
 2. サインアップが完了したら、非同期でテナント個別のアプリケーションプレーンのデプロイを実行する
 
-   1. 具体的には Cognito の`postSignUp`トリガーを用いてアプリケーションプレーンのデプロイジョブを非同期実行する
+   1. 具体的には Cognito の`confirmSignUp`トリガーを用いてアプリケーションプレーンのデプロイジョブを非同期実行する
    2. デプロイジョブは StepFunctions で実装する
    3. アプリケーションプレーンのデプロイが完了したら、テナントの状態を`active`に更新する
 
@@ -63,7 +63,132 @@ cdk deploy ...(省略)...
 
 まずは`1.`のロジックを実装していきます。
 
+- まずは DynamoDB に保管する為のテナントアイデンティティをモデリングします。
 
+```js: projects/control-plane/amplify/data/resource.ts
+const schema = a.schema({
+  Tenant: a
+    .model({
+      id: a.id().required(),
+      name: a.string().required(),
+      status: a.enum(["pending", "active", "inactive"]),
+      url: a.url(),
+    })
+    .authorization((allow) => [
+      allow.publicApiKey(),
+    ]),
+});
+```
+
+- 次に、ユーザーアイデンティティとテナントアイデンティティとを関連付けられるようユーザープールを設定します。具体的には、カスタム属性としてユーザーアイデンティティにテナント ID(及びテナント名) を設定出来るようにします。また、サインアップの過程で、ユーザ属性に設定されたテナント情報に基づき DynamoDB 上にテナントアイデンティティを作成するための Lambda 関数も用意しトリガーとして設定します。
+
+```js: projects/control-plane/amplify/auth/resource.ts
+export const auth = defineAuth({
+  loginWith: {
+    email: true,
+  },
+  userAttributes: {
+    "custom:tenantId": {
+      dataType: "String",
+      mutable: true,
+    },
+    "custom:tenantName": {
+      dataType: "String",
+      mutable: true,
+    },
+  },
+  triggers: {
+    preSignUp,
+  },
+});
+```
+
+```js: projects/control-plane/amplify/auth/pre-sign-up/handler.ts
+/**
+ * テナント所有者に対応するテナントアイデンティティを作成する
+ * @param event
+ */
+export const handler: PreSignUpTriggerHandler = async (event) => {
+  console.log(event);
+  const userAttributes = event.request.userAttributes as SignUpUserAttributes;
+  // テナントアイデンティティを作成
+  const tenant = await client.models.Tenant.create({
+    id: userAttributes["custom:tenantId"],
+    name: userAttributes["custom:tenantName"],
+    status: "pending",
+  });
+  console.log(tenant);
+  return event;
+};
+
+```
+
+- 最後に、サインアップの過程でテナント ID(及びテナント名) を上記の Lambda 関数に渡せるよう、サインアップの UI をカスタマイズします。
+
+```js: projects/control-plane/src/components/Authenticator.tsx
+  const services = {
+    /**
+     * サインアップ時にカスタムのユーザー属性としてテナント情報を渡す
+     * @param input
+     * @returns
+     */
+    handleSignUp: async (input: SignUpInput) => {
+      const userAttributes: SignUpUserAttributes = {
+        // テナントIDはUUIDを生成し、テナント名はユーザから入力してもらう
+        "custom:tenantId": uuidv4(),
+        "custom:tenantName":
+          input.options!.userAttributes[
+            SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME
+          ]!,
+        email: input.options!.userAttributes["email"]!,
+      };
+      console.log(input);
+      return signUp({
+        ...input,
+        options: {
+          ...input.options,
+          userAttributes: {
+            ...input.options?.userAttributes,
+            ...userAttributes,
+          },
+        },
+      });
+    },
+  };
+  return (
+    <>
+      <AmplifyAuthenticator
+        formFields={{
+          // サインアップ時にテナント名をユーザーに入力してもらう
+          signUp: {
+            [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
+              label: "Tenant Name",
+              isRequired: true,
+              order: 1,
+            },
+          },
+        }}
+        services={services}
+      >
+        {props.children}
+      </AmplifyAuthenticator>
+    </>
+  );
+```
+
+- これによって、以下のようなサインアップの UI が作成されます。
+
+![](/images/06/full-silo-signup-with-tenant.png)
+
+- 実際にサインアップを行うとその過程でトリガー関数によって DynamoDB 上にテナントアイデンティティが作成されること、及び、サインアップ成功後にフロントエンドからそのテナントアイデンティティを取得出来るところまで確認出来ました。
+
+![](/images/06/full-silo-after-signup.png)
+
+`1.`(サインアップ及びテナントアイデンティティの作成)まで完了したので、次に`2.`(アプリケーションプレーンのデプロイジョブの実行)の実装に移ります
+
+- サインアップ成功後(`ConfirmSignUp`)にトリガーされる Lambda 関数を用意します。
 
 TODO:参考資料
+https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls
+
 https://dev.classmethod.jp/articles/amplify-auth-get-user-info/

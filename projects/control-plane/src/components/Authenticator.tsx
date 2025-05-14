@@ -12,25 +12,33 @@ import {
   SIGNUP_CUSTOM_USER_ATTRIBUTES,
 } from "./../../amplify/auth/types";
 import { Hub } from "aws-amplify/utils";
-import { BaseProps, StateKey } from "./utils";
+import { BaseProps, State } from "./utils";
 
 export interface AuthenticatorProps
   extends BaseProps,
-    AmplifyAuthenticatorProps {}
+    AmplifyAuthenticatorProps {
+  setSignedIn: (b: State["signedIn"]) => void;
+  setTenant: (t: State["tenant"]) => void;
+  setUserAttributes: (t: State["userAttributes"]) => void;
+}
 
 export default function Authenticator(props: AuthenticatorProps) {
-  const [, setSignedIn] = React.useState<StateKey["signedIn"]>(
-    props.stateRepository.get("signedIn", false)
-  );
-  Hub.listen("auth", async ({ payload }) => {
+  Hub.listen("auth", ({ payload }) => {
     switch (payload.event) {
       case "signedIn":
         console.log("サインイン成功");
-        props.stateRepository.set("signedIn", true, setSignedIn);
+        props.stateRepository.set("signedIn", true, props.setSignedIn);
         break;
       case "signedOut":
         console.log("サインアウト成功");
-        props.stateRepository.set("signedIn", false, setSignedIn);
+        props.stateRepository.set("tenant", null, props.setTenant);
+        props.stateRepository.set(
+          "userAttributes",
+          null,
+          props.setUserAttributes
+        );
+        props.stateRepository.set("signedIn", false, props.setSignedIn);
+        break;
     }
   });
 
@@ -67,6 +75,7 @@ export default function Authenticator(props: AuthenticatorProps) {
     <>
       <AmplifyAuthenticator
         formFields={{
+          // サインアップ時にテナント名をユーザーに入力してもらう
           signUp: {
             [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
               label: "Tenant Name",
@@ -78,7 +87,6 @@ export default function Authenticator(props: AuthenticatorProps) {
         services={services}
       >
         {props.children}
-        {/* {() => <main>{props.children.map((child) => child)}</main>} */}
       </AmplifyAuthenticator>
     </>
   );

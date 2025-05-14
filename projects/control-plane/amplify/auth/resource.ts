@@ -1,5 +1,6 @@
-import { defineAuth } from "@aws-amplify/backend";
+import { defineAuth, defineFunction } from "@aws-amplify/backend";
 import { preSignUp } from "./pre-sign-up/resource";
+import { confirmSignUp } from "./confirm-sign-up/resource";
 import { SIGNUP_CUSTOM_USER_ATTRIBUTES } from "./types";
 
 /**
@@ -26,5 +27,6 @@ export const auth = defineAuth({
   },
   triggers: {
     preSignUp,
+    postConfirmation: confirmSignUp,
   },
 });

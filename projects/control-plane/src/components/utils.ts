@@ -4,7 +4,7 @@ import { SignUpUserAttributes } from "../../amplify/auth/types";
 /**
  * アプリケーションで管理するステートの名前とその型
  */
-export type StateKey = {
+export type State = {
   signedIn: boolean;
   userAttributes: SignUpUserAttributes | null;
   tenant: Schema["Tenant"]["type"] | null;
@@ -13,10 +13,10 @@ export type StateKey = {
  * ステートの保存とアクセスの為のリポジトリ仕様
  */
 export interface IStateRepository {
-  get: <T extends StateKey[k], k extends keyof StateKey>(
+  get: <T extends State[k], k extends keyof State>(
     key: k,
     defaultValue: T
-  ) => StateKey[k];
+  ) => State[k];
   /**
    *
    * @param key
@@ -24,12 +24,12 @@ export interface IStateRepository {
    * @param setState ステートを更新する為の関数
    * @returns
    */
-  set: <k extends keyof StateKey>(
+  set: <k extends keyof State>(
     key: k,
-    value: StateKey[k],
-    setState: (value: StateKey[k]) => void
+    value: State[k],
+    setState: (value: State[k]) => void
   ) => void;
-  remove: <k extends keyof StateKey>(key: k) => void;
+  remove: <k extends keyof State>(key: k) => void;
 }
 
 /**
@@ -37,25 +37,25 @@ export interface IStateRepository {
  */
 export class LocalStateRepository implements IStateRepository {
   constructor() {}
-  public get<T extends StateKey[k], k extends keyof StateKey>(
+  public get<T extends State[k], k extends keyof State>(
     key: k,
     defaultValue: T
-  ): StateKey[k] {
+  ): State[k] {
     const item = localStorage.getItem(key);
     if (item === null) {
       return defaultValue;
     }
-    return JSON.parse(item) as StateKey[k];
+    return JSON.parse(item) as State[k];
   }
-  public set<k extends keyof StateKey>(
+  public set<k extends keyof State>(
     key: k,
-    value: StateKey[k],
-    setFn: (value: StateKey[k]) => void
+    value: State[k],
+    setState: (value: State[k]) => void
   ): void {
     localStorage.setItem(key, JSON.stringify(value));
-    setFn(value);
+    setState(value);
   }
-  public remove<k extends keyof StateKey>(key: k): void {
+  public remove<k extends keyof State>(key: k): void {
     localStorage.removeItem(key);
   }
 }
