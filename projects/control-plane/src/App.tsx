@@ -16,14 +16,13 @@ import * as React from "react";
 // } from "./../amplify/auth/types";
 // import TenantInfo from "./components/Tenant";
 // import { Hub } from "aws-amplify/utils";
-import MyAuthenticator from "./components/Authenticator";
+import Authenticator from "./components/Authenticator";
 import { LocalStateRepository, StateKey } from "./components/utils";
+import AppBar from "./components/AppBar";
+import TenantInfo from "./components/TenantInfo";
 
 function App() {
   const stateRepository = new LocalStateRepository();
-  const [, setSignedIn] = React.useState<StateKey["signedIn"]>(
-    stateRepository.get("signedIn", false)
-  );
 
   // const [userAttributes, setUserAttributes] = React.useState<
   //   FetchUserAttributesOutput | SignUpUserAttributes | undefined
@@ -93,11 +92,14 @@ function App() {
           </main>
         )}
       </Authenticator> */}
-      <MyAuthenticator
-        children={[<div>hogefuga</div>, <div>fugahoge</div>]}
-        stateRepository={new LocalStateRepository()}
-        setSignedIn={setSignedIn}
-      />
+      <Authenticator stateRepository={stateRepository}>
+        {({ signOut }) => (
+          <>
+            <AppBar signOut={signOut} stateRepository={stateRepository} />
+            <TenantInfo stateRepository={stateRepository} />
+          </>
+        )}
+      </Authenticator>
     </>
   );
 }

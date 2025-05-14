@@ -2,30 +2,35 @@ import * as React from "react";
 import { v4 as uuidv4 } from "uuid";
 import { signUp, SignUpInput } from "aws-amplify/auth";
 import "./../App.css";
-import { Authenticator } from "@aws-amplify/ui-react";
+import {
+  Authenticator as AmplifyAuthenticator,
+  AuthenticatorProps as AmplifyAuthenticatorProps,
+} from "@aws-amplify/ui-react";
 import {} from "aws-amplify/auth";
 import {
   type SignUpUserAttributes,
   SIGNUP_CUSTOM_USER_ATTRIBUTES,
 } from "./../../amplify/auth/types";
 import { Hub } from "aws-amplify/utils";
-import { BaseProps } from "./utils";
+import { BaseProps, StateKey } from "./utils";
 
-export interface MyAuthenticatorProps extends BaseProps {
-  setSignedIn: (b: boolean) => void;
-  children: React.JSX.Element[];
-}
+export interface AuthenticatorProps
+  extends BaseProps,
+    AmplifyAuthenticatorProps {}
 
-export default function MyAuthenticator(props: MyAuthenticatorProps) {
+export default function Authenticator(props: AuthenticatorProps) {
+  const [, setSignedIn] = React.useState<StateKey["signedIn"]>(
+    props.stateRepository.get("signedIn", false)
+  );
   Hub.listen("auth", async ({ payload }) => {
     switch (payload.event) {
       case "signedIn":
         console.log("サインイン成功");
-        props.stateRepository.set("signedIn", true, props.setSignedIn);
+        props.stateRepository.set("signedIn", true, setSignedIn);
         break;
       case "signedOut":
         console.log("サインアウト成功");
-        props.stateRepository.set("signedIn", false, props.setSignedIn);
+        props.stateRepository.set("signedIn", false, setSignedIn);
     }
   });
 
@@ -60,7 +65,7 @@ export default function MyAuthenticator(props: MyAuthenticatorProps) {
   };
   return (
     <>
-      <Authenticator
+      <AmplifyAuthenticator
         formFields={{
           signUp: {
             [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
@@ -72,8 +77,9 @@ export default function MyAuthenticator(props: MyAuthenticatorProps) {
         }}
         services={services}
       >
-        {() => <main>{props.children.map((child) => child)}</main>}
-      </Authenticator>
+        {props.children}
+        {/* {() => <main>{props.children.map((child) => child)}</main>} */}
+      </AmplifyAuthenticator>
     </>
   );
 }

@@ -19,7 +19,7 @@ export const handler: PreSignUpTriggerHandler = async (event) => {
     id: userAttributes["custom:tenantId"],
     name: userAttributes["custom:tenantName"],
     status: "pending",
-    owner: userAttributes.email,
+    // owner: userAttributes.email,
   });
   console.log(tenant);
   return event;

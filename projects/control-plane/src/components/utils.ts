@@ -1,9 +1,13 @@
+import { type Schema } from "../../amplify/data/resource";
+import { SignUpUserAttributes } from "../../amplify/auth/types";
+
 /**
  * アプリケーションで管理するステートの名前とその型
  */
 export type StateKey = {
   signedIn: boolean;
-  tenantId: string;
+  userAttributes: SignUpUserAttributes | null;
+  tenant: Schema["Tenant"]["type"] | null;
 };
 /**
  * ステートの保存とアクセスの為のリポジトリ仕様
@@ -12,7 +16,7 @@ export interface IStateRepository {
   get: <T extends StateKey[k], k extends keyof StateKey>(
     key: k,
     defaultValue: T
-  ) => StateKey[k] | null;
+  ) => StateKey[k];
   /**
    *
    * @param key

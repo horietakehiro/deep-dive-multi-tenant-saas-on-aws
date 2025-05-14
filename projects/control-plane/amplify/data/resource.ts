@@ -17,9 +17,10 @@ const schema = a.schema({
       id: a.id().required(),
       name: a.string().required(),
       status: a.enum(["pending", "active", "inactive"]),
-      owner: a.email().required(),
+      // owner: a.email().required(),
     })
     .authorization((allow) => [allow.guest()]),
+  // .authorization((allow) => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
