@@ -11,7 +11,7 @@ export const auth = defineAuth({
     email: true,
   },
   multifactor: {
-    mode: "REQUIRED",
+    mode: "OPTIONAL",
     totp: true,
   },
   userAttributes: {

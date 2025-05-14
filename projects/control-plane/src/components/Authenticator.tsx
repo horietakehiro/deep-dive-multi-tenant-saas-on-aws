@@ -1,0 +1,79 @@
+import * as React from "react";
+import { v4 as uuidv4 } from "uuid";
+import { signUp, SignUpInput } from "aws-amplify/auth";
+import "./../App.css";
+import { Authenticator } from "@aws-amplify/ui-react";
+import {} from "aws-amplify/auth";
+import {
+  type SignUpUserAttributes,
+  SIGNUP_CUSTOM_USER_ATTRIBUTES,
+} from "./../../amplify/auth/types";
+import { Hub } from "aws-amplify/utils";
+import { BaseProps } from "./utils";
+
+export interface MyAuthenticatorProps extends BaseProps {
+  setSignedIn: (b: boolean) => void;
+  children: React.JSX.Element[];
+}
+
+export default function MyAuthenticator(props: MyAuthenticatorProps) {
+  Hub.listen("auth", async ({ payload }) => {
+    switch (payload.event) {
+      case "signedIn":
+        console.log("サインイン成功");
+        props.stateRepository.set("signedIn", true, props.setSignedIn);
+        break;
+      case "signedOut":
+        console.log("サインアウト成功");
+        props.stateRepository.set("signedIn", false, props.setSignedIn);
+    }
+  });
+
+  const services = {
+    /**
+     * サインアップ時にカスタムのユーザー属性としてテナント情報を渡す
+     * @param input
+     * @returns
+     */
+    handleSignUp: async (input: SignUpInput) => {
+      const userAttributes: SignUpUserAttributes = {
+        // テナントIDはUUIDを生成し、テナント名はユーザから入力してもらう
+        "custom:tenantId": uuidv4(),
+        "custom:tenantName":
+          input.options!.userAttributes[
+            SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME
+          ]!,
+        email: input.options!.userAttributes["email"]!,
+      };
+      console.log(input);
+      return signUp({
+        ...input,
+        options: {
+          ...input.options,
+          userAttributes: {
+            ...input.options?.userAttributes,
+            ...userAttributes,
+          },
+        },
+      });
+    },
+  };
+  return (
+    <>
+      <Authenticator
+        formFields={{
+          signUp: {
+            [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
+              label: "Tenant Name",
+              isRequired: true,
+              order: 1,
+            },
+          },
+        }}
+        services={services}
+      >
+        {() => <main>{props.children.map((child) => child)}</main>}
+      </Authenticator>
+    </>
+  );
+}
