@@ -26,5 +26,8 @@ backend.confirmSignUp.resources.lambda.addToRolePolicy(
 const applicationPlaneDeployment = new ApplicationPlaneDeployment(
   backend.createStack("ApplicationPlaneDeployment"),
   "ApplicationPlaneDeployment",
-  { paramNameForSFNArn: paramNameForSFNArn }
+  {
+    paramNameForSFNArn: paramNameForSFNArn,
+    paramNameForGithubAccessToken: "/GitHub/MyToken",
+  }
 );
