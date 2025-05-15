@@ -87,6 +87,7 @@ class ControlPlane extends Construct {
       repository:
         "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
     });
+    // TODO: https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html#setting-up-github-app-cloudformation
 
     new amplify.CfnBranch(this, "MainBranch", {
       appId: app.attrAppId,
@@ -96,6 +97,7 @@ class ControlPlane extends Construct {
       framework: "web",
       // backend
     });
+    // TODO: route53:ListHostedZones 
     const domainRole = new amplify.CfnDomain(this, "Domain", {
       appId: app.attrAppId,
       domainName: "ht-burdock.com",
@@ -111,7 +113,19 @@ class ControlPlane extends Construct {
         customCertificateArn: props.certArn,
       },
     });
+
+    // TODO: aws amplify start-job    --app-id  dv8ckulfkeu3z --branch-name main   --job-type RELEASE 
+{
+    "jobSummary": {
+        "jobArn": "arn:aws:amplify:ap-northeast-1:382098889955:apps/dv8ckulfkeu3z/branches/main/jobs/0000000002",
+        "jobId": "2",
+        "commitId": "HEAD",
+        "commitTime": "2025-05-15T18:54:06.883000+09:00",
+        "status": "PENDING"
+    }
+}
   }
+
 }
 
 export interface FullStackSiloDeployModelStackProps extends cdk.StackProps {
