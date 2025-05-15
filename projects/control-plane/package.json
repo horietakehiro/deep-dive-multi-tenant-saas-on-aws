@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.11.1",
+    "@aws-sdk/client-amplify": "^3.810.0",
     "@aws-sdk/client-sfn": "^3.808.0",
     "@aws-sdk/client-ssm": "^3.808.0",
     "@emotion/react": "^11.14.0",

@@ -11,6 +11,7 @@ import { confirmSignUp } from "./auth/confirm-sign-up/resource";
 const backend = defineBackend({
   auth,
   data,
+  // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
   confirmSignUp,
 });
 // アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
@@ -29,5 +30,8 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
   {
     paramNameForSFNArn: paramNameForSFNArn,
     paramNameForGithubAccessToken: "/GitHub/MyToken",
+    domainName: "ht-burdock.com",
+    repositoryURL:
+      "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
   }
 );
