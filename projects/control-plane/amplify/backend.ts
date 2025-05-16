@@ -29,7 +29,7 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
   "ApplicationPlaneDeployment",
   {
     paramNameForSFNArn: paramNameForSFNArn,
-    paramNameForGithubAccessToken: "/GitHub/MyToken",
+    paramNameForGithubAccessToken: "/GitHub/MyClassicToken",
     domainName: "ht-burdock.com",
     repositoryURL:
       "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",

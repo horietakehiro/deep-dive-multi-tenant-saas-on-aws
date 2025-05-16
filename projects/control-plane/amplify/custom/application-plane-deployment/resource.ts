@@ -21,13 +21,69 @@ import {
   CreateAppCommandInput,
   CreateBranchCommandInput,
   CreateDomainAssociationCommandInput,
+  DomainStatus,
   GetAppCommandInput,
+  GetAppCommandOutput,
+  GetDomainAssociationCommand,
+  GetDomainAssociationCommandInput,
+  GetDomainAssociationCommandOutput,
+  StartJobCommand,
+  StartJobCommandInput,
 } from "@aws-sdk/client-amplify";
+import { Choice } from "aws-cdk-lib/aws-stepfunctions";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+type StringKey<T> = {
+  [P in keyof T]: T[P] extends string ? P : never;
+};
+
+type Primitives =
+  | string
+  | number
+  | boolean
+  | undefined
+  | null
+  | symbol
+  | bigint
+  | string[]
+  | number[]
+  | boolean[]
+  | bigint[];
+
+/**
+ * [参考URL](https://medium.com/@fullstack-shepherd/typescript-transforming-types-with-snake-case-keys-to-camelcase-keys-or-how-to-keep-busy-in-9d5f074d9bfa)
+ */
+type CapitalizeCommandInput<T> = {
+  [key in keyof T as key extends string
+    ? T[key] extends Function
+      ? key
+      : key extends keyof ArrayLike<any> | symbol
+        ? key
+        : Capitalize<key>
+    : key]: T[key] extends Primitives ? T[key] : CapitalizeCommandInput<T[key]>;
+};
+
+const B: CapitalizeCommandInput<CreateDomainAssociationCommandInput> = {
+  AppId: "",
+  CertificateSettings: {
+    Type: "AMPLIFY_MANAGED",
+  },
+  DomainName: "",
+  SubDomainSettings: [
+    {
+      BranchName: "",
+      Prefix: "",
+    },
+    {
+      BranchName: "",
+      Prefix: "hoge",
+    },
+  ],
+};
 export interface ApplicationPlaneDeploymentProps {
-  /**
+  /*
    * ステートマシンのARNを格納する為のSSMパラメータの名前
    */
   paramNameForSFNArn: string;
@@ -136,7 +192,7 @@ export class ApplicationPlaneDeployment extends Construct {
           })
         )
           .next(
-            new sfn.Wait(this, "Wait", {
+            new sfn.Wait(this, "WaitAfterCreateApp", {
               time: sfn.WaitTime.duration(Duration.seconds(15)),
             })
           )
@@ -151,7 +207,7 @@ export class ApplicationPlaneDeployment extends Construct {
                 Stage: "PRODUCTION",
                 EnableAutoBuild: true,
                 Framework: "web",
-              } as unknown as CreateAppCommandInput,
+              } as CapitalizeCommandInput<CreateBranchCommandInput>,
               outputs: {},
             })
           )
@@ -160,6 +216,17 @@ export class ApplicationPlaneDeployment extends Construct {
               service: "amplify",
               action: "createDomainAssociation",
               iamResources: ["*"],
+              additionalIamStatements: [
+                new iam.PolicyStatement({
+                  effect: iam.Effect.ALLOW,
+                  actions: [
+                    "route53:ChangeResourceRecordSets",
+                    "route53:ListHostedZonesByName",
+                    "route53:ListResourceRecordSets",
+                  ],
+                  resources: ["*"],
+                }),
+              ],
               parameters: {
                 AppId: "{% $appId %}",
                 DomainName: props.domainName,
@@ -173,8 +240,46 @@ export class ApplicationPlaneDeployment extends Construct {
                 CertificateSettings: {
                   Type: "AMPLIFY_MANAGED",
                 },
-              } as unknown as CreateDomainAssociationCommandInput,
+              } as CapitalizeCommandInput<CreateDomainAssociationCommandInput>,
             })
+          )
+          .next(
+            new sfn.Wait(this, "WiatAfterDomainAssociation", {
+              time: sfn.WaitTime.duration(Duration.seconds(15)),
+            })
+          )
+          .next(
+            new sfnTasks.CallAwsService(this, "GetDomainAssociation", {
+              action: "getDomainAssociation",
+              service: "amplify",
+              iamResources: ["*"],
+              parameters: {
+                AppId: "{% $appId %}",
+                DomainName: `{% $appId & '.${props.domainName}' %}`,
+              } as unknown as GetDomainAssociationCommandInput,
+              outputs: {
+                domainStatus:
+                  "{% $states.result.domainAssociation.domainStatus %}",
+              },
+            }).next(
+              new Choice(this, "CehckDomainStatusAvailable", {}).when(
+                sfn.Condition.stringEquals(
+                  "{% $domainStatus %}",
+                  DomainStatus.AVAILABLE
+                ),
+                new sfnTasks.CallAwsService(this, "StartJob", {
+                  service: "amplify",
+                  action: "startJob",
+                  iamResources: ["*"],
+                  parameters: {
+                    AppId: "{% $appId %}",
+                    BranchName: "main",
+                    JobType: "RELEASE",
+                    JobReason: "first release",
+                  } as CapitalizeCommandInput<StartJobCommandInput>,
+                })
+              )
+            )
           )
         // .next(
         //   new sfnTasks.CallAwsService(this, "GetApplication", {

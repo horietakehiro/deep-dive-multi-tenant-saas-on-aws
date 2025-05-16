@@ -87,7 +87,6 @@ class ControlPlane extends Construct {
       repository:
         "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
     });
-    // TODO: https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html#setting-up-github-app-cloudformation
 
     new amplify.CfnBranch(this, "MainBranch", {
       appId: app.attrAppId,
@@ -97,7 +96,6 @@ class ControlPlane extends Construct {
       framework: "web",
       // backend
     });
-    // TODO: route53:ListHostedZones 
     const domainRole = new amplify.CfnDomain(this, "Domain", {
       appId: app.attrAppId,
       domainName: "ht-burdock.com",
