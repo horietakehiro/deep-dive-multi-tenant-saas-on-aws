@@ -17,6 +17,7 @@ import {
   Input as CreateAppFunctionInput,
   Output,
 } from "./functions/create-app-function";
+import { Input as UpdateTenantFunctionInput } from "./functions/update-tenant-function";
 import {
   CreateAppCommandInput,
   CreateBranchCommandInput,
@@ -27,6 +28,9 @@ import {
   GetDomainAssociationCommand,
   GetDomainAssociationCommandInput,
   GetDomainAssociationCommandOutput,
+  GetJobCommand,
+  GetJobCommandInput,
+  JobStatus,
   StartJobCommand,
   StartJobCommandInput,
 } from "@aws-sdk/client-amplify";
@@ -53,6 +57,8 @@ type Primitives =
   | bigint[];
 
 /**
+ * キャメル形式のAWS SDKのリクエストパラメータを、ステートマシンタスクの引数に渡すためのアッパーキャメル形式に変換するための型定義
+ *
  * [参考URL](https://medium.com/@fullstack-shepherd/typescript-transforming-types-with-snake-case-keys-to-camelcase-keys-or-how-to-keep-busy-in-9d5f074d9bfa)
  */
 type CapitalizeCommandInput<T> = {
@@ -65,23 +71,6 @@ type CapitalizeCommandInput<T> = {
     : key]: T[key] extends Primitives ? T[key] : CapitalizeCommandInput<T[key]>;
 };
 
-const B: CapitalizeCommandInput<CreateDomainAssociationCommandInput> = {
-  AppId: "",
-  CertificateSettings: {
-    Type: "AMPLIFY_MANAGED",
-  },
-  DomainName: "",
-  SubDomainSettings: [
-    {
-      BranchName: "",
-      Prefix: "",
-    },
-    {
-      BranchName: "",
-      Prefix: "hoge",
-    },
-  ],
-};
 export interface ApplicationPlaneDeploymentProps {
   /*
    * ステートマシンのARNを格納する為のSSMパラメータの名前
@@ -90,6 +79,7 @@ export interface ApplicationPlaneDeploymentProps {
   paramNameForGithubAccessToken: string;
   repositoryURL: string;
   domainName: string;
+  branchName: string;
 }
 export class ApplicationPlaneDeployment extends Construct {
   public readonly stateMachine: sfn.IStateMachine;
@@ -100,11 +90,15 @@ export class ApplicationPlaneDeployment extends Construct {
     props: ApplicationPlaneDeploymentProps
   ) {
     super(scope, id);
-    const parameter = new ssm.StringParameter(this, "BuildSpecParam", {
-      stringValue: fs
-        .readFileSync(path.join(__dirname, "../../../../../amplify.yml"))
-        .toString("utf-8"),
-    });
+    const buildSpecParameter = new ssm.StringParameter(
+      this,
+      "BuildSpecParameter",
+      {
+        stringValue: fs
+          .readFileSync(path.join(__dirname, "../../../../../amplify.yml"))
+          .toString("utf-8"),
+      }
+    );
     const amplifyServiceRole = new iam.Role(this, "AmplifyServiceRole", {
       assumedBy: new iam.ServicePrincipal("amplify.amazonaws.com"),
       managedPolicies: [
@@ -160,6 +154,170 @@ export class ApplicationPlaneDeployment extends Construct {
         resources: ["*"],
       })
     );
+    const invokeCreateAppFunction = new sfnTasks.LambdaInvoke(
+      this,
+      "InvokeAppCreationFunction",
+      {
+        lambdaFunction: createAppFunction,
+        comment:
+          "Amplifyアプリケーションとしてアプリケーションのデプロイを開始するためのLambda関数を実行する。※処理の過程でGitHubのアクセストークンを扱う必要があるので、ステートマシンのログに出力されないようLambda関数として実行する。",
+        integrationPattern: sfn.IntegrationPattern.REQUEST_RESPONSE,
+        invocationType: sfnTasks.LambdaInvocationType.REQUEST_RESPONSE,
+        payload: sfn.TaskInput.fromObject({
+          amplifyServiceRoleARN: amplifyServiceRole.roleArn,
+          paramNameForGitHubToken: props.paramNameForGithubAccessToken,
+          repositoryURL: props.repositoryURL,
+          tenantId: "{% $states.input.tenantId %}",
+          paramNameForBuildSpec: buildSpecParameter.parameterName,
+        } as CreateAppFunctionInput),
+        assign: {
+          appId: "{% $states.result.Payload.appId %}",
+          tenantId: "{% $states.input.tenantId %}",
+        },
+      }
+    );
+    const waitForDomainAssociation = new sfn.Wait(
+      this,
+      "WaitForDomainAssociation",
+      {
+        time: sfn.WaitTime.duration(Duration.seconds(30)),
+      }
+    );
+    const createBranch = new sfnTasks.CallAwsService(this, "CreateBranch", {
+      comment: `${props.branchName}ブランチを本番環境として設定する`,
+      service: "amplify",
+      action: "createBranch",
+      iamResources: ["*"],
+      parameters: {
+        AppId: "{% $appId %}",
+        BranchName: props.branchName,
+        Stage: "PRODUCTION",
+        EnableAutoBuild: true,
+        Framework: "web",
+      } as CapitalizeCommandInput<CreateBranchCommandInput>,
+      outputs: {},
+    });
+    const createDomainAssociation = new sfnTasks.CallAwsService(
+      this,
+      "CreateDomainAssociation",
+      {
+        comment: `${props.branchName}ブランチにカスタムドメインを設定する`,
+        service: "amplify",
+        action: "createDomainAssociation",
+        iamResources: ["*"],
+        additionalIamStatements: [
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: [
+              "route53:ChangeResourceRecordSets",
+              "route53:ListHostedZonesByName",
+              "route53:ListResourceRecordSets",
+              "route53:ListHostedZones",
+            ],
+            resources: ["*"],
+          }),
+        ],
+        parameters: {
+          AppId: "{% $appId %}",
+          DomainName: props.domainName,
+          SubDomainSettings: [
+            {
+              BranchName: props.branchName,
+              Prefix: "{% $appId %}",
+            },
+          ],
+          AutoSubDomainCreationPatterns: [],
+          CertificateSettings: {
+            Type: "AMPLIFY_MANAGED",
+          },
+        } as CapitalizeCommandInput<CreateDomainAssociationCommandInput>,
+      }
+    );
+    const getDomainAssociation = new sfnTasks.CallAwsService(
+      this,
+      "GetDomainAssociation",
+      {
+        comment: "カスタムドメインの設定状況を取得する",
+        action: "getDomainAssociation",
+        service: "amplify",
+        iamResources: ["*"],
+        parameters: {
+          AppId: "{% $appId %}",
+          DomainName: props.domainName,
+        } as unknown as GetDomainAssociationCommandInput,
+        assign: {
+          domainStatus: "{% $states.result.DomainAssociation.DomainStatus %}",
+        },
+      }
+    );
+    const domainStatusChoice = new Choice(this, "DomainStatusChoice", {
+      comment: "カスタムドメインの設定状況を確認する",
+    });
+    const domainStatusConditionFn = (status: DomainStatus) =>
+      sfn.Condition.jsonata(`{% $domainStatus = '${status}' %}`);
+
+    const startJob = new sfnTasks.CallAwsService(this, "StartJob", {
+      comment: "アプリケーションプレーンのデプロイジョブを実行する",
+      service: "amplify",
+      action: "startJob",
+      iamResources: ["*"],
+      parameters: {
+        AppId: "{% $appId %}",
+        BranchName: props.branchName,
+        JobType: "RELEASE",
+        JobReason: "first release",
+      } as CapitalizeCommandInput<StartJobCommandInput>,
+      assign: {
+        jobId: "{% $states.result.JobSummary.JobId %}",
+      },
+    });
+    const getJob = new sfnTasks.CallAwsService(this, "GetJob", {
+      comment: "ジョブの状態を確認する",
+      service: "amplify",
+      action: "getJob",
+      iamResources: ["*"],
+      parameters: {
+        AppId: "{% $appId %}",
+        BranchName: props.branchName,
+        JobId: "{% $jobId %}",
+      } as CapitalizeCommandInput<GetJobCommandInput>,
+      assign: {
+        jobStatus: "{% $states.result.Job.JobSummary.Status %}",
+      },
+    });
+    const waitForJob = new sfn.Wait(this, "WaitForJob", {
+      time: sfn.WaitTime.duration(Duration.seconds(30)),
+    });
+    const jobStatusConditionFn = (status: JobStatus) =>
+      sfn.Condition.jsonata(`{% $jobStatus = '${status}' %}`);
+    const jobStatusChoice = new sfn.Choice(this, "JobStatusChoice", {
+      comment: "ジョブの実行状態を確認する",
+    });
+
+    const updateTenantFunction = new nodejsLambda.NodejsFunction(
+      this,
+      "UpdateTenantFunction",
+      {
+        entry: path.join(__dirname, "functions", "update-tenant-function.ts"),
+        handler: "handler",
+        timeout: Duration.seconds(60),
+      }
+    );
+
+    const invokeUpdateTenantFunction = new sfnTasks.LambdaInvoke(
+      this,
+      "InvokeUpdateTenantFunction",
+      {
+        lambdaFunction: updateTenantFunction,
+        comment: "テナント情報を更新する",
+        integrationPattern: sfn.IntegrationPattern.REQUEST_RESPONSE,
+        invocationType: sfnTasks.LambdaInvocationType.REQUEST_RESPONSE,
+        payload: sfn.TaskInput.fromObject({
+          tenantId: "{% $tenantId %}",
+          url: `{% 'https://' & $appId & '.${props.domainName}' %}`,
+        } as UpdateTenantFunctionInput),
+      }
+    );
 
     this.stateMachine = new sfn.StateMachine(this, "StateMachine", {
       logs: {
@@ -172,131 +330,37 @@ export class ApplicationPlaneDeployment extends Construct {
       },
       queryLanguage: sfn.QueryLanguage.JSONATA,
       definitionBody: sfn.DefinitionBody.fromChainable(
-        sfn.Chain.start(
-          new sfnTasks.LambdaInvoke(this, "InvokeAppCreationFunction", {
-            lambdaFunction: createAppFunction,
-            comment:
-              "Amplifyアプリケーションとしてアプリケーションのデプロイを開始するためのLambda関数を実行する。※処理の過程でGitHubのアクセストークンを扱う必要があるので、ステートマシンのログに出力されないようLambda関数として実行する。",
-            integrationPattern: sfn.IntegrationPattern.REQUEST_RESPONSE,
-            invocationType: sfnTasks.LambdaInvocationType.REQUEST_RESPONSE,
-            payload: sfn.TaskInput.fromObject({
-              amplifyServiceRoleARN: amplifyServiceRole.roleArn,
-              paramNameForGitHubToken: props.paramNameForGithubAccessToken,
-              repositoryURL: props.repositoryURL,
-              tenantId: "{% $states.input.tenantId %}",
-              paramNameForBuildSpec: parameter.parameterName,
-            } as CreateAppFunctionInput),
-            assign: {
-              appId: "{% $states.result.Payload.appId %}",
-            },
-          })
-        )
+        sfn.Chain.start(invokeCreateAppFunction)
+          .next(createBranch)
+          .next(createDomainAssociation)
+          .next(waitForDomainAssociation)
+          .next(getDomainAssociation)
           .next(
-            new sfn.Wait(this, "WaitAfterCreateApp", {
-              time: sfn.WaitTime.duration(Duration.seconds(15)),
-            })
-          )
-          .next(
-            new sfnTasks.CallAwsService(this, "CreateBranch", {
-              service: "amplify",
-              action: "createBranch",
-              iamResources: ["*"],
-              parameters: {
-                AppId: "{% $appId %}",
-                BranchName: "main",
-                Stage: "PRODUCTION",
-                EnableAutoBuild: true,
-                Framework: "web",
-              } as CapitalizeCommandInput<CreateBranchCommandInput>,
-              outputs: {},
-            })
-          )
-          .next(
-            new sfnTasks.CallAwsService(this, "CreateDomainAssociation", {
-              service: "amplify",
-              action: "createDomainAssociation",
-              iamResources: ["*"],
-              additionalIamStatements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  actions: [
-                    "route53:ChangeResourceRecordSets",
-                    "route53:ListHostedZonesByName",
-                    "route53:ListResourceRecordSets",
-                  ],
-                  resources: ["*"],
-                }),
-              ],
-              parameters: {
-                AppId: "{% $appId %}",
-                DomainName: props.domainName,
-                SubDomainSettings: [
-                  {
-                    BranchName: "main",
-                    Prefix: "{% $appId %}",
-                  },
-                ],
-                AutoSubDomainCreationPatterns: [],
-                CertificateSettings: {
-                  Type: "AMPLIFY_MANAGED",
-                },
-              } as CapitalizeCommandInput<CreateDomainAssociationCommandInput>,
-            })
-          )
-          .next(
-            new sfn.Wait(this, "WiatAfterDomainAssociation", {
-              time: sfn.WaitTime.duration(Duration.seconds(15)),
-            })
-          )
-          .next(
-            new sfnTasks.CallAwsService(this, "GetDomainAssociation", {
-              action: "getDomainAssociation",
-              service: "amplify",
-              iamResources: ["*"],
-              parameters: {
-                AppId: "{% $appId %}",
-                DomainName: `{% $appId & '.${props.domainName}' %}`,
-              } as unknown as GetDomainAssociationCommandInput,
-              outputs: {
-                domainStatus:
-                  "{% $states.result.domainAssociation.domainStatus %}",
-              },
-            }).next(
-              new Choice(this, "CehckDomainStatusAvailable", {}).when(
-                sfn.Condition.stringEquals(
-                  "{% $domainStatus %}",
-                  DomainStatus.AVAILABLE
-                ),
-                new sfnTasks.CallAwsService(this, "StartJob", {
-                  service: "amplify",
-                  action: "startJob",
-                  iamResources: ["*"],
-                  parameters: {
-                    AppId: "{% $appId %}",
-                    BranchName: "main",
-                    JobType: "RELEASE",
-                    JobReason: "first release",
-                  } as CapitalizeCommandInput<StartJobCommandInput>,
-                })
+            domainStatusChoice
+              .otherwise(waitForDomainAssociation)
+              .when(
+                domainStatusConditionFn("FAILED"),
+                new sfn.Fail(this, "DomainAssociationFaild", {})
               )
-            )
+              .when(
+                domainStatusConditionFn("AVAILABLE"),
+                startJob
+                  .next(waitForJob)
+                  .next(getJob)
+                  .next(
+                    jobStatusChoice
+                      .otherwise(waitForJob)
+                      .when(
+                        jobStatusConditionFn("FAILED"),
+                        new sfn.Fail(this, "JobFailed", {})
+                      )
+                      .when(
+                        jobStatusConditionFn("SUCCEED"),
+                        invokeUpdateTenantFunction
+                      )
+                  )
+              )
           )
-        // .next(
-        //   new sfnTasks.CallAwsService(this, "GetApplication", {
-        //     service: "amplify",
-        //     action: "getApplication",
-        //     iamResources: ["*"],
-        //     parameters: {
-        //       appId: "{% $appId %}",
-        //     } as GetAppCommandInput,
-        //     outputs: {},
-        //   })
-        // )
-        // .next(
-        //   new sfn.Choice(this, "CheckCreateAppCompleted", {}).when(
-        //     sfn.Condition.stringEquals()
-        //   )
-        // )
       ),
     });
 

@@ -33,5 +33,6 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
     domainName: "ht-burdock.com",
     repositoryURL:
       "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
+    branchName: "main",
   }
 );

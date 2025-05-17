@@ -73,7 +73,7 @@ export const handler = async (
       enableBranchAutoDeletion: false,
       environmentVariables: {
         AMPLIFY_DIFF_DEPLOY: "false",
-        AMPLIFY_MONOREPO_APP_ROOT: "projects/application-plane",
+        AMPLIFY_MONOREPO_APP_ROOT: "projects/intersection",
       },
       iamServiceRoleArn: event.amplifyServiceRoleARN,
       platform: "WEB",
