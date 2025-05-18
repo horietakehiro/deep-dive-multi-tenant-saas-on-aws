@@ -12,7 +12,7 @@ export const auth = defineAuth({
     email: true,
   },
   multifactor: {
-    mode: "OPTIONAL",
+    mode: "REQUIRED",
     totp: true,
   },
   userAttributes: {
@@ -27,6 +27,6 @@ export const auth = defineAuth({
   },
   triggers: {
     preSignUp,
-    postConfirmation: confirmSignUp,
+    // postConfirmation: confirmSignUp,
   },
 });

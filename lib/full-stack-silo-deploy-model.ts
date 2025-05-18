@@ -111,19 +111,7 @@ class ControlPlane extends Construct {
         customCertificateArn: props.certArn,
       },
     });
-
-    // TODO: aws amplify start-job    --app-id  dv8ckulfkeu3z --branch-name main   --job-type RELEASE 
-{
-    "jobSummary": {
-        "jobArn": "arn:aws:amplify:ap-northeast-1:382098889955:apps/dv8ckulfkeu3z/branches/main/jobs/0000000002",
-        "jobId": "2",
-        "commitId": "HEAD",
-        "commitTime": "2025-05-15T18:54:06.883000+09:00",
-        "status": "PENDING"
-    }
-}
   }
-
 }
 
 export interface FullStackSiloDeployModelStackProps extends cdk.StackProps {

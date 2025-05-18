@@ -12,16 +12,25 @@ const backend = defineBackend({
   auth,
   data,
   // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
-  confirmSignUp,
+  // confirmSignUp,
 });
-// アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
-backend.confirmSignUp.resources.lambda.addToRolePolicy(
-  new iam.PolicyStatement({
-    effect: iam.Effect.ALLOW,
-    actions: ["ssm:GetParameter", "states:StartExecution"],
-    resources: ["*"],
-  })
-);
+// // アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
+// backend.confirmSignUp.resources.lambda.addToRolePolicy(
+//   new iam.PolicyStatement({
+//     effect: iam.Effect.ALLOW,
+//     actions: ["ssm:GetParameter", "states:StartExecution"],
+//     resources: ["*"],
+//   })
+// );
+const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
+cfnUserPoolClient.explicitAuthFlows = [
+  "ALLOW_CUSTOM_AUTH",
+  "ALLOW_REFRESH_TOKEN_AUTH",
+  "ALLOW_USER_SRP_AUTH",
+  // ユーザー移行トリガーのために必要
+  "ALLOW_USER_PASSWORD_AUTH",
+  "ALLOW_ADMIN_USER_PASSWORD_AUTH",
+];
 
 // アプリケーションプレーンのデプロイジョブ用のステートマシンを追加する
 const applicationPlaneDeployment = new ApplicationPlaneDeployment(
