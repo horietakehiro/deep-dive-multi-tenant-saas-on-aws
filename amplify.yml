@@ -21,6 +21,8 @@ applications:
         build:
           commands:
             - npm ci --cache .npm --prefer-offline
+            # outputsファイルを参照するバックエンドリソースために、空のoutputsファイルを作成しておく
+            - "echo '{\"version\": \"1.4\"}' > amplify_outputs.json"
             - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
   - appRoot: projects/intersection
     env:
