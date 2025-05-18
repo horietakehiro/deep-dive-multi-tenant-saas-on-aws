@@ -3,8 +3,8 @@ import { defineBackend } from "@aws-amplify/backend";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { ApplicationPlaneDeployment } from "./custom/application-plane-deployment/resource";
-import { paramNameForSFNArn } from "./auth/confirm-sign-up/handler";
 import { confirmSignUp } from "./auth/confirm-sign-up/resource";
+import { PARAM_NAME_FOR_SFN_ARN } from "./auth/confirm-sign-up/handler";
 /**
  * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
  */
@@ -14,14 +14,6 @@ const backend = defineBackend({
   // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
   confirmSignUp,
 });
-// アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
-backend.confirmSignUp.resources.lambda.addToRolePolicy(
-  new iam.PolicyStatement({
-    effect: iam.Effect.ALLOW,
-    actions: ["ssm:GetParameter", "states:StartExecution"],
-    resources: ["*"],
-  })
-);
 const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
 cfnUserPoolClient.explicitAuthFlows = [
   "ALLOW_CUSTOM_AUTH",
@@ -37,7 +29,6 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
   backend.createStack("ApplicationPlaneDeployment"),
   "ApplicationPlaneDeployment",
   {
-    paramNameForSFNArn: paramNameForSFNArn,
     paramNameForGithubAccessToken: "/GitHub/MyClassicToken",
     domainName: "ht-burdock.com",
     repositoryURL:
@@ -45,3 +36,18 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
     branchName: "main",
   }
 );
+
+// アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
+backend.confirmSignUp.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: ["ssm:GetParameter", "states:StartExecution"],
+    resources: ["*"],
+  })
+);
+const cfnFunction = backend.confirmSignUp.resources.cfnResources.cfnFunction;
+cfnFunction.environment = {
+  variables: {
+    [PARAM_NAME_FOR_SFN_ARN]: applicationPlaneDeployment.arnParam.parameterName,
+  },
+};

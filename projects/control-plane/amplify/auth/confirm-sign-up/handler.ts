@@ -1,11 +1,11 @@
 import { PostConfirmationTriggerHandler } from "aws-lambda";
-import outputs from "../../../amplify_outputs.json";
 import { Amplify } from "aws-amplify";
 import { SFNClient, StartExecutionCommand } from "@aws-sdk/client-sfn";
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
-export const paramNameForSFNArn = "application-plane-deployment-arn";
-Amplify.configure(outputs);
+import { env } from "process";
+export const PARAM_NAME_FOR_SFN_ARN = "PARAM_NAME_FOR_SFN_ARN";
 
+const paramNameForSFNArn = env[PARAM_NAME_FOR_SFN_ARN];
 const ssmClient = new SSMClient();
 const sfnClient = new SFNClient();
 

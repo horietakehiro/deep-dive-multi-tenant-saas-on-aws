@@ -10,28 +10,17 @@ import {
   aws_lambda_nodejs as nodejsLambda,
   Duration,
 } from "aws-cdk-lib";
-import { type GetParameterCommandInput } from "@aws-sdk/client-ssm";
 import { Construct } from "constructs";
 import path from "path";
-import {
-  Input as CreateAppFunctionInput,
-  Output,
-} from "./functions/create-app-function";
+import { Input as CreateAppFunctionInput } from "./functions/create-app-function";
 import { Input as UpdateTenantFunctionInput } from "./functions/update-tenant-function";
 import {
-  CreateAppCommandInput,
   CreateBranchCommandInput,
   CreateDomainAssociationCommandInput,
   DomainStatus,
-  GetAppCommandInput,
-  GetAppCommandOutput,
-  GetDomainAssociationCommand,
   GetDomainAssociationCommandInput,
-  GetDomainAssociationCommandOutput,
-  GetJobCommand,
   GetJobCommandInput,
   JobStatus,
-  StartJobCommand,
   StartJobCommandInput,
 } from "@aws-sdk/client-amplify";
 import { Choice } from "aws-cdk-lib/aws-stepfunctions";
@@ -75,7 +64,6 @@ export interface ApplicationPlaneDeploymentProps {
   /*
    * ステートマシンのARNを格納する為のSSMパラメータの名前
    */
-  paramNameForSFNArn: string;
   paramNameForGithubAccessToken: string;
   repositoryURL: string;
   domainName: string;
@@ -366,7 +354,6 @@ export class ApplicationPlaneDeployment extends Construct {
 
     this.arnParam = new ssm.StringParameter(this, "ArnParam", {
       stringValue: this.stateMachine.stateMachineArn,
-      parameterName: props.paramNameForSFNArn,
     });
   }
 }
