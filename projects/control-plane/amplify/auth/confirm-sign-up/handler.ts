@@ -31,6 +31,9 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
   const res = await sfnClient.send(
     new StartExecutionCommand({
       stateMachineArn: arn,
+      input: JSON.stringify({
+        tenantId: event.request.userAttributes["custom:tenantId"],
+      }),
     })
   );
   console.log(res);

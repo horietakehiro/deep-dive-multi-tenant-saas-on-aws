@@ -251,6 +251,32 @@ cfnFunction.environment = {
 
 ```
 
+- 次に、アプリケーションプレーンの一連のデプロイジョブを実行するためのステートマシン及び関連リソース(サービスロール等)をカスタムリソースとして定義しコントロールプレーンのバックエンドリソースとして追加します。
+
+```js projects/control-plane/amplify/backend.ts
+// アプリケーションプレーンのデプロイジョブ用のステートマシンを追加する
+const applicationPlaneDeployment = new ApplicationPlaneDeployment(
+  backend.createStack("ApplicationPlaneDeployment"),
+  "ApplicationPlaneDeployment",
+  {
+    paramNameForGithubAccessToken: "/GitHub/MyClassicToken",
+    domainName: "ht-burdock.com",
+    repositoryURL:
+      "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
+    branchName: "main",
+  }
+);
+```
+
+- 今回ステートマシンで実行する具体的なデプロイジョブの中身は以下の通りです。
+  - アプリケーションプレーン用の Amplify アプリケーションを作成
+  - Amplify アプリケーションにデプロイ用のブランチ設定を作成
+  - Amplify アプリケーションにカスタムドメインを関連付け、処理が完了するまで待機
+  - アプリケーションプレーンの初回デプロイを手動実行し、デプロイが完了するまで待機
+  - DB 上のテナント情報を更新する(ステータスを`active`に更新する)
+
+![](/images/06/full-silo-application-plane-deploy-job-state-machine.png)
+
 TODO:参考資料
 https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls
 
