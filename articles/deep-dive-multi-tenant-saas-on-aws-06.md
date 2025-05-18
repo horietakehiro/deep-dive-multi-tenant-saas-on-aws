@@ -186,7 +186,70 @@ export const handler: PreSignUpTriggerHandler = async (event) => {
 
 `1.`(サインアップ及びテナントアイデンティティの作成)まで完了したので、次に`2.`(アプリケーションプレーンのデプロイジョブの実行)の実装に移ります
 
-- サインアップ成功後(`ConfirmSignUp`)にトリガーされる Lambda 関数を用意します。
+- サインアップ成功後(`ConfirmSignUp`)にトリガーされ、アプリケーションプレーンデプロイジョブ(ステートマシン)を実行するための Lambda 関数を用意します。
+  - この時、AWS SDK を使用してステートマシンの ARN をパラメータストアから取得してステートマシンを実行します
+  - また、ステートマシンの ARN が格納されたパラメータストア上のパラメータ名は環境変数に設定しておきます。
+  - そのため、ロジックの実装と共に、必要な IAM 権限及び環境変数も合わせて設定します
+
+```js: projects/control-plane/amplify/auth/confirm-sign-up/handler.ts
+
+/**
+ * テナント専用のアプリケーションプレーンのデプロイジョブを実行する
+ * @param event
+ */
+export const handler: PostConfirmationTriggerHandler = async (event) => {
+  console.log(event);
+  console.log("パラメータストアからステートマシンのARNを取得する");
+  const ssmRes = await ssmClient.send(
+    new GetParameterCommand({
+      Name: paramNameForSFNArn,
+    })
+  );
+  console.log(ssmRes);
+  if (ssmRes.Parameter === undefined || ssmRes.Parameter.Value === undefined) {
+    throw Error(`パラメータ[${paramNameForSFNArn}]からARNの取得に失敗`);
+  }
+  const arn = ssmRes.Parameter.Value;
+
+  console.log("アプリケーションプレーンのデプロイジョブを非同期実行");
+  const res = await sfnClient.send(
+    new StartExecutionCommand({
+      stateMachineArn: arn,
+    })
+  );
+  console.log(res);
+  return event;
+};
+
+```
+
+```js: projects/control-plane/amplify/backend.ts
+const backend = defineBackend({
+  auth,
+  data,
+  // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
+  confirmSignUp,
+});
+
+...(省略)...
+
+// アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
+backend.confirmSignUp.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: ["ssm:GetParameter", "states:StartExecution"],
+    resources: ["*"],
+  })
+);
+// ステートマシンのARNを参照するためのパラメータ名を環境変数に設定する
+const cfnFunction = backend.confirmSignUp.resources.cfnResources.cfnFunction;
+cfnFunction.environment = {
+  variables: {
+    [PARAM_NAME_FOR_SFN_ARN]: applicationPlaneDeployment.arnParam.parameterName,
+  },
+};
+
+```
 
 TODO:参考資料
 https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls
