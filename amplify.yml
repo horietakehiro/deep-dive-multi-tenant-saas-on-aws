@@ -30,7 +30,7 @@ applications:
   - appRoot: projects/intersection
     env:
       variables:
-        CONTROL_PLANE_APP_ID: d2tluq7eukvnud
+        CONTROL_PLANE_APP_ID: dm601eykhnw0a
     frontend:
       phases:
         preBuild:
