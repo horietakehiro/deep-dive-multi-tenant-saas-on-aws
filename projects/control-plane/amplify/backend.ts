@@ -45,6 +45,7 @@ backend.confirmSignUp.resources.lambda.addToRolePolicy(
     resources: ["*"],
   })
 );
+// ステートマシンのARNを参照するためのパラメータ名を環境変数に設定する
 const cfnFunction = backend.confirmSignUp.resources.cfnResources.cfnFunction;
 cfnFunction.environment = {
   variables: {

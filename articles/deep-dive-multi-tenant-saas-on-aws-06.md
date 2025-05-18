@@ -277,7 +277,112 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
 
 ![](/images/06/full-silo-application-plane-deploy-job-state-machine.png)
 
+- 最後に、テナント所有者がアプリケーションプレーンに初回サインインした際に、コントロールプレーン側のユーザープール上のテナント所有者のユーザーアイデンティティをアプリケーションプレーン側に移行するためのトリガーを実装します。これによって、再度サインアップを実施することなく、コントロールプレーン側と同じ認証情報(パスワード)でアプリケーションプレーンにもテナント所有者がサインインすることが出来るようになります。
+
+```js projects/intersection/amplify/auth/user-migration/handler.ts
+export const handler = async (
+  event: UserMigrationAuthenticationTriggerEvent
+): Promise<UserMigrationAuthenticationTriggerEvent> => {
+  securelyLogEvent(event);
+  // テナント所有者がサインインしようとしているか否かを判定する
+  // 具体的には、リクエスト情報に含まれるユーザー名とパスワードで
+  // コントロールプレーンのユーザープールにサインインを試行して成功するか否かを確認する
+  const username = event.userName;
+  const password = event.request.password;
+
+  try {
+    // 認証エラーが発生しなければユーザー名とパスワードが正しいと判断する
+    const authResponse = await client.send(
+      new AdminInitiateAuthCommand({
+        AuthFlow: "ADMIN_USER_PASSWORD_AUTH",
+        UserPoolId: sharedOutputs.auth.user_pool_id,
+        ClientId: sharedOutputs.auth.user_pool_client_id,
+        AuthParameters: {
+          USERNAME: username,
+          PASSWORD: password,
+        },
+      })
+    );
+    console.log(authResponse);
+
+    console.log("sub以外の全てのユーザー属性も移行する");
+    const userResponse = await client.send(
+      new AdminGetUserCommand({
+        Username: username,
+        UserPoolId: sharedOutputs.auth.user_pool_id,
+      })
+    );
+    const migrateAttributes: { [name: string]: string } = Object.fromEntries(
+      (userResponse.UserAttributes ?? [])
+        .filter((att) => att.Name !== "sub")
+        .map((att) => [att.Name, att.Value])
+    );
+    console.log(migrateAttributes);
+
+    event.response.userAttributes = {
+      ...migrateAttributes,
+      username: event.userName,
+    };
+    event.response.finalUserStatus = "CONFIRMED";
+    event.response.messageAction = "SUPPRESS";
+    securelyLogEvent(event);
+    return event;
+  } catch (error: unknown) {
+    console.error(error);
+    throw error;
+  }
+};
+```
+
+```js: projects/intersection/amplify/backend.ts
+const backend = defineBackend({
+  auth,
+  userMigration,
+});
+
+const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
+cfnUserPoolClient.explicitAuthFlows = [
+  "ALLOW_CUSTOM_AUTH",
+  "ALLOW_REFRESH_TOKEN_AUTH",
+  "ALLOW_USER_SRP_AUTH",
+  // ユーザー移行トリガーのために必要
+  "ALLOW_USER_PASSWORD_AUTH",
+];
+
+backend.userMigration.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: ["cognito-idp:AdminInitiateAuth", "cognito-idp:AdminGetUser"],
+    resources: ["*"],
+  })
+);
+
+オンボーディング機能に必要な一通りの部品が揃いましたので、それらをデプロイし、実際にコントロールプレーンにテナント所有者としてサインアップした結果が以下の通りです。
+
+- サインアップ直後のコントロールプレーン上の画面
+
+![](/images/06/full-silo-control-plane-signup.png)
+
+- バックグラウンドで非同期実行されたアプリケーションプレーンのデプロイジョブ
+
+![](TODO:)
+
+- アプリケーションプレーンへのサインインに成功
+
+![](TODO:)
+
+TODO:
+
+2025-05-18T06:35:55.355Z [INFO]: ../control-plane/amplify/data/resource.ts(1,50): error TS2307: Cannot find module '@aws-amplify/backend' or its corresponding type declarations.
+
+294
+
+2025-05-18T06:35:55.361Z [INFO]: ../control-plane/amplify/data/resource.ts(11,21): error TS7006: Parameter 'allow' implicitly has an 'any' type.
+
+
+
 TODO:参考資料
 https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls
 
 https://dev.classmethod.jp/articles/amplify-auth-get-user-info/
+```

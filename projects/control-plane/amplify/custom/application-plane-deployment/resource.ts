@@ -270,7 +270,7 @@ export class ApplicationPlaneDeployment extends Construct {
         JobId: "{% $jobId %}",
       } as CapitalizeCommandInput<GetJobCommandInput>,
       assign: {
-        jobStatus: "{% $states.result.Job.JobSummary.Status %}",
+        jobStatus: "{% $states.result.Job.Summary.Status %}",
       },
     });
     const waitForJob = new sfn.Wait(this, "WaitForJob", {
