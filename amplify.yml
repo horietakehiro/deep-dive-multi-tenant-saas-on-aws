@@ -67,5 +67,8 @@ applications:
             - npm ci --cache .npm --prefer-offline
             # # リソースを共有したい、作成済みのコントロールプレーン側のリソース設定をエクスポートする TODO:
             # - npx ampx generate outputs --branch $AWS_BRANCH --app-id $CONTROL_PLANE_APP_ID --out-dir shared
+            - mkdir shared
+            - 'echo ''{"version": "1.4"}'' > shared/amplify_outputs.json'
+
             # 自分自身のリソースをデプロイする
             - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
