@@ -289,6 +289,7 @@ export class ApplicationPlaneDeployment extends Construct {
         entry: path.join(__dirname, "functions", "update-tenant-function.ts"),
         handler: "handler",
         timeout: Duration.seconds(60),
+        projectRoot: path.join(__dirname, "../../../"),
       }
     );
 
