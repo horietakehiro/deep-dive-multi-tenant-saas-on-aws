@@ -68,6 +68,18 @@ applications:
             # # リソースを共有したい、作成済みのコントロールプレーン側のリソース設定をエクスポートする
             - sudo dnf install -y jq
             - CONTROL_PLANE_APP_ID=$(aws amplify list-apps  | jq -r '.apps[] | select(.name == "full-stack-silo-deploy-model-control-plane") | .appId')
+            # コントロールプレーンのバックエンドスタックが更新中の場合はoutputsファイルを生成できないため、更新が完了するまで待機する
+            - STACK_ARN=$(aws amplify get-branch --app-id  ${CONTROL_PLANE_APP_ID}  --branch-name main | jq -r .branch.backend.stackArn)
+            - STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_ARN | jq -r .Stacks[0].StackStatus)
+            - echo stack status of ${STACK_ARN} is ${STACK_STATUS}
+            - | 
+              while [[ $STACK_STATUS != *"COMPLETE" ]]
+              do
+                echo wait for 15 sec...
+                sleep 15
+                STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_ARN | jq -r .Stacks[0].StackStatus)
+                echo stack status of ${STACK_ARN} is ${STACK_STATUS}
+              done
             - npx ampx generate outputs --branch $AWS_BRANCH --app-id $CONTROL_PLANE_APP_ID --out-dir shared
 
             # 自分自身のリソースをデプロイする
