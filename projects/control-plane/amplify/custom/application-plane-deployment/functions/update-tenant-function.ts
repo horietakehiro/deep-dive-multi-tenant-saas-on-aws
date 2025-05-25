@@ -12,6 +12,7 @@ export interface Input {
 }
 export const handler = async (event: Input, context: any): Promise<void> => {
   console.log(event);
+  console.log(outputs);
   console.log(`テナント[${event.tenantId}]のステータスをactiveに更新する`);
   const currentTenant = await client.models.Tenant.get({ id: event.tenantId });
   console.log(currentTenant);
@@ -25,3 +26,11 @@ export const handler = async (event: Input, context: any): Promise<void> => {
   });
   console.log(newTenant);
 };
+
+handler(
+  {
+    tenantId: "1d5802d8-9f89-4309-86ea-52af3deb3692",
+    url: "",
+  },
+  {}
+);
