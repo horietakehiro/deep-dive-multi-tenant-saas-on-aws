@@ -4,6 +4,7 @@ import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { ApplicationPlaneDeployment } from "./custom/application-plane-deployment/resource";
 import { confirmSignUp } from "./auth/confirm-sign-up/resource";
+import { updateTenantFunction } from "./custom/application-plane-deployment/resource";
 import { PARAM_NAME_FOR_SFN_ARN } from "./auth/confirm-sign-up/handler";
 /**
  * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
@@ -13,6 +14,8 @@ const backend = defineBackend({
   data,
   // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
   confirmSignUp,
+
+  updateTenantFunction,
 });
 const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
 cfnUserPoolClient.explicitAuthFlows = [
@@ -34,6 +37,7 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
     repositoryURL:
       "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
     branchName: "main",
+    updateTenantFunction: backend.updateTenantFunction.resources.lambda,
   }
 );
 

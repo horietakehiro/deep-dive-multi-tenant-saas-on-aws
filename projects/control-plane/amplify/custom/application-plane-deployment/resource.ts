@@ -8,12 +8,13 @@ import {
   aws_ssm as ssm,
   aws_iam as iam,
   aws_lambda_nodejs as nodejsLambda,
+  aws_lambda as lambda,
   Duration,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import path from "path";
-import { Input as CreateAppFunctionInput } from "./functions/create-app-function";
-import { Input as UpdateTenantFunctionInput } from "./functions/update-tenant-function";
+import { Input as CreateAppFunctionInput } from "./create-app/handler";
+import { Input as UpdateTenantFunctionInput } from "./update-tenant/handler";
 import {
   CreateBranchCommandInput,
   CreateDomainAssociationCommandInput,
@@ -24,13 +25,16 @@ import {
   StartJobCommandInput,
 } from "@aws-sdk/client-amplify";
 import { Choice } from "aws-cdk-lib/aws-stepfunctions";
+import { defineFunction } from "@aws-amplify/backend";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-type StringKey<T> = {
-  [P in keyof T]: T[P] extends string ? P : never;
-};
+export const updateTenantFunction = defineFunction({
+  name: "update-tenant",
+  resourceGroupName: "function",
+  timeoutSeconds: 60,
+});
 
 type Primitives =
   | string
@@ -68,6 +72,7 @@ export interface ApplicationPlaneDeploymentProps {
   repositoryURL: string;
   domainName: string;
   branchName: string;
+  updateTenantFunction: lambda.IFunction;
 }
 export class ApplicationPlaneDeployment extends Construct {
   public readonly stateMachine: sfn.IStateMachine;
@@ -116,7 +121,7 @@ export class ApplicationPlaneDeployment extends Construct {
       this,
       "CreateAppFunction",
       {
-        entry: path.join(__dirname, "functions", "create-app-function.ts"),
+        entry: path.join(__dirname, "create-app", "handler.ts"),
         handler: "handler",
         timeout: Duration.seconds(60),
       }
@@ -282,22 +287,21 @@ export class ApplicationPlaneDeployment extends Construct {
       comment: "ジョブの実行状態を確認する",
     });
 
-    const updateTenantFunction = new nodejsLambda.NodejsFunction(
-      this,
-      "UpdateTenantFunction",
-      {
-        entry: path.join(__dirname, "functions", "update-tenant-function.ts"),
-        handler: "handler",
-        timeout: Duration.seconds(60),
-        projectRoot: path.join(__dirname, "../../../"),
-      }
-    );
+    // const updateTenantFunction = new nodejsLambda.NodejsFunction(
+    //   this,
+    //   "UpdateTenantFunction",
+    //   {
+    //     entry: path.join(__dirname, "functions", "update-tenant-function.ts"),
+    //     handler: "handler",
+    //     timeout: Duration.seconds(60),
+    //   }
+    // );
 
     const invokeUpdateTenantFunction = new sfnTasks.LambdaInvoke(
       this,
       "InvokeUpdateTenantFunction",
       {
-        lambdaFunction: updateTenantFunction,
+        lambdaFunction: props.updateTenantFunction,
         comment: "テナント情報を更新する",
         integrationPattern: sfn.IntegrationPattern.REQUEST_RESPONSE,
         invocationType: sfnTasks.LambdaInvocationType.REQUEST_RESPONSE,
