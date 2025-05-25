@@ -27,10 +27,10 @@ export const handler = async (event: Input, context: any): Promise<void> => {
   console.log(newTenant);
 };
 
-handler(
-  {
-    tenantId: "1d5802d8-9f89-4309-86ea-52af3deb3692",
-    url: "",
-  },
-  {}
-);
+// handler(
+//   {
+//     tenantId: "1d5802d8-9f89-4309-86ea-52af3deb3692",
+//     url: "",
+//   },
+//   {}
+// );
