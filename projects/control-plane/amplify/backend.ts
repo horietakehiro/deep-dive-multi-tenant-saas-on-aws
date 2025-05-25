@@ -14,7 +14,7 @@ const backend = defineBackend({
   data,
   // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
   confirmSignUp,
-
+  // "aws-amplify/data"のclientを使用してdataにアクセスする関数は明示的にバックエンドに追加する必要あり
   updateTenantFunction,
 });
 const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
