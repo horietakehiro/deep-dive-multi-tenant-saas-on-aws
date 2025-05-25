@@ -57,10 +57,22 @@ type CapitalizeCommandInput<T> = {
     : key]: T[key] extends Primitives ? T[key] : CapitalizeCommandInput<T[key]>;
 };
 
+// export interface PoolResourceDeploymentProps {}
+// export class PoolResourceDeployment extends Construct {
+//   public readonly stateMachine: sfn.IStateMachine;
+//   public readonly arnParam: ssm.IParameter;
+//   constructor(
+//     scope: Construct,
+//     id: string,
+//     props: PoolResourceDeploymentProps
+//   ) {
+//     super(scope, id);
+
+//     //
+//   }
+// }
+
 export interface ApplicationPlaneDeploymentProps {
-  /*
-   * ステートマシンのARNを格納する為のSSMパラメータの名前
-   */
   paramNameForGithubAccessToken: string;
   repositoryURL: string;
   domainName: string;

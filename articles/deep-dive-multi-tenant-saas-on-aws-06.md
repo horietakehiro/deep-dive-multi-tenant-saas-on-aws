@@ -10,13 +10,11 @@ published: false
 
 本記事では、「[【第 04 回】Deep Dive マルチテナント SaaS on AWS - 第 3 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-04)」で取り上げたデプロイモデル、及び、「[【第 05 回】Deep Dive マルチテナント SaaS on AWS - 第 4 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-05)」で取り上げたオンボーディングプロセスを、実際の React + Amplify のアプリケーションでどの様に実現出来るのかを探っていきます。
 
-まずはベースライン環境をデプロイし、第 3 章で取り上げた下記 3 種類のデプロイモデルそれぞれについて、オンボーディングプロセスを通した具体的なデプロイプロセスを実現してみます。
+まずはベースライン環境をデプロイし、第 3 章で取り上げた下記 2 種類のデプロイモデルそれぞれについて、オンボーディングプロセスを通した具体的なデプロイプロセスを実現してみます。
 
 - フルスタックのサイロデプロイモデル
-- ハイブリッドなフルスタックのデプロイモデル
+<!-- - ハイブリッドなフルスタックのデプロイモデル -->
 - 混合モードのデプロイモデル
-
-※フルスタックのプールデプロイモデルは Amplify がデフォルトでサポートしているデプロイモデルであり、実現方式は自明なので、割愛します。
 
 ## フルスタックのサイロデプロイモデル
 
@@ -41,12 +39,11 @@ cdk deploy ...(省略)...
 
 #### オンボーディング機能の実装
 
-ここでは具体的に以下のようなオンボーディングプロセスを実現したいと思います。
+実現方法は様々ありますが、ここでは具体的に以下のようなオンボーディングプロセスを実現したいと思います。
 
 1. テナント所有者のサインアップ(≒ ユーザーアイデンティティの作成)の過程で、テナントアイデンティティも併せて作成する
 
-   1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを作成し、ユーザーアイデンティティと関連づける
-
+   1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを DynamoDB に作成し、Cognito ユーザープールのユーザーアイデンティティと関連づける
    2. テナント所有者のサインアップ完了直後のテナントの初期状態は`pending`とする
 
 2. サインアップが完了したら、非同期でテナント個別のアプリケーションプレーンのデプロイを実行する
@@ -215,6 +212,9 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
   const res = await sfnClient.send(
     new StartExecutionCommand({
       stateMachineArn: arn,
+      input: JSON.stringify({
+        tenantId: event.request.userAttributes["custom:tenantId"],
+      }),
     })
   );
   console.log(res);
@@ -251,9 +251,17 @@ cfnFunction.environment = {
 
 ```
 
-- 次に、アプリケーションプレーンの一連のデプロイジョブを実行するためのステートマシン及び関連リソース(サービスロール等)をカスタムリソースとして定義しコントロールプレーンのバックエンドリソースとして追加します。
+- 次に、アプリケーションプレーンの一連のデプロイジョブを実行するためのステートマシン及び関連リソース(サービスロールやステートマシンから呼び出される Lambda 関数)をカスタムリソースとして定義しコントロールプレーンのバックエンドリソースとして追加します。
 
 ```js projects/control-plane/amplify/backend.ts
+const backend = defineBackend({
+  auth,
+  data,
+  // "aws-amplify/data"のclientを使用してdataにアクセスする関数は明示的にバックエンドに追加する必要あり
+  updateTenantFunction,
+});
+...(省略)...
+
 // アプリケーションプレーンのデプロイジョブ用のステートマシンを追加する
 const applicationPlaneDeployment = new ApplicationPlaneDeployment(
   backend.createStack("ApplicationPlaneDeployment"),
@@ -264,6 +272,7 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
     repositoryURL:
       "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
     branchName: "main",
+    updateTenantFunction: backend.updateTenantFunction.resources.lambda,
   }
 );
 ```
@@ -356,33 +365,69 @@ backend.userMigration.resources.lambda.addToRolePolicy(
     resources: ["*"],
   })
 );
+```
 
 オンボーディング機能に必要な一通りの部品が揃いましたので、それらをデプロイし、実際にコントロールプレーンにテナント所有者としてサインアップした結果が以下の通りです。
 
-- サインアップ直後のコントロールプレーン上の画面
-
-![](/images/06/full-silo-control-plane-signup.png)
-
 - バックグラウンドで非同期実行されたアプリケーションプレーンのデプロイジョブ
 
-![](TODO:)
+![](/images/06/full-silo-deploy-job-conplete.png)
+
+- オンボーディング完了後のコントロールプレーン上の画面
+
+![](/images/06/full-silo-control-plane-signup.png:TODO:)
 
 - アプリケーションプレーンへのサインインに成功
 
-![](TODO:)
+![](/images/06/full-silo-application-plane-signin.png)
 
-TODO:
+- 初回サインイン時に、コントロールプレーン側のユーザープール上のユーザーアイデンティティが、アプリケーションプレーン側のユーザープールに移行されていることも確認
 
-2025-05-18T06:35:55.355Z [INFO]: ../control-plane/amplify/data/resource.ts(1,50): error TS2307: Cannot find module '@aws-amplify/backend' or its corresponding type declarations.
+![](/images/06/full-silo-migrated-user.png)
 
-294
+##　混合モードのデプロイモデル
 
-2025-05-18T06:35:55.361Z [INFO]: ../control-plane/amplify/data/resource.ts(11,21): error TS7006: Parameter 'allow' implicitly has an 'any' type.
+ここでは下図のように、アプリケーションプレーン内の DynamoDB リソースのみサイロデプロイモデルとして運用し、残りのリソース(Amplify のホスティング及び Cognito ユーザープール)はプールデプロイモデルとして運用する混合デプロイモデルを実装したいと思います。
 
+![](/images/06/mix-resource-separation.drawio.png)
 
+### アプリケーションプレーンの実装
+
+#### ベースライン環境のデプロイ
+
+- ベースライン環境として、コントロールプレーンとアプリケーションプレーン(Cognito ユーザープール)をそれぞれ個別の Amplify アプリケーションとしてデプロイします。
+
+```bash: ベースライン環境(アプリケーションプレーン)のデプロイ
+cdk deploy ...(省略)...
+```
+
+#### オンボーディング機能の実装
+
+大枠は[フルスタックのサイロデプロイモデルで実装したオンボーディング機能](#オンボーディング機能の実装)を踏襲しつつ、以下のようなオンボーディング機能を実装していきます。
+
+1. テナント所有者のサインアップ(≒ ユーザーアイデンティティの作成)の過程で、テナントアイデンティティも併せて作成する
+
+   1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを DynamoDB に作成し、Cognito ユーザープールのユーザーアイデンティティと関連づける
+   2. テナント所有者のサインアップ完了直後のテナントの初期状態は`pending`とする
+
+2. サインアップが完了したら、非同期でテナント個別のアプリケーションプレーンのデプロイを実行する
+
+   1. 具体的には Cognito の`confirmSignUp`トリガーを用いてアプリケーションプレーン内のサイロリソースのデプロイジョブを非同期実行する
+   2. デプロイジョブは StepFunctions で実装する
+   3. アプリケーションプレーンのサイロリソースのデプロイが完了したら、テナントの状態を`active`に更新する
+
+3. テナントの状態が`active`になったら、アプリケーションプレーンにアクセスして、テナント個別のサイロリソース(DynamoDB)から取得したデータが表示される
+
+   1. 具体的には、Cognito の`userMigration`機能を使用して、アプリケーションプレーンへの初回サインイン時に、コントロールプレーンの Cognito ユーザープールからユーザーアイデンティティをアプリケーションプレーンに移行(レプリケーションする)
+   2. ユーザーアイデンティティに紐づくテナントアイデンティティに基づいで、データを取得すべき GraphQL のエンドポイントを動的に決定してデータを取得する
+
+####
 
 TODO:参考資料
 https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls
 
 https://dev.classmethod.jp/articles/amplify-auth-get-user-info/
+
+```
+
 ```

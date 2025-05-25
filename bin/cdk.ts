@@ -4,6 +4,7 @@ import {
   CustomCertStack,
   FullStackSiloDeployModelStack,
 } from "../lib/full-stack-silo-deploy-model";
+import { MixDeployModelStack } from "../lib/mix-deploy-model";
 
 const app = new cdk.App();
 const certStack = new CustomCertStack(app, "CustomCertStack", {
@@ -15,7 +16,7 @@ const certStack = new CustomCertStack(app, "CustomCertStack", {
   domaineName: "*.ht-burdock.com",
   hostedZoneId: "Z039399416TTZBHG4C8OO",
 });
-const appStack = new FullStackSiloDeployModelStack(
+const fullStackStack = new FullStackSiloDeployModelStack(
   app,
   "FullStackSiloDeployModelStack",
   {
@@ -28,4 +29,15 @@ const appStack = new FullStackSiloDeployModelStack(
   }
 );
 
-appStack.addDependency(certStack);
+fullStackStack.addDependency(certStack);
+
+const mixStack = new MixDeployModelStack(app, "FullStackSiloDeployModelStack", {
+  env: {
+    region: "ap-northeast-1",
+    account: "382098889955",
+  },
+  crossRegionReferences: true,
+  cert: certStack.certificate,
+});
+
+mixStack.addDependency(certStack);
