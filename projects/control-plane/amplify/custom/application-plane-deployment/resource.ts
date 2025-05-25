@@ -25,16 +25,9 @@ import {
   StartJobCommandInput,
 } from "@aws-sdk/client-amplify";
 import { Choice } from "aws-cdk-lib/aws-stepfunctions";
-import { defineFunction } from "@aws-amplify/backend";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-export const updateTenantFunction = defineFunction({
-  name: "update-tenant",
-  resourceGroupName: "function",
-  timeoutSeconds: 60,
-});
 
 type Primitives =
   | string

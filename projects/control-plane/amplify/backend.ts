@@ -4,7 +4,7 @@ import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { ApplicationPlaneDeployment } from "./custom/application-plane-deployment/resource";
 import { confirmSignUp } from "./auth/confirm-sign-up/resource";
-import { updateTenantFunction } from "./custom/application-plane-deployment/resource";
+import { updateTenantFunction } from "./custom/application-plane-deployment/update-tenant/resource";
 import { PARAM_NAME_FOR_SFN_ARN } from "./auth/confirm-sign-up/handler";
 /**
  * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
