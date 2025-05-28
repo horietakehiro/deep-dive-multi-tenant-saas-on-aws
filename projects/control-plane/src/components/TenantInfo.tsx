@@ -37,6 +37,7 @@ export default function TenantInfo(props: TenantInfoProps) {
           <p>テナントID : {props.tenant?.id}</p>
           <p>テナント名 : {props.tenant?.name}</p>
           <p>ステータス : {props.tenant?.status}</p>
+          {props.tenant?.url && <p>アプリケーションURL : {props.tenant.url}</p>}
         </Box>
       </Container>
     </React.Fragment>
