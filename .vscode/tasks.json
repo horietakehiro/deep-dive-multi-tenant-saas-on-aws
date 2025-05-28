@@ -1,0 +1,74 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "vite: run intersection",
+      "type": "shell",
+      "linux": {
+        "command": "npm run dev",
+        "options": {
+          "cwd": "${workspaceFolder}/projects/intersection"
+        }
+      },
+      "promptOnClose": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "vite: run control-plane",
+      "type": "shell",
+      "linux": {
+        "command": "npm run dev",
+        "options": {
+          "cwd": "${workspaceFolder}/projects/control-plane"
+        }
+      },
+      "promptOnClose": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "amplify: deploy intersection sandbox",
+      "type": "shell",
+      "linux": {
+        "command": "npx ampx sandbox --once",
+        "options": {
+          "cwd": "${workspaceFolder}/projects/intersection"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "amplify: deploy control-plane sandbox",
+      "type": "shell",
+      "linux": {
+        "command": "npx ampx sandbox --once",
+        "options": {
+          "cwd": "${workspaceFolder}/projects/control-plane"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "amplify: delete intersection sandbox",
+      "type": "shell",
+      "linux": {
+        "command": "npx ampx sandbox delete",
+        "options": {
+          "cwd": "${workspaceFolder}/projects/intersection"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "amplify: delete control-plane sandbox",
+      "type": "shell",
+      "linux": {
+        "command": "npx ampx sandbox delete",
+        "options": {
+          "cwd": "${workspaceFolder}/projects/control-plane"
+        }
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": []
+}

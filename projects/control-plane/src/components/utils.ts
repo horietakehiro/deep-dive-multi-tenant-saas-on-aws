@@ -6,6 +6,7 @@ import { SignUpUserAttributes } from "../../amplify/auth/types";
  */
 export type State = {
   signedIn: boolean;
+  leftMenuOpened: boolean;
   userAttributes: SignUpUserAttributes | null;
   tenant: Schema["Tenant"]["type"] | null;
 };

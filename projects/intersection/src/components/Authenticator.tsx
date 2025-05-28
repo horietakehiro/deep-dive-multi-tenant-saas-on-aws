@@ -12,7 +12,7 @@ import {
 export interface AuthenticatorProps
   extends BaseProps,
     AmplifyAuthenticatorProps {
-  setSignedIn: (b: State["signedIn"]) => void;
+  setSignedIn: (s: State["signedIn"]) => void;
 }
 
 export default function Authenticator(props: AuthenticatorProps) {

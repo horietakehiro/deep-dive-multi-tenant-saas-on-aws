@@ -2,16 +2,9 @@ import { UserMigrationAuthenticationTriggerEvent } from "aws-lambda";
 import sharedOutputs from "../../../shared/amplify_outputs.json";
 import { Amplify } from "aws-amplify";
 import {
-  FetchAuthSessionOptions,
-  fetchUserAttributes,
-  FetchUserAttributesOutput,
-  signIn,
-} from "aws-amplify/auth";
-import {
   CognitoIdentityProviderClient,
   AdminInitiateAuthCommand,
   AdminGetUserCommand,
-  NotAuthorizedException,
 } from "@aws-sdk/client-cognito-identity-provider";
 import {} from "aws-amplify/auth";
 
