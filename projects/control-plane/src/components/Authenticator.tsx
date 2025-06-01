@@ -16,9 +16,9 @@ import { BaseProps, State } from "./utils";
 export interface AuthenticatorProps
   extends BaseProps,
     AmplifyAuthenticatorProps {
-  setSignedIn: (b: State["signedIn"]) => void;
-  setTenant: (t: State["tenant"]) => void;
-  setUserAttributes: (t: State["userAttributes"]) => void;
+  setSignedIn: (s: State["signedIn"]) => void;
+  setTenant: (s: State["tenant"]) => void;
+  setUserAttributes: (s: State["userAttributes"]) => void;
 }
 
 export default function Authenticator(props: AuthenticatorProps) {

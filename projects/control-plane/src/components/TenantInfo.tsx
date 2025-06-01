@@ -10,7 +10,7 @@ import { BaseProps, State } from "./utils";
 export interface TenantInfoProps extends BaseProps {
   userAttributes: State["userAttributes"];
   tenant: State["tenant"];
-  setTenant: (t: State["tenant"]) => void;
+  setTenant: (s: State["tenant"]) => void;
 }
 export default function TenantInfo(props: TenantInfoProps) {
   const client = generateClient<Schema>();
