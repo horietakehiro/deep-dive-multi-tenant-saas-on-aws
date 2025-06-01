@@ -9,6 +9,12 @@ export type State = {
   userAttributes: SignUpUserAttributes | null;
   tenant: Schema["Tenant"]["type"] | null;
 };
+export type R = {
+  [key in keyof State]: {
+    get: (defaultValue?: State[key]) => State[key];
+    set: (value: State[key], persist: boolean) => void;
+  };
+};
 /**
  * ステートの保存とアクセスの為のリポジトリ仕様
  */

@@ -19,15 +19,15 @@ const backend = defineBackend({
   // // "aws-amplify/data"のclientを使用してdataにアクセスする関数は明示的にバックエンドに追加する必要あり
   // updateTenantFunction,
 });
-// const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
-// cfnUserPoolClient.explicitAuthFlows = [
-//   "ALLOW_CUSTOM_AUTH",
-//   "ALLOW_REFRESH_TOKEN_AUTH",
-//   "ALLOW_USER_SRP_AUTH",
-//   // ユーザー移行トリガーのために必要
-//   "ALLOW_USER_PASSWORD_AUTH",
-//   "ALLOW_ADMIN_USER_PASSWORD_AUTH",
-// ];
+const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
+cfnUserPoolClient.explicitAuthFlows = [
+  "ALLOW_CUSTOM_AUTH",
+  "ALLOW_REFRESH_TOKEN_AUTH",
+  "ALLOW_USER_SRP_AUTH",
+  // ユーザー移行トリガーのために必要
+  "ALLOW_USER_PASSWORD_AUTH",
+  "ALLOW_ADMIN_USER_PASSWORD_AUTH",
+];
 
 // // アプリケーションプレーンのデプロイジョブ用のステートマシンを追加する
 // const applicationPlaneDeployment = new ApplicationPlaneDeployment(

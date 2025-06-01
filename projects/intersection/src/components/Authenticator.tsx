@@ -3,24 +3,34 @@ import {
   Authenticator as AmplifyAuthenticator,
   AuthenticatorProps as AmplifyAuthenticatorProps,
 } from "@aws-amplify/ui-react";
-import { signIn, SignInInput } from "aws-amplify/auth";
+import { fetchUserAttributes, signIn, SignInInput } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 import {
   type BaseProps,
-  type State,
+  State,
 } from "../../../control-plane/src/components/utils";
+
 export interface AuthenticatorProps
   extends BaseProps,
     AmplifyAuthenticatorProps {
-  setSignedIn: (b: State["signedIn"]) => void;
+  tenantGetter: (tenantId: string) => Promise<State["tenant"]>;
+  setSignedIn: (s: State["signedIn"]) => void;
+  setTenant: (s: State["tenant"]) => void;
 }
 
 export default function Authenticator(props: AuthenticatorProps) {
-  Hub.listen("auth", ({ payload }) => {
+  Hub.listen("auth", async ({ payload }) => {
     switch (payload.event) {
       case "signedIn":
         console.log("サインイン成功");
         props.stateRepository.set("signedIn", true, props.setSignedIn);
+        const userAttributes = await fetchUserAttributes();
+        const tenantId = userAttributes["custom:tenantId"];
+        if (tenantId === undefined) {
+          throw Error("ユーザー属性からテナントIDの取得に失敗");
+        }
+        const tenant = await props.tenantGetter(tenantId);
+        props.stateRepository.set("tenant", tenant, props.setTenant);
         break;
       case "signedOut":
         console.log("サインアウト成功");

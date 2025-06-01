@@ -3,6 +3,7 @@ import { defineBackend } from "@aws-amplify/backend";
 import { auth } from "./auth/resource";
 // import { data } from "./data/resource";
 import { userMigration } from "./auth/user-migration/resource";
+import { storages } from "./storage/resource";
 
 /**
  * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
@@ -10,6 +11,7 @@ import { userMigration } from "./auth/user-migration/resource";
 const backend = defineBackend({
   auth,
   userMigration,
+  ...storages,
 
   // data,
 });
