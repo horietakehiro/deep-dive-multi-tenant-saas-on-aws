@@ -375,7 +375,7 @@ backend.userMigration.resources.lambda.addToRolePolicy(
 
 - オンボーディング完了後のコントロールプレーン上の画面
 
-![](/images/06/full-silo-control-plane-signup.png:TODO:)
+![](/images/06/full-silo-control-plane-signup.png)
 
 - アプリケーションプレーンへのサインインに成功
 
@@ -385,7 +385,7 @@ backend.userMigration.resources.lambda.addToRolePolicy(
 
 ![](/images/06/full-silo-migrated-user.png)
 
-##　混合モードのデプロイモデル
+## 混合モードのデプロイモデル
 
 ここでは下図のように、アプリケーションプレーン内の S3 バケットのみサイロデプロイモデルとして運用し、残りのリソース(Amplify のホスティング及び Cognito ユーザープール)はプールデプロイモデルとして運用する混合デプロイモデルを実装したいと思います。
 
@@ -400,11 +400,7 @@ backend.userMigration.resources.lambda.addToRolePolicy(
 
 #### ベースライン環境のデプロイ
 
-- ベースライン環境として、コントロールプレーンとアプリケーションプレーン(Cognito ユーザープール)をそれぞれ個別の Amplify アプリケーションとしてデプロイします。
-
-```bash: ベースライン環境(アプリケーションプレーン)のデプロイ
-cdk deploy ...(省略)...
-```
+- ベースライン環境として、コントロールプレーンとアプリケーションプレーン(プールリソースのみ)をそれぞれ個別の Amplify アプリケーションとしてデプロイします。
 
 #### オンボーディング機能の実装
 
@@ -415,18 +411,82 @@ cdk deploy ...(省略)...
    1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを DynamoDB に作成し、Cognito ユーザープールのユーザーアイデンティティと関連づける
    2. テナント所有者のサインアップ完了直後のテナントの初期状態は`pending`とする
 
-2. サインアップが完了したら、非同期でテナント個別のアプリケーションプレーンのデプロイを実行する
+2. サインアップが完了したら、非同期でテナント個別のサイロリソース(今回は`storage`リソース(S3 バケット))アプリケーションプレーンにデプロイする
 
    1. 具体的には Cognito の`confirmSignUp`トリガーを用いてアプリケーションプレーン内のサイロリソースのデプロイジョブを非同期実行する
    2. デプロイジョブは StepFunctions で実装する
    3. アプリケーションプレーンのサイロリソースのデプロイが完了したら、テナントの状態を`active`に更新する
 
-3. テナントの状態が`active`になったら、アプリケーションプレーンにアクセスして、テナント個別のサイロリソース(DynamoDB)から取得したデータが表示される
+3. テナントの状態が`active`になったら、アプリケーションプレーンにアクセスして、テナント個別のサイロリソース(S3 バケット)にアクセス出来る
 
    1. 具体的には、Cognito の`userMigration`機能を使用して、アプリケーションプレーンへの初回サインイン時に、コントロールプレーンの Cognito ユーザープールからユーザーアイデンティティをアプリケーションプレーンに移行(レプリケーションする)
-   2. ユーザーアイデンティティに紐づくテナントアイデンティティに基づいで、データを取得すべき GraphQL のエンドポイントを動的に決定してデータを取得する
+   2. ユーザーアイデンティティに紐づくテナントアイデンティティに基づいで、データを取得すべき S3 バケットを動的に決定してデータを取得する
 
-TODO: サイロリソース用のバックエンドのみの Amplify アプリケーションをデプロイする？
+![](/images/06/mix-onboarding-flow.drawio.png)
+
+- `1.`はフルスタックのサイロデプロイモデルで実装した内容と同じなので割愛します。
+
+- `2.`で実行するステートマシンの具体的なデプロイジョブの中身は以下の通りです。
+
+  - アプリケーションプレーン用の作成済みの Amplify アプリケーションでデプロイジョブを手動実行する
+    - デプロイジョブの中で、コントロールプレーンの DynamoDB に格納されているテナント情報のリストを取得する
+    - 取得したテナントそれぞれについてサイロリソースをデプロイする。
+  - デプロイが完了するまで待機する
+  - DB 上のテナント情報を更新する(ステータスを`active`に更新する)
+
+- アプリケーションプレーン用の`data`リソース及びバックエンドを以下のように定義することで、デプロイ時にテナント情報のリストをコントロールプレーン上の DynamoDB から動的に取得し、テナント個別に`data`リソースを動的にデプロイすることが可能になります。
+
+```js: projects/intersection/amplify/storage/resource.ts
+import { generateClient } from "aws-amplify/data";
+import { type Schema } from "../../../control-plane/amplify/data/resource";
+import { defineStorage } from "@aws-amplify/backend";
+
+// コントロールプレーン上のDynamoDBにアクセスするためのGraphQLクライアントを構成
+import { Amplify } from "aws-amplify";
+import sharedOutputs from "../../shared/amplify_outputs.json";
+Amplify.configure(sharedOutputs);
+const client = generateClient<Schema>();
+
+export const storages: {
+  [tenantName: string]: ReturnType<typeof defineStorage>;
+} = {
+  // Amplifyの仕様上デフォルトのストレージを設定する必要がある(アクセスは許可しない)
+  defaultStorage: defineStorage({
+    name: "defaultStorage",
+    isDefault: true,
+    access: (allow) => ({}),
+  }),
+};
+console.log("コントロールプレーンからテナントのリストを取得");
+const { data, errors } = await client.models.Tenant.list();
+if (errors !== undefined) {
+  console.error("コントロールプレーンからテナントのリストの取得に失敗");
+  console.error(errors);
+}
+console.log("取得に成功したコントロールプレーン : ");
+console.log(data);
+data.forEach((tenant) => {
+  storages[`storage${tenant.id}`] = defineStorage({
+    name: `storage-${tenant.id}`,
+    access: (allow) => ({
+      "data/*": [allow.authenticated.to(["list", "get", "write"])],
+    }),
+  });
+});
+
+```
+
+```js:　projects/intersection/amplify/backend.ts
+import { storages } from "./storage/resource";
+
+const backend = defineBackend({
+  auth,
+  userMigration,
+  ...storages,
+});
+```
+
+TODO: StepFunctions の動確
 
 ####
 

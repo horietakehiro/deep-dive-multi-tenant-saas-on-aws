@@ -19,6 +19,7 @@ import {
   CreateBranchCommandInput,
   CreateDomainAssociationCommandInput,
   DomainStatus,
+  GetAppCommandInput,
   GetDomainAssociationCommandInput,
   GetJobCommandInput,
   JobStatus,
@@ -56,21 +57,6 @@ type CapitalizeCommandInput<T> = {
         : Capitalize<key>
     : key]: T[key] extends Primitives ? T[key] : CapitalizeCommandInput<T[key]>;
 };
-
-// export interface PoolResourceDeploymentProps {}
-// export class PoolResourceDeployment extends Construct {
-//   public readonly stateMachine: sfn.IStateMachine;
-//   public readonly arnParam: ssm.IParameter;
-//   constructor(
-//     scope: Construct,
-//     id: string,
-//     props: PoolResourceDeploymentProps
-//   ) {
-//     super(scope, id);
-
-//     //
-//   }
-// }
 
 export interface ApplicationPlaneDeploymentProps {
   paramNameForGithubAccessToken: string;
@@ -292,16 +278,6 @@ export class ApplicationPlaneDeployment extends Construct {
       comment: "ジョブの実行状態を確認する",
     });
 
-    // const updateTenantFunction = new nodejsLambda.NodejsFunction(
-    //   this,
-    //   "UpdateTenantFunction",
-    //   {
-    //     entry: path.join(__dirname, "functions", "update-tenant-function.ts"),
-    //     handler: "handler",
-    //     timeout: Duration.seconds(60),
-    //   }
-    // );
-
     const invokeUpdateTenantFunction = new sfnTasks.LambdaInvoke(
       this,
       "InvokeUpdateTenantFunction",
@@ -358,6 +334,150 @@ export class ApplicationPlaneDeployment extends Construct {
                       )
                   )
               )
+          )
+      ),
+    });
+
+    this.arnParam = new ssm.StringParameter(this, "ArnParam", {
+      stringValue: this.stateMachine.stateMachineArn,
+    });
+  }
+}
+
+export interface ApplicationResourceDeploymentProps {
+  appName: string;
+  branchName: string;
+  domainName: string;
+  updateTenantFunction: lambda.IFunction;
+}
+export class ApplicationResourceDeployment extends Construct {
+  public readonly stateMachine: sfn.IStateMachine;
+  public readonly arnParam: ssm.IParameter;
+  constructor(
+    scope: Construct,
+    id: string,
+    props: ApplicationResourceDeploymentProps
+  ) {
+    super(scope, id);
+    const buildSpecParameter = new ssm.StringParameter(
+      this,
+      "BuildSpecParameter",
+      {
+        stringValue: fs
+          .readFileSync(path.join(__dirname, "../../../../../amplify.yml"))
+          .toString("utf-8"),
+      }
+    );
+    const amplifyServiceRole = new iam.Role(this, "AmplifyServiceRole", {
+      assumedBy: new iam.ServicePrincipal("amplify.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          "service-role/AmplifyBackendDeployFullAccess"
+        ),
+        iam.ManagedPolicy.fromAwsManagedPolicyName("ReadOnlyAccess"),
+      ],
+      inlinePolicies: {
+        root: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups",
+              ],
+              resources: ["*"],
+            }),
+          ],
+        }),
+      },
+    });
+    const getAppId = new sfnTasks.CallAwsService(this, "GetAppId", {
+      comment: "アプリケーションプレーンのIDを取得する",
+      service: "amplify",
+      action: "getApp",
+      iamResources: ["*"],
+      parameters: {},
+      assign: {
+        appId: `{% $states.result.apps[name = ${props.appName}][0].appId %}`,
+      },
+    });
+    const startJob = new sfnTasks.CallAwsService(this, "StartJob", {
+      comment: "アプリケーションプレーンのデプロイジョブを実行する",
+      service: "amplify",
+      action: "startJob",
+      iamResources: ["*"],
+      parameters: {
+        AppId: "{% $appId %}",
+        BranchName: props.branchName,
+        JobType: "RELEASE",
+        JobReason: "update resources",
+      } as CapitalizeCommandInput<StartJobCommandInput>,
+      assign: {
+        jobId: "{% $states.result.JobSummary.JobId %}",
+      },
+    });
+    const getJob = new sfnTasks.CallAwsService(this, "GetJob", {
+      comment: "ジョブの状態を確認する",
+      service: "amplify",
+      action: "getJob",
+      iamResources: ["*"],
+      parameters: {
+        AppId: "{% $appId %}",
+        BranchName: props.branchName,
+        JobId: "{% $jobId %}",
+      } as CapitalizeCommandInput<GetJobCommandInput>,
+      assign: {
+        jobStatus: "{% $states.result.Job.Summary.Status %}",
+      },
+    });
+    const waitForJob = new sfn.Wait(this, "WaitForJob", {
+      time: sfn.WaitTime.duration(Duration.seconds(30)),
+    });
+    const jobStatusConditionFn = (status: JobStatus) =>
+      sfn.Condition.jsonata(`{% $jobStatus = '${status}' %}`);
+    const jobStatusChoice = new sfn.Choice(this, "JobStatusChoice", {
+      comment: "ジョブの実行状態を確認する",
+    });
+    const invokeUpdateTenantFunction = new sfnTasks.LambdaInvoke(
+      this,
+      "InvokeUpdateTenantFunction",
+      {
+        lambdaFunction: props.updateTenantFunction,
+        comment: "テナント情報を更新する",
+        integrationPattern: sfn.IntegrationPattern.REQUEST_RESPONSE,
+        invocationType: sfnTasks.LambdaInvocationType.REQUEST_RESPONSE,
+        payload: sfn.TaskInput.fromObject({
+          tenantId: "{% $tenantId %}",
+          url: `{% 'https://' & $appId & '.${props.domainName}' %}`,
+        } as UpdateTenantFunctionInput),
+      }
+    );
+
+    this.stateMachine = new sfn.StateMachine(this, "StateMachine", {
+      logs: {
+        level: sfn.LogLevel.ALL,
+        includeExecutionData: true,
+        destination: new logs.LogGroup(this, "LogGroup", {
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy: RemovalPolicy.DESTROY,
+        }),
+      },
+      queryLanguage: sfn.QueryLanguage.JSONATA,
+      definitionBody: sfn.DefinitionBody.fromChainable(
+        sfn.Chain.start(getAppId)
+          .next(startJob)
+          .next(waitForJob)
+          .next(getJob)
+          .next(
+            jobStatusChoice
+              .otherwise(waitForJob)
+              .when(
+                jobStatusConditionFn("FAILED"),
+                new sfn.Fail(this, "JobFailed", {})
+              )
+              .when(jobStatusConditionFn("SUCCEED"), invokeUpdateTenantFunction)
           )
       ),
     });

@@ -1,13 +1,9 @@
 import { aws_iam as iam } from "aws-cdk-lib";
 import { defineBackend } from "@aws-amplify/backend";
 import { auth } from "./auth/resource";
-// import { data } from "./data/resource";
 import { userMigration } from "./auth/user-migration/resource";
 import { storages } from "./storage/resource";
 
-/**
- * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
- */
 const backend = defineBackend({
   auth,
   userMigration,
