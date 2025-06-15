@@ -1,14 +1,11 @@
-import {
-  LocalStateRepository,
-  R,
-} from "./../../control-plane/src/components/utils";
+import { LocalStateRepository } from "./../../control-plane/src/components/utils";
 import Authenticator from "./components/Authenticator";
 import AppBar from "./components/AppBar";
 import React from "react";
 import { Files } from "./components/Files";
 import outputs from "./../amplify_outputs.json";
 import sharedOutputs from "./../shared/amplify_outputs.json";
-import { Amplify, ResourcesConfig } from "aws-amplify";
+import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
 import { Schema } from "../../control-plane/amplify/data/resource";
 Amplify.configure({
