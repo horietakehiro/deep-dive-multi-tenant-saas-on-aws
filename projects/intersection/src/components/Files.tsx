@@ -3,7 +3,6 @@ import { list, uploadData } from "aws-amplify/storage";
 import { BaseProps, State } from "../../../control-plane/src/components/utils";
 import React from "react";
 import {
-  Box,
   Button,
   Container,
   CssBaseline,
