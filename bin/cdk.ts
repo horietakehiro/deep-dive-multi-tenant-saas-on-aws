@@ -31,7 +31,7 @@ const fullStackStack = new FullStackSiloDeployModelStack(
 
 fullStackStack.addDependency(certStack);
 
-const mixStack = new MixDeployModelStack(app, "FullStackSiloDeployModelStack", {
+const mixStack = new MixDeployModelStack(app, "MixDeployModelStack", {
   env: {
     region: "ap-northeast-1",
     account: "382098889955",
