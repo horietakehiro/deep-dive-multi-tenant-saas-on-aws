@@ -396,11 +396,12 @@ export class ApplicationResourceDeployment extends Construct {
     const getAppId = new sfnTasks.CallAwsService(this, "GetAppId", {
       comment: "アプリケーションプレーンのIDを取得する",
       service: "amplify",
-      action: "getApp",
+      action: "listApps",
       iamResources: ["*"],
       parameters: {},
       assign: {
-        appId: `{% $states.result.apps[name = ${props.appName}][0].appId %}`,
+        appId: `{% $states.result.Apps[Name = '${props.appName}'][0].AppId %}`,
+        tenantId: "{% $states.input.tenantId %}",
       },
     });
     const startJob = new sfnTasks.CallAwsService(this, "StartJob", {

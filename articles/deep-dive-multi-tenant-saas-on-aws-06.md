@@ -434,7 +434,7 @@ backend.userMigration.resources.lambda.addToRolePolicy(
   - デプロイが完了するまで待機する
   - DB 上のテナント情報を更新する(ステータスを`active`に更新する)
 
-- アプリケーションプレーン用の`data`リソース及びバックエンドを以下のように定義することで、デプロイ時にテナント情報のリストをコントロールプレーン上の DynamoDB から動的に取得し、テナント個別に`data`リソースを動的にデプロイすることが可能になります。
+- アプリケーションプレーン用の`data`リソース及びバックエンドを以下のように定義することで、デプロイ時にテナント情報のリストをコントロールプレーン上の DynamoDB から動的に取得し、テナント個別に`data`リソースを動的にデプロイ出来るようにします。
 
 ```js: projects/intersection/amplify/storage/resource.ts
 import { generateClient } from "aws-amplify/data";
@@ -485,6 +485,8 @@ const backend = defineBackend({
   ...storages,
 });
 ```
+
+- コントロールプレーンにサインアップして、テナントリソースのオンボーディングプロセスを実行させ、結果を確認します。
 
 TODO: StepFunctions の動確
 

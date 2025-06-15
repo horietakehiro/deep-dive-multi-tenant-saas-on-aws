@@ -177,7 +177,7 @@ export default function Header(props: HeaderProps) {
                 Settings
               </MenuItem>
               <Divider />
-              <MenuItem onClick={handleClose}>
+              <MenuItem onClick={props.signOut}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
