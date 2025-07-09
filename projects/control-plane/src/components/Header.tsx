@@ -103,6 +103,8 @@ export default function Header(props: HeaderProps) {
               props.leftMenuOpened && { display: "none" },
             ]}
             onClick={handleLeftMenuOpened}
+            role="button"
+            aria-hidden={false}
           >
             <MenuIcon />
           </IconButton>
