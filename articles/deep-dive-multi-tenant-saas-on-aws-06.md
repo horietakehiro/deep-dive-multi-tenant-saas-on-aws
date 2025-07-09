@@ -13,7 +13,6 @@ published: false
 まずはベースライン環境をデプロイし、第 3 章で取り上げた下記 2 種類のデプロイモデルそれぞれについて、オンボーディングプロセスを通した具体的なデプロイプロセスを実現してみます。
 
 - フルスタックのサイロデプロイモデル
-<!-- - ハイブリッドなフルスタックのデプロイモデル -->
 - 混合モードのデプロイモデル
 
 ## フルスタックのサイロデプロイモデル
@@ -21,6 +20,10 @@ published: false
 ここでは下図の様に、Amplify アプリケーション単位でアプリケーションプレーンをサイロ化したいと思います。
 
 ![](/images/06/full-silo-resource-separation.drawio.png)
+
+:::message
+[Amplify アプリケーションのリージョンあたりの最大数](https://docs.aws.amazon.com/ja_jp/amplify/latest/userguide/quotas-chapter.html)ははデフォルトで 25(引き上げ可能)となっています。引き上げ可能な最大数が幾つかは不明ですが、実際のビジネスでアプリケーションプレーンを Amplify アプリケーション単位でサイロ化する場合、こういったサービスクォートに抵触しないかは重要な確認観点となります。
+:::
 
 ### コントロールプレーンの実装
 
@@ -434,7 +437,7 @@ backend.userMigration.resources.lambda.addToRolePolicy(
   - デプロイが完了するまで待機する
   - DB 上のテナント情報を更新する(ステータスを`active`に更新する)
 
-- アプリケーションプレーン用の`data`リソース及びバックエンドを以下のように定義することで、デプロイ時にテナント情報のリストをコントロールプレーン上の DynamoDB から動的に取得し、テナント個別に`data`リソースを動的にデプロイすることが可能になります。
+- アプリケーションプレーン用の`data`リソース及びバックエンドを以下のように定義することで、デプロイ時にテナント情報のリストをコントロールプレーン上の DynamoDB から動的に取得し、テナント個別に`data`リソースを動的にデプロイ出来るようにします。
 
 ```js: projects/intersection/amplify/storage/resource.ts
 import { generateClient } from "aws-amplify/data";
@@ -486,14 +489,32 @@ const backend = defineBackend({
 });
 ```
 
-TODO: StepFunctions の動確
+- コントロールプレーンに 2 つのアカウントでサインアップして、テナントリソース 2 つ分のオンボーディングプロセスを実行させ、結果を確認します。
 
-####
+- コントロールプレーンにサインアップすると、StepFunctions によってオンボーディングプロセスが実行され、サイロリソースのデプロイとテナント情報の更新が実行されます。
 
-TODO:参考資料
-https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls
+![](/images/06/mix-onboarding-process-result.png)
 
-https://dev.classmethod.jp/articles/amplify-auth-get-user-info/
+- テストテナント ① としてアプリケーションプレーンにサインインし、適当にファイルを幾つかアップロードします。
+
+![](/images/06/mix-test-tenant-1-app.png)
+
+- 次にテストテナント ② としてアプリケーションプレーンにサインインすると、テストテナント ① とは別の(テナントごとに個別の)S3 バケットを使用していることを確認出来ました。
+
+![](/images/06/mix-test-tenant-2-app.png)
+
+---
+
+## おわりに
+
+ここでは、フルスタックのサイロデプロイモデルと混合モードのデプロイモデルの 2 種類のオンボーディングプロセスの一例を、Amplify を活用して実装しました。
+Amplify Gen2 はこの取り組みを通して始めて利用してみましたが、CDK(バックエンド AWS リソース)とのシームレスな統合やバックエンド<->フロントエンド間でスキーマ/型情報の共有が可能で、非常に効率的にオンボーディングプロセスを実装出来たという実感があります。一方で、Amplify を使用することによって、デプロイモデルの選択に制約がもたらされる一例(サービスクォートの存在や、サイロ化可能なリソースの種類)を確認することも出来ました。
+
+### 参考資料
+
+- [Amplify Documentation](https://docs.amplify.aws/)
+- [Amplify UI Authenticator](https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls)
+- [AWS Amplify で認証中のユーザー情報を取得・表示してみた](https://dev.classmethod.jp/articles/amplify-auth-get-user-info/)
 
 ```
 

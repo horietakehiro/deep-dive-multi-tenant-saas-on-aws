@@ -22,44 +22,43 @@ function App() {
   );
   return (
     <>
-      {/* <Authenticator
+      <Authenticator
         stateRepository={stateRepository}
         setSignedIn={setSignedIn}
         setTenant={setTenant}
         setUserAttributes={setUserAttributes}
       >
         {({ signOut }) => (
-          <> */}
-      <Box sx={{ display: "flex" }}>
-        <CssBaseline />
-        <Header
-          // signOut={signOut}
-          signOut={undefined}
-          stateRepository={stateRepository}
-          userAttributes={userAttributes}
-          setUserAttributes={setUserAttributes}
-          signedIn={signedIn}
-          leftMenuOpened={leftMenuOpened}
-          setLeftMenuOpened={setLeftMenuOpened}
-        />
-        <LeftMenu
-          stateRepository={stateRepository}
-          leftMenuOpened={leftMenuOpened}
-          setLeftMenuOpened={setLeftMenuOpened}
-        />
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-          {/* <DrawerHeader /> */}
-          <TenantInfo
-            stateRepository={stateRepository}
-            userAttributes={userAttributes}
-            tenant={tenant}
-            setTenant={setTenant}
-          />
-        </Box>
-      </Box>
-      {/* </>
+          <>
+            <Box sx={{ display: "flex" }}>
+              <CssBaseline />
+              <Header
+                signOut={signOut}
+                stateRepository={stateRepository}
+                userAttributes={userAttributes}
+                setUserAttributes={setUserAttributes}
+                signedIn={signedIn}
+                leftMenuOpened={leftMenuOpened}
+                setLeftMenuOpened={setLeftMenuOpened}
+              />
+              <LeftMenu
+                stateRepository={stateRepository}
+                leftMenuOpened={leftMenuOpened}
+                setLeftMenuOpened={setLeftMenuOpened}
+              />
+              <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                {/* <DrawerHeader /> */}
+                <TenantInfo
+                  stateRepository={stateRepository}
+                  userAttributes={userAttributes}
+                  tenant={tenant}
+                  setTenant={setTenant}
+                />
+              </Box>
+            </Box>
+          </>
         )}
-      </Authenticator> */}
+      </Authenticator>
     </>
   );
 }

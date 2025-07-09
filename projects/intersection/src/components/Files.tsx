@@ -3,7 +3,6 @@ import { list, uploadData } from "aws-amplify/storage";
 import { BaseProps, State } from "../../../control-plane/src/components/utils";
 import React from "react";
 import {
-  Box,
   Button,
   Container,
   CssBaseline,
@@ -72,7 +71,7 @@ export const Files = (props: FilesProps) => {
       setFiles(files.items.map((item) => item.path));
     };
     listFiles();
-  }, []);
+  }, [props.tenant]);
 
   const handleUploadFile = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -119,7 +118,10 @@ export const Files = (props: FilesProps) => {
           <Table sx={{ minWidth: 650 }} aria-label="simple table">
             <TableHead>
               <TableRow>
-                <TableCell>Files of Tenant : {props.tenant!.id}</TableCell>
+                <TableCell>
+                  Tenant[{props.tenant!.name}] / Bucket[
+                  {tenantBucket?.bucketName ?? ""}]
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

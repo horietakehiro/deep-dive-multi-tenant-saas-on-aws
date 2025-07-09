@@ -2,7 +2,8 @@ import { aws_iam as iam } from "aws-cdk-lib";
 import { defineBackend } from "@aws-amplify/backend";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
-import { ApplicationPlaneDeployment } from "./custom/application-plane-deployment/resource";
+// import { ApplicationPlaneDeployment } from "./custom/application-plane-deployment/resource";
+import { ApplicationResourceDeployment } from "./custom/application-plane-deployment/resource";
 import { confirmSignUp } from "./auth/confirm-sign-up/resource";
 import { updateTenantFunction } from "./custom/application-plane-deployment/update-tenant/resource";
 import { PARAM_NAME_FOR_SFN_ARN } from "./auth/confirm-sign-up/handler";
@@ -14,10 +15,10 @@ const backend = defineBackend({
   data,
   // data1,
   // data2,
-  // // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
-  // confirmSignUp,
-  // // "aws-amplify/data"のclientを使用してdataにアクセスする関数は明示的にバックエンドに追加する必要あり
-  // updateTenantFunction,
+  // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
+  confirmSignUp,
+  // "aws-amplify/data"のclientを使用してdataにアクセスする関数は明示的にバックエンドに追加する必要あり
+  updateTenantFunction,
 });
 const { cfnUserPoolClient } = backend.auth.resources.cfnResources;
 cfnUserPoolClient.explicitAuthFlows = [
@@ -43,18 +44,31 @@ cfnUserPoolClient.explicitAuthFlows = [
 //   }
 // );
 
-// // アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
-// backend.confirmSignUp.resources.lambda.addToRolePolicy(
-//   new iam.PolicyStatement({
-//     effect: iam.Effect.ALLOW,
-//     actions: ["ssm:GetParameter", "states:StartExecution"],
-//     resources: ["*"],
-//   })
-// );
-// // ステートマシンのARNを参照するためのパラメータ名を環境変数に設定する
-// const cfnFunction = backend.confirmSignUp.resources.cfnResources.cfnFunction;
-// cfnFunction.environment = {
-//   variables: {
-//     [PARAM_NAME_FOR_SFN_ARN]: applicationPlaneDeployment.arnParam.parameterName,
-//   },
-// };
+// アプリケーションリソースのデプロイジョブ用のステートマシンを追加する
+const applicationResourceDeployment = new ApplicationResourceDeployment(
+  backend.createStack("ApplicationResourceDeployment"),
+  "ApplicationResourceDeployment",
+  {
+    domainName: "ht-burdock.com",
+    branchName: "main",
+    updateTenantFunction: backend.updateTenantFunction.resources.lambda,
+    appName: "intersection",
+  }
+);
+
+// アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
+backend.confirmSignUp.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: ["ssm:GetParameter", "states:StartExecution"],
+    resources: ["*"],
+  })
+);
+// ステートマシンのARNを参照するためのパラメータ名を環境変数に設定する
+const cfnFunction = backend.confirmSignUp.resources.cfnResources.cfnFunction;
+cfnFunction.environment = {
+  variables: {
+    [PARAM_NAME_FOR_SFN_ARN]:
+      applicationResourceDeployment.arnParam.parameterName,
+  },
+};
