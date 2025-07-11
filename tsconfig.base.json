@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    // "module": "nodenext",
+    // "target": "esnext",
+    // "lib": ["ESNext"],
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["es2020", "dom"],
+    /* Linting */
+    "declaration": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
+
+    "typeRoots": ["./node_modules/@types"]
+  }
+}

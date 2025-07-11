@@ -4,18 +4,15 @@ import { Construct } from "constructs";
 import {
   aws_amplify as amplify,
   aws_iam as iam,
-  SecretValue,
-  aws_ssm as ssm,
   aws_certificatemanager as acm,
   aws_route53 as route53,
 } from "aws-cdk-lib";
 import path = require("path");
-export interface PlaneProps {
+export interface ControlPlaneProps {
   certArn: string;
-  appName: "control-plane" | "intersection";
 }
-class Plane extends Construct {
-  constructor(scope: Construct, id: string, props: PlaneProps) {
+class ControlPlane extends Construct {
+  constructor(scope: Construct, id: string, props: ControlPlaneProps) {
     super(scope, id);
     const accessToken = new cdk.CfnParameter(this, "AccessToken", {
       noEcho: true,
@@ -47,7 +44,7 @@ class Plane extends Construct {
       },
     });
     const app = new amplify.CfnApp(this, "App", {
-      name: props.appName,
+      name: "full-stack-silo-deploy-model-control-plane",
       accessToken: cdk.Fn.ref(accessToken.logicalId),
       autoBranchCreationConfig: {
         enableAutoBranchCreation: false,
@@ -79,7 +76,7 @@ class Plane extends Construct {
         },
         {
           name: "AMPLIFY_MONOREPO_APP_ROOT",
-          value: `projects/${props.appName}`,
+          value: "projects/control-plane",
         },
       ],
       iamServiceRole: serviceRole.roleArn,
@@ -97,13 +94,13 @@ class Plane extends Construct {
       framework: "web",
       // backend
     });
-    const domainRole = new amplify.CfnDomain(this, "Domain", {
+    new amplify.CfnDomain(this, "Domain", {
       appId: app.attrAppId,
       domainName: "ht-burdock.com",
       subDomainSettings: [
         {
           branchName: "main",
-          prefix: props.appName,
+          prefix: "control-plane",
         },
       ],
       autoSubDomainCreationPatterns: [],
@@ -115,20 +112,19 @@ class Plane extends Construct {
   }
 }
 
-export interface MixDeployModelStackProps extends cdk.StackProps {
+export interface FullStackSiloDeployModelStackProps extends cdk.StackProps {
   cert: acm.ICertificate;
 }
-export class MixDeployModelStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: MixDeployModelStackProps) {
+export class FullStackSiloDeployModelStack extends cdk.Stack {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: FullStackSiloDeployModelStackProps
+  ) {
     super(scope, id, props);
 
-    new Plane(this, "ControlPlane", {
+    new ControlPlane(this, "ControlPlane", {
       certArn: props.cert.certificateArn,
-      appName: "control-plane",
-    });
-    new Plane(this, "ApplicationPlane", {
-      certArn: props.cert.certificateArn,
-      appName: "intersection",
     });
   }
 }
