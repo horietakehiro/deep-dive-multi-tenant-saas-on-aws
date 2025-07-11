@@ -2,11 +2,17 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "esModuleInterop": true,
-    "types": ["@testing-library/jest-dom", "jest", "node"] // ←追加
-  }
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.test.json" }
+  ]
+  // "include": ["jest.setup.ts"]
+  // "compilerOptions": {
+  //   "composite": true,
+  //   "jsx": "react-jsx"
+  // }
+  // "compilerOptions": {
+  //   "jsx": "react-jsx",
+  //   "esModuleInterop": true,
+  //   "types": ["@testing-library/jest-dom", "jest", "node"] // ←追加
+  // }
 }
