@@ -1,14 +1,12 @@
 {
-  "name": "ckd",
-  "version": "0.1.0",
-  "bin": {},
-  "scripts": {},
-  "dependencies": {
-    "aws-cdk-lib": "^2.204.0",
-    "constructs": "^10.0.0"
+  "name": "baseline-infrastructure",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cdk": "npx cdk"
   },
-  "devDependencies": {
-    "@horietakehiro/aws-cdk-utul": "^0.41.3",
-    "aws-cdk": "^2.1020.2"
+  "dependencies": {
+    "aws-cdk-lib": "^2.208.0",
+    "constructs": "^10.4.2"
   }
 }

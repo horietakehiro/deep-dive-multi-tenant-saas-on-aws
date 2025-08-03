@@ -1,5 +1,11 @@
+.DS_Store
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
+
 # amplify
-node_modules
 .amplify
 amplify_outputs*
 amplifyconfiguration*

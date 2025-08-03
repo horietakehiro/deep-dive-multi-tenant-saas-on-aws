@@ -7,7 +7,7 @@ import {
   aws_certificatemanager as acm,
   aws_route53 as route53,
 } from "aws-cdk-lib";
-import path = require("path");
+import * as path from "node:path";
 export interface ControlPlaneProps {
   certArn: string;
 }

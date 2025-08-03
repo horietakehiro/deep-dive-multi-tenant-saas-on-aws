@@ -14,9 +14,5 @@
       ]
     }
   },
-  "references": [
-    {
-      "path": "../tsconfig.json"
-    }
-  ]
+  "extends": "../../../tsconfig.base.json"
 }

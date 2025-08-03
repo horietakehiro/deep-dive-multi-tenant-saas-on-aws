@@ -1,7 +1,20 @@
+import { reactRouter } from "@react-router/dev/vite";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import tsconfigPaths from "vite-tsconfig-paths";
+import devtoolsJson from "vite-plugin-devtools-json";
+import env from "vite-plugin-env-compatible";
+// import { nodePolyfills } from "vite-plugin-node-polyfills";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    tailwindcss(),
+    reactRouter(),
+    tsconfigPaths({}),
+    devtoolsJson(),
+    env(),
+    // nodePolyfills({
+    //   exclude: [],
+    // }),
+  ],
 });

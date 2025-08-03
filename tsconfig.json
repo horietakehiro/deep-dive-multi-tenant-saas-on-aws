@@ -2,6 +2,9 @@
   "references": [
     {
       "path": "./baseline-infrastructure/"
+    },
+    {
+      "path": "./apps/control-plane/"
     }
   ],
   "files": []
