@@ -5,13 +5,16 @@
   "bin": {},
   "scripts": {
     "cdk": "cd baseline-infrastructure && cdk",
-    "ampx": "cd apps/common && npx ampx"
+    "ampx": "cd apps/control-plane && npx ampx"
   },
   "workspaces": [
     "baseline-infrastructure",
-    "apps/common"
+    "apps/common",
+    "apps/control-plane",
+    "apps/application-plane"
   ],
   "devDependencies": {
+    "@horietakehiro/aws-cdk-utul": "^0.41.3",
     "@types/jest": "^29.5.12",
     "@types/node": "20.11.30",
     "eslint": "^9.30.1",
