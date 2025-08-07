@@ -1,40 +1,34 @@
-import type { Schema } from "../../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
-import React from "react";
 import Box from "@mui/material/Box";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
+import type { Schema } from "amplify/data/resource";
+import type { Route } from "./+types/tenants";
 
-const client = generateClient<Schema>();
+interface ITenantClient {
+  list: () => Promise<Schema["Tenant"]["type"][]>;
+}
 
-export default function Tenants() {
-  const [tenants, setTenants] = React.useState<Schema["Tenant"]["type"][]>([]);
+type Loader = ({
+  params,
+}: Route.ClientLoaderArgs) => Promise<Schema["Tenant"]["type"][]>;
+export const clientLoaderFactory = (client: ITenantClient): Loader => {
+  return async () => {
+    return client.list();
+  };
+};
 
-  const columns: GridColDef<(typeof tenants)[number]>[] = [
-    {
-      field: "id",
-    },
-  ];
+// const client = generateClient<Schema>();
+export const clientLoader = clientLoaderFactory({
+  list: async () => {
+    return [];
+  },
+});
 
-  React.useEffect(() => {
-    console.log("get tenant list...");
-    const listTenants = async () => {
-      try {
-        const res = await client.models.Tenant.list();
-        console.log(res);
-        setTenants([...res.data]);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    listTenants();
-  }, []);
-
+export default function Tenants({ loaderData }: Route.ComponentProps) {
   return (
     <Box sx={{ height: 400, width: "100%" }}>
       <DataGrid
-        rows={tenants}
-        columns={columns}
+        rows={loaderData}
+        columns={[{ field: "id" }, { field: "name" }]}
         initialState={{
           pagination: {
             paginationModel: {
