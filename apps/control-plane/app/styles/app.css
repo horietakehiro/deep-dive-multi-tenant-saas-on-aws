@@ -12,4 +12,7 @@ body {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

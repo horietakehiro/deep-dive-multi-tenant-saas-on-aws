@@ -18,6 +18,7 @@
     "@mui/x-data-grid": "^8.9.2",
     "@react-router/node": "^7.7.1",
     "@react-router/serve": "^7.7.1",
+    "@standard-schema/spec": "^1.0.0",
     "@toolpad/core": "^0.16.0",
     "aws-amplify": "^6.15.4",
     "isbot": "^5.1.29",
