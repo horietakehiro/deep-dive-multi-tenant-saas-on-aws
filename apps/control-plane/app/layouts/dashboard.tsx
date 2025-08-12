@@ -1,17 +1,20 @@
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import GroupsIcon from "@mui/icons-material/Groups";
-import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import type { Branding, Navigation, Session } from "@toolpad/core/AppProvider";
 import { DashboardLayout as ToolpadDashboardLayout } from "@toolpad/core/DashboardLayout";
 import { Outlet, useOutletContext } from "react-router";
 import React from "react";
-import { signOut } from "aws-amplify/auth";
+import { fetchUserAttributes, signOut } from "aws-amplify/auth";
 
 import type { Route } from "./+types/dashboard";
-import type { OutletContext } from "~/root";
+import type { OutletContext } from "~/models/context";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import { getTenantFromUserAttributes } from "~/models/tenant";
+import type { CustomUserAttributes } from "~/models/admin-user";
 
 const branding: Branding = {
-  title: "Intersection - Admin Console",
+  title: "Intersection - Controle Plane",
   logo: undefined,
 };
 const navigation: Navigation = [
@@ -21,38 +24,27 @@ const navigation: Navigation = [
   },
   {
     kind: "page",
-    segment: "tenants",
-    title: "Tenants",
-    icon: <GroupsIcon />,
-  },
-  {
-    kind: "divider",
-  },
-  {
-    kind: "header",
-    title: "Admin Management",
+    segment: "tenant",
+    title: "Tenant",
+    icon: <ApartmentIcon />,
   },
   {
     kind: "page",
-    segment: "admin-users",
-    title: "Admin Users",
-    pattern: "admin-users{/:userId}*",
-    icon: <SupervisorAccountIcon />,
+    segment: "users",
+    title: "Users",
+    icon: <GroupsIcon />,
+  },
+  {
+    kind: "page",
+    segment: "billing",
+    title: "Billing",
+    icon: <AttachMoneyIcon />,
   },
 ];
 
-// export const clientLoader = async () => {
-//   console.log("client loader of dashboard");
-//   const user = await getCurrentUser();
-//   return {
-//     user: {
-//       id: user.signInDetails?.loginId,
-//       name: user.signInDetails?.loginId,
-//     },
-//   } as Session;
-// };
 export default function DashboardLayout({}: Route.ComponentProps) {
-  const { authUser } = useOutletContext<OutletContext>();
+  const { authUser, client, setTenant, tenant } =
+    useOutletContext<OutletContext>();
   console.log(authUser);
   const [session, setSession] = React.useState<Session | null>({
     user: {
@@ -61,6 +53,17 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       email: authUser.signInDetails?.loginId,
     },
   });
+  React.useEffect(() => {
+    const f = async () => {
+      setTenant!(
+        await getTenantFromUserAttributes(
+          () => fetchUserAttributes() as Promise<CustomUserAttributes>,
+          client
+        )
+      );
+    };
+    f();
+  }, []);
   return (
     <ReactRouterAppProvider
       navigation={navigation}
@@ -77,7 +80,9 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       session={session}
     >
       <ToolpadDashboardLayout>
-        <Outlet />
+        <Outlet
+          context={{ authUser, tenant, setTenant, client } as OutletContext}
+        />
       </ToolpadDashboardLayout>
     </ReactRouterAppProvider>
   );

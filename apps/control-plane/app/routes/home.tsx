@@ -1,19 +1,25 @@
-import type { Route } from "./+types/home";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { PageContainer } from "@toolpad/core";
+import { useOutletContext } from "react-router";
+import type { OutletContext } from "~/models/context";
+export default function Home() {
+  const { authUser } = useOutletContext<OutletContext>();
 
-export default function Welcome() {
   return (
-    <Box sx={{ textAlign: "center", justifyContent: "center" }}>Welcome</Box>
+    <PageContainer>
+      <Box
+        sx={{
+          textAlign: "center",
+          justifyContent: "center",
+          alignItems: "center",
+          display: "flex",
+        }}
+      >
+        <Typography variant="h2">
+          WELCOM {authUser.signInDetails?.loginId}
+        </Typography>
+      </Box>
+    </PageContainer>
   );
 }
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
-
-// export default function Home() {
-//   return <Welcome />;
-// }

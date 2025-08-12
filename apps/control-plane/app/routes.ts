@@ -8,8 +8,8 @@ import {
 export default [
   layout("./layouts/dashboard.tsx", [
     index("./routes/home.tsx"),
-    route("tenants/*", "./routes/tenants.tsx"),
-    route("admin-users/*", "./routes/admin-users.tsx"),
+    route("tenant", "./routes/tenant.tsx"),
+    route("tenant/edit", "./routes/tenant-edit.tsx"),
     // route("admin-users/:userId", "./routes/admin-users.tsx"),
   ]),
 ] satisfies RouteConfig;
