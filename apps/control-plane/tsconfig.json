@@ -39,4 +39,7 @@
     { "path": "./tsconfig.node.json" }
   ],
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // "allowJs": true,
+  }
 }

@@ -3,14 +3,20 @@ import type { OutletContext } from "./context";
 
 export const status = ["pending", "active", "inactive"] as const;
 export type Status = (typeof status)[number];
+
 export const getTenantFromUserAttributes = async (
-  f: () => Promise<CustomUserAttributes>,
-  c: OutletContext["client"]
+  customUserAttributesFactory: () => Promise<CustomUserAttributes>,
+  tenantClient: {
+    // getTenant: OutletContext["client"]["models"]["Tenant"]["get"];
+    getTenant: (
+      ...args: Parameters<OutletContext["client"]["models"]["Tenant"]["get"]>
+    ) => ReturnType<OutletContext["client"]["models"]["Tenant"]["get"]>;
+  }
 ) => {
-  const userAttributes = await f();
+  const userAttributes = await customUserAttributesFactory();
   console.log(userAttributes);
 
-  const res = await c.models.Tenant.get({
+  const res = await tenantClient.getTenant({
     id: userAttributes["custom:tenantId"],
   });
   console.log(res);

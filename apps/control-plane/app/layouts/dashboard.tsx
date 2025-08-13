@@ -58,7 +58,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       setTenant!(
         await getTenantFromUserAttributes(
           () => fetchUserAttributes() as Promise<CustomUserAttributes>,
-          client
+          { getTenant: client.models.Tenant.get }
         )
       );
     };
