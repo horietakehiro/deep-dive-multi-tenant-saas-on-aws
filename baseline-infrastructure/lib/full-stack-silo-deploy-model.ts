@@ -10,6 +10,7 @@ import {
 import * as path from "node:path";
 export interface ControlPlaneProps {
   certArn: string;
+  branch: string;
 }
 class ControlPlane extends Construct {
   constructor(scope: Construct, id: string, props: ControlPlaneProps) {
@@ -86,9 +87,9 @@ class ControlPlane extends Construct {
         "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
     });
 
-    new amplify.CfnBranch(this, "MainBranch", {
+    new amplify.CfnBranch(this, "Branch", {
       appId: app.attrAppId,
-      branchName: "main",
+      branchName: props.branch,
       stage: "PRODUCTION",
       enableAutoBuild: true,
       framework: "web",
@@ -99,7 +100,7 @@ class ControlPlane extends Construct {
       domainName: "ht-burdock.com",
       subDomainSettings: [
         {
-          branchName: "main",
+          branchName: props.branch,
           prefix: "control-plane",
         },
       ],
@@ -125,6 +126,7 @@ export class FullStackSiloDeployModelStack extends cdk.Stack {
 
     new ControlPlane(this, "ControlPlane", {
       certArn: props.cert.certificateArn,
+      branch: "restructuring",
     });
   }
 }

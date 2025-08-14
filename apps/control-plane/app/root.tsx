@@ -9,7 +9,7 @@ import type { Schema } from "amplify/data/resource";
 import "@aws-amplify/ui-react/styles.css";
 import "./styles/app.css";
 import "./styles/amplify.css";
-import type { OutletContext } from "./models/context";
+import type { RootContext } from "./models/context";
 import { formFileds, services } from "./models/authenticator";
 
 Amplify.configure(outputs);
@@ -23,10 +23,23 @@ export default function App() {
     <React.StrictMode>
       <Authenticator services={services} formFields={formFileds}>
         {({ user }) => {
+          if (user === undefined) {
+            return <></>;
+          }
           return (
             <Outlet
               context={
-                { authUser: user, client, tenant, setTenant } as OutletContext
+                {
+                  authUser: user,
+                  tenant,
+                  setTenant,
+                  client: {
+                    getTenant: client.models.Tenant.get,
+                    updateTenant: client.models.Tenant.update,
+                    activateTenant:
+                      client.queries.invokeApplicationPlaneDeployment,
+                  },
+                } satisfies RootContext
               }
             />
           );

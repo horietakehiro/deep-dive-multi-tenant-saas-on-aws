@@ -1,0 +1,32 @@
+{
+  "name": "application-plane",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc",
+    "ampx": "npx ampx",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@aws-amplify/ui-react": "^6.11.2",
+    "@mui/icons-material": "^7.3.1",
+    "@mui/material": "^7.3.1",
+    "@mui/x-data-grid": "^8.9.2",
+    "@react-router/node": "^7.7.1",
+    "@react-router/serve": "^7.7.1",
+    "@standard-schema/spec": "^1.0.0",
+    "@toolpad/core": "^0.16.0",
+    "aws-amplify": "^6.15.4",
+    "isbot": "^5.1.29",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router": "^7.7.1"
+  }
+}
