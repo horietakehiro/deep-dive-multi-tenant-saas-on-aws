@@ -1,6 +1,6 @@
 import { defineAuth } from "@aws-amplify/backend";
 import { CUSTOM_USER_ATTRIBUTES } from "../../../control-plane/app/models/admin-user";
-
+import { userMigration } from "./user-migration/resource";
 /**
  * Define and configure your auth resource
  * @see https://docs.amplify.aws/gen2/build-a-backend/auth
@@ -9,11 +9,10 @@ export const auth = defineAuth({
   loginWith: {
     email: true,
   },
-  // 開発を高速化するため無効化しておく
   multifactor: {
     mode: "OFF",
   },
-  // テナント管理者とテナントとの対応関係をカスタム属性として持たせる
+  // テナントとの対応関係をカスタム属性として持たせる
   userAttributes: {
     [CUSTOM_USER_ATTRIBUTES.TENANT_ID]: {
       dataType: "String",
@@ -24,5 +23,7 @@ export const auth = defineAuth({
       mutable: true,
     },
   },
-  triggers: {},
+  triggers: {
+    userMigration,
+  },
 });

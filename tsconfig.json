@@ -5,6 +5,15 @@
     },
     {
       "path": "./apps/control-plane/"
+    },
+    {
+      "path": "./apps/application-plane/"
+    },
+    {
+      "path": "./apps/control-plane/amplify"
+    },
+    {
+      "path": "./apps/application-plane/amplify"
     }
   ],
   "files": []

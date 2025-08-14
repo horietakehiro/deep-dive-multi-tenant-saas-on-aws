@@ -4,9 +4,6 @@ import { PageContainer } from "@toolpad/core";
 import { useOutletContext } from "react-router";
 import type { RootContext } from "../models/context";
 export default function Home() {
-  if (useOutletContext === undefined) {
-    throw Error("hgoeghoe");
-  }
   const { authUser } = useOutletContext<RootContext>();
 
   return (

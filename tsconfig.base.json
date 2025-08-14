@@ -18,7 +18,8 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-
-    // "typeRoots": ["./node_modules/@types"]
-  }
+    "baseUrl": "./"
+  },
+  // "include": ["**/*.ts", "**/*.tsx", "**/amplify_outputs.json"],
+  "exclude": ["**/build"]
 }

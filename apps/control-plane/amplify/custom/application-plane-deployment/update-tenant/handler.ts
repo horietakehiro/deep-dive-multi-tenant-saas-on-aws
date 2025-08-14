@@ -1,16 +1,22 @@
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../../../data/resource";
-import outputs from "../../../../amplify_outputs.json";
+// import outputs from "../../../../amplify_outputs.json";
 import { Amplify } from "aws-amplify";
+import { getAmplifyDataClientConfig } from "@aws-amplify/backend/function/runtime";
+import { env } from "../../../../.amplify/generated/env/update-tenant";
 
-Amplify.configure(outputs);
-const client = generateClient<Schema>();
-
+// Amplify.configure(outputs);
+// const client = generateClient<Schema>();
 export interface Input {
   tenantId: string;
   url: string;
 }
 export const handler = async (event: Input): Promise<void> => {
+  const { resourceConfig, libraryOptions } =
+    await getAmplifyDataClientConfig(env);
+  Amplify.configure(resourceConfig, libraryOptions);
+  const client = generateClient<Schema>();
+
   console.log(event);
   console.log(`テナント[${event.tenantId}]のステータスをactiveに更新する`);
   const currentTenant = await client.models.Tenant.get({ id: event.tenantId });

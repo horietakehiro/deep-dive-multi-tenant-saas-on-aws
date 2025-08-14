@@ -1,47 +1,14 @@
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
-import GroupsIcon from "@mui/icons-material/Groups";
 import type { Branding, Navigation, Session } from "@toolpad/core/AppProvider";
 import { DashboardLayout as ToolpadDashboardLayout } from "@toolpad/core/DashboardLayout";
 import { Outlet, useOutletContext } from "react-router";
 import React from "react";
 import { fetchUserAttributes, signOut } from "aws-amplify/auth";
-
-import type { Route } from "./+types/dashboard";
+import LocationPinIcon from "@mui/icons-material/LocationPin";
+import type { Route } from "../+types/root";
 import type { RootContext } from "../models/context";
-import ApartmentIcon from "@mui/icons-material/Apartment";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import { getTenantFromUserAttributes } from "../models/tenant";
-import type { CustomUserAttributes } from "../models/admin-user";
-
-const branding: Branding = {
-  title: "Intersection - Controle Plane",
-  logo: undefined,
-};
-const navigation: Navigation = [
-  {
-    kind: "header",
-    title: "Tenant Management",
-  },
-  {
-    kind: "page",
-    segment: "tenant",
-    title: "Tenant",
-    icon: <ApartmentIcon />,
-  },
-  {
-    kind: "page",
-    segment: "users",
-    title: "Users",
-    icon: <GroupsIcon />,
-  },
-  {
-    kind: "page",
-    segment: "billing",
-    title: "Billing",
-    icon: <AttachMoneyIcon />,
-  },
-];
-
+import { getTenantFromUserAttributes } from "../../../control-plane/app/models/tenant";
+import type { CustomUserAttributes } from "apps/control-plane/app/models/admin-user";
 export default function DashboardLayout({}: Route.ComponentProps) {
   const { authUser, client, setTenant, tenant } =
     useOutletContext<RootContext>();
@@ -53,6 +20,23 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       email: authUser.signInDetails?.loginId,
     },
   });
+
+  const branding: Branding = {
+    title: `Intersection - Application Plane / ${tenant?.name}`,
+    logo: undefined,
+  };
+  const navigation: Navigation = [
+    {
+      kind: "header",
+      title: "Tenant Management",
+    },
+    {
+      kind: "page",
+      segment: "locations",
+      title: "Locations",
+      icon: <LocationPinIcon />,
+    },
+  ];
   React.useEffect(() => {
     const f = async () => {
       setTenant!(

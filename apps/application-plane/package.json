@@ -1,21 +1,19 @@
 {
   "name": "application-plane",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "ampx": "npx ampx",
-    "test": "vitest"
+    "test": "vitest",
+    "preview": "vite preview --port 8080"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.11.2",
+    "@aws-sdk/client-cognito-identity-provider": "^3.865.0",
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1",
     "@mui/x-data-grid": "^8.9.2",
