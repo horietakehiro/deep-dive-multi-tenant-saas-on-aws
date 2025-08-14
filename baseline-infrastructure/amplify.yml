@@ -1,6 +1,7 @@
 applications:
-  - appRoot: /
+  - appRoot: /apps/control-plane
     frontend:
+      buildPath: '/'
       phases:
         preBuild:
           commands:
@@ -17,6 +18,7 @@ applications:
           - .npm/**/*
           - node_modules/**/*
     backend:
+      buildPath: "/"
       phases:
         build:
           commands:

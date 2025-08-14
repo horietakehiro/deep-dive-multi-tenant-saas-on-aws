@@ -77,7 +77,7 @@ class ControlPlane extends Construct {
         },
         {
           name: "AMPLIFY_MONOREPO_APP_ROOT",
-          value: "projects/control-plane",
+          value: "/apps/control-plane",
         },
       ],
       iamServiceRole: serviceRole.roleArn,
