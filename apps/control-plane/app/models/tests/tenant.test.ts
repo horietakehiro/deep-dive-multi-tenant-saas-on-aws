@@ -49,7 +49,7 @@ describe("カスタムユーザー属性からのテナント情報の取得", (
       );
     };
 
-    await expect(f()).rejects.toThrowError(Error);
+    await expect(f()).rejects.toThrow(Error);
   });
   test("テナント情報時にエラーが発生した場合は例外を上げる", async () => {
     const f = async () => {
@@ -84,6 +84,6 @@ describe("カスタムユーザー属性からのテナント情報の取得", (
         }
       );
     };
-    await expect(f()).rejects.toThrowError(Error);
+    await expect(f()).rejects.toThrow(Error);
   });
 });

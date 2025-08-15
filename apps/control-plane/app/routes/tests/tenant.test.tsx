@@ -1,54 +1,25 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
-import Tenant from "../tenant";
-import type { RootContext } from "../../models/context";
+import Tenant, { type Context } from "../tenant";
+// import type { RootContext } from "../../models/context";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
-import TenantEdit from "../tenant-edit";
+// import TenantEdit from "../tenant-edit";
 import React from "react";
 import "@testing-library/jest-dom";
+import TenantEdit from "../tenant-edit";
+import type { EmotionJSX } from "node_modules/@emotion/react/dist/declarations/src/jsx-namespace";
 
-const useOutletContext = vi.hoisted(() =>
-  vi.fn(() => {
-    return {
-      client: {
-        updateTenant: (props) => {
-          return Promise.resolve({
-            data: {
-              ...props,
-              createdAt: "",
-              updatedAt: "",
-            },
-          });
-        },
-        activateTenant: () => {
-          return Promise.resolve({
-            data: "",
-          });
-        },
-        getTenant: () => {
-          throw Error("not used");
-        },
-      },
-      tenant: {
-        id: "tenant-id",
-        status: "pending",
-        name: "tenant-name",
-        url: null,
-        createdAt: "",
-        updatedAt: "",
-      },
-      setTenant: (tenant) => {
-        tenant;
-      },
-    } as Pick<RootContext, "client" | "tenant" | "setTenant">;
-  })
-);
+const mockUseOutletContext = vi.hoisted(() => {
+  return vi.fn<() => Context>(() => {
+    throw Error("後続のテストコード内で返す値を設定 ");
+  });
+});
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
-    useOutletContext,
+    useOutletContext: mockUseOutletContext,
   };
 });
 
@@ -57,11 +28,34 @@ describe("テナント管理画面", () => {
     const Stub = createRoutesStub([
       {
         path: "/tenant",
-        Component: () => (
-          <ReactRouterAppProvider>
-            <Tenant />
-          </ReactRouterAppProvider>
-        ),
+        Component: () => {
+          const [tenant, setTenant] = React.useState<Context["tenant"]>({
+            id: "tenant-id",
+            name: "tenant-name",
+            status: "pending",
+            createdAt: "",
+            updatedAt: "",
+          });
+          mockUseOutletContext.mockReturnValue({
+            tenant,
+            setTenant,
+            client: {
+              activateTenant: () => {
+                throw Error("このテストでは不要");
+              },
+              updateTenant: () => {
+                throw Error("このテストでは不要");
+              },
+              listTenantStatuses: () => [],
+            },
+          });
+
+          return (
+            <ReactRouterAppProvider>
+              <Tenant />
+            </ReactRouterAppProvider>
+          );
+        },
       },
     ]);
     render(<Stub initialEntries={["/tenant"]} />);
@@ -79,22 +73,43 @@ describe("テナント管理画面", () => {
   });
 
   test("編集ボタンをクリックすることでテナント情報の編集画面に遷移できる", async () => {
+    const C = (CUT: () => EmotionJSX.Element) => {
+      return () => {
+        const [tenant, setTenant] = React.useState<Context["tenant"]>({
+          id: "test-id",
+          name: "test-name",
+          status: "pending",
+          createdAt: "",
+          updatedAt: "",
+        });
+        mockUseOutletContext.mockReturnValue({
+          tenant,
+          setTenant,
+          client: {
+            listTenantStatuses: () => [],
+            updateTenant: () => {
+              throw Error();
+            },
+            activateTenant: () => {
+              throw Error();
+            },
+          },
+        });
+        return (
+          <ReactRouterAppProvider>
+            <CUT />
+          </ReactRouterAppProvider>
+        );
+      };
+    };
     const Stub = createRoutesStub([
       {
         path: "/tenant",
-        Component: () => (
-          <ReactRouterAppProvider>
-            <Tenant />
-          </ReactRouterAppProvider>
-        ),
+        Component: C(Tenant),
       },
       {
         path: "/tenant/edit",
-        Component: () => (
-          <ReactRouterAppProvider>
-            <TenantEdit />
-          </ReactRouterAppProvider>
-        ),
+        Component: C(TenantEdit),
       },
     ]);
     render(<Stub initialEntries={["/tenant"]} />);
@@ -110,7 +125,7 @@ describe("テナント管理画面", () => {
       {
         path: "/tenant",
         Component: () => {
-          const [tenant, setTenant] = React.useState<RootContext["tenant"]>({
+          const [tenant, setTenant] = React.useState<Context["tenant"]>({
             id: "tenant-id",
             status: "pending",
             name: "tenant-name",
@@ -118,10 +133,27 @@ describe("テナント管理画面", () => {
             createdAt: "",
             updatedAt: "",
           });
-          useOutletContext.mockReturnValue({
-            ...useOutletContext(),
+          mockUseOutletContext.mockReturnValue({
             tenant,
             setTenant,
+            client: {
+              listTenantStatuses: () => [],
+              updateTenant: (props) => {
+                return Promise.resolve({
+                  data: {
+                    id: props.id,
+                    name: props.name!,
+                    status: props.status!,
+                    url: null,
+                    createdAt: "",
+                    updatedAt: "",
+                  },
+                });
+              },
+              activateTenant: (props) => {
+                return Promise.resolve({ data: props.tenantId! });
+              },
+            },
           });
           return (
             <ReactRouterAppProvider>

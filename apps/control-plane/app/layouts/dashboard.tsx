@@ -55,7 +55,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
   ];
   React.useEffect(() => {
     const f = async () => {
-      setTenant!(
+      setTenant(
         await getTenantFromUserAttributes(
           () => fetchUserAttributes() as Promise<CustomUserAttributes>,
           { getTenant: client.getTenant }

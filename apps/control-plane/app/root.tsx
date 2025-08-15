@@ -46,6 +46,8 @@ export default function App() {
                     updateTenant: client.models.Tenant.update,
                     activateTenant:
                       client.queries.invokeApplicationPlaneDeployment,
+                    listTenantStatuses: () =>
+                      client.enums.TenantStatus.values(),
                   },
                 } satisfies RootContext
               }

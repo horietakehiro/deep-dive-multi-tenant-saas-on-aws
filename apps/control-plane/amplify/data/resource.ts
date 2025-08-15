@@ -1,16 +1,16 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
-import { status } from "../../app/models/tenant";
+// import { status } from "../../app/models/tenant";
 import { invokeDeploymentFunction } from "../custom/application-plane-deployment/invoke-deployment/resource";
 import { updateTenantFunction } from "../custom/application-plane-deployment/update-tenant/resource";
 import { preSignUp } from "../auth/pre-sign-up/resource";
 const schema = a
   .schema({
+    TenantStatus: a.enum(["pending", "activating", "active", "inactive"]),
     Tenant: a
       .model({
         id: a.id().required(),
         name: a.string().required(),
-        // status: a.enum(["pending", "active", "inactive"]),
-        status: a.enum(status),
+        status: a.ref("TenantStatus").required(),
         url: a.url(),
       })
       .authorization((allow) => [allow.publicApiKey()]),

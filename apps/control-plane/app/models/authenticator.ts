@@ -18,23 +18,24 @@ export const formFileds: AuthenticatorProps["formFields"] = {
     },
   },
 };
-
-export const services: AuthContext["services"] = {
-  /**
-   * テナント管理者のサインアップ時にカスタムユーザー属性としてテナント情報を渡す
-   * @param input
-   */
-  handleSignUp: async (input: SignUpInput) => {
-    console.log(input);
+/**
+ *
+ * @param idFn テナントIDの生成関数
+ * @param signUpFn サインアップリクエストをCognitoユーザープールに送信するための関数
+ * @returns
+ */
+export const handleSignUpFactory = (
+  idFn: () => string,
+  signUpFn: typeof signUp
+): typeof signUp => {
+  return async (input: SignUpInput) => {
     const requiredUserAttributes: SignupUserAttributes = {
-      "custom:tenantId": uuidv4(),
+      "custom:tenantId": idFn(),
       "custom:tenantName":
         input.options!.userAttributes[CUSTOM_USER_ATTRIBUTES.TENANT_NAME]!,
       email: input.options?.userAttributes["email"]!,
     };
-
-    console.log(requiredUserAttributes);
-    return signUp({
+    return signUpFn({
       ...input,
       options: {
         ...input.options,
@@ -44,5 +45,12 @@ export const services: AuthContext["services"] = {
         },
       },
     });
-  },
+  };
+};
+export const services: AuthContext["services"] = {
+  /**
+   * テナント管理者のサインアップ時にカスタムユーザー属性としてテナント情報を渡す
+   * @param input
+   */
+  handleSignUp: handleSignUpFactory(uuidv4, signUp),
 };

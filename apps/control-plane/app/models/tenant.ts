@@ -1,20 +1,19 @@
 import type { CustomUserAttributes } from "./admin-user";
 import type { RootContext } from "./context";
 
-export const status = ["pending", "active", "inactive", "activating"] as const;
-export type Status = (typeof status)[number];
+// export const status = ["pending", "active", "inactive", "activating"] as const;
+// export type Status = (typeof status)[number];
 
 export const getTenantFromUserAttributes = async (
   customUserAttributesFactory: () => Promise<CustomUserAttributes>,
-  tenantClient: {
-    // getTenant: OutletContext["client"]["models"]["Tenant"]["get"];
+  client: {
     getTenant: RootContext["client"]["getTenant"];
   }
 ) => {
   const userAttributes = await customUserAttributesFactory();
   console.log(userAttributes);
 
-  const res = await tenantClient.getTenant({
+  const res = await client.getTenant({
     id: userAttributes["custom:tenantId"],
   });
   console.log(res, res.errors);
