@@ -1,7 +1,7 @@
 import type { CustomUserAttributes } from "./admin-user";
 import type { RootContext } from "./context";
 
-export const status = ["pending", "active", "inactive"] as const;
+export const status = ["pending", "active", "inactive", "activating"] as const;
 export type Status = (typeof status)[number];
 
 export const getTenantFromUserAttributes = async (

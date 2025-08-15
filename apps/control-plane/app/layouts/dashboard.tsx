@@ -13,35 +13,6 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import { getTenantFromUserAttributes } from "../models/tenant";
 import type { CustomUserAttributes } from "../models/admin-user";
 
-const branding: Branding = {
-  title: "Intersection - Controle Plane",
-  logo: undefined,
-};
-const navigation: Navigation = [
-  {
-    kind: "header",
-    title: "Tenant Management",
-  },
-  {
-    kind: "page",
-    segment: "tenant",
-    title: "Tenant",
-    icon: <ApartmentIcon />,
-  },
-  {
-    kind: "page",
-    segment: "users",
-    title: "Users",
-    icon: <GroupsIcon />,
-  },
-  {
-    kind: "page",
-    segment: "billing",
-    title: "Billing",
-    icon: <AttachMoneyIcon />,
-  },
-];
-
 export default function DashboardLayout({}: Route.ComponentProps) {
   const { authUser, client, setTenant, tenant } =
     useOutletContext<RootContext>();
@@ -53,6 +24,35 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       email: authUser.signInDetails?.loginId,
     },
   });
+
+  const branding: Branding = {
+    title: `Intersection - Controle Plane / ${tenant?.name}`,
+    logo: undefined,
+  };
+  const navigation: Navigation = [
+    {
+      kind: "header",
+      title: "Tenant Management",
+    },
+    {
+      kind: "page",
+      segment: "tenant",
+      title: "Tenant",
+      icon: <ApartmentIcon />,
+    },
+    {
+      kind: "page",
+      segment: "users",
+      title: "Users",
+      icon: <GroupsIcon />,
+    },
+    {
+      kind: "page",
+      segment: "billing",
+      title: "Billing",
+      icon: <AttachMoneyIcon />,
+    },
+  ];
   React.useEffect(() => {
     const f = async () => {
       setTenant!(

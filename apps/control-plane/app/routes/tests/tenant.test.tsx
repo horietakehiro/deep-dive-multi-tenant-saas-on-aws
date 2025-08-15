@@ -5,6 +5,9 @@ import Tenant from "../tenant";
 import type { RootContext } from "../../models/context";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import TenantEdit from "../tenant-edit";
+import React from "react";
+import "@testing-library/jest-dom";
+
 const useOutletContext = vi.hoisted(() =>
   vi.fn(() => {
     return {
@@ -12,10 +15,7 @@ const useOutletContext = vi.hoisted(() =>
         updateTenant: (props) => {
           return Promise.resolve({
             data: {
-              id: props.id,
-              status: "pending",
-              name: "test",
-              url: null,
+              ...props,
               createdAt: "",
               updatedAt: "",
             },
@@ -38,8 +38,10 @@ const useOutletContext = vi.hoisted(() =>
         createdAt: "",
         updatedAt: "",
       },
-      setTenant: () => {},
-    } satisfies Pick<RootContext, "client" | "tenant" | "setTenant">;
+      setTenant: (tenant) => {
+        tenant;
+      },
+    } as Pick<RootContext, "client" | "tenant" | "setTenant">;
   })
 );
 vi.mock("react-router", async () => {
@@ -103,22 +105,47 @@ describe("テナント管理画面", () => {
     await waitFor(() => screen.findByText(/Edit Tenant Information/));
   });
 
-  // test("テナントのアクティベーションボタンをクリックすることでテナントのアクティベーションを実行できる", async () => {
-  //   const Stub = createRoutesStub([
-  //     {
-  //       path: "/tenant",
-  //       Component: () => (
-  //         <ReactRouterAppProvider>
-  //           <Tenant />
-  //         </ReactRouterAppProvider>
-  //       ),
-  //     },
-  //   ]);
-  //   render(<Stub initialEntries={["/tenant"]} />);
-  //   const editButton = await waitFor(() =>
-  //     screen.getByRole("button", { name: "ACTIVATE TENANT" })
-  //   );
-  //   userEvent.click(editButton);
-  //   await waitFor(() => screen.findByText(/Edit Tenant Information/));
-  // });
+  test("テナントのアクティベーションボタンをクリックすることでテナントのアクティベーションを実行できる", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/tenant",
+        Component: () => {
+          const [tenant, setTenant] = React.useState<RootContext["tenant"]>({
+            id: "tenant-id",
+            status: "pending",
+            name: "tenant-name",
+            url: null,
+            createdAt: "",
+            updatedAt: "",
+          });
+          useOutletContext.mockReturnValue({
+            ...useOutletContext(),
+            tenant,
+            setTenant,
+          });
+          return (
+            <ReactRouterAppProvider>
+              <Tenant />
+            </ReactRouterAppProvider>
+          );
+        },
+      },
+    ]);
+    render(<Stub initialEntries={["/tenant"]} />);
+    // テナントの初期状態はpendingであること
+    await waitFor(() => screen.getByText(/pending/));
+    // アクティベーションボタンボタンを押すことで、テナントの状態がactivatingに更新されること
+    await userEvent.click(
+      await waitFor(() =>
+        screen.getByRole("button", { name: "ACTIVATE TENANT" })
+      )
+    );
+    await waitFor(() => screen.findByText(/activating/));
+    // ボタンは無効化(押せない)状態になる
+    expect(
+      await waitFor(() =>
+        screen.getByRole("button", { name: "ACTIVATE TENANT" })
+      )
+    ).toBeDisabled();
+  });
 });

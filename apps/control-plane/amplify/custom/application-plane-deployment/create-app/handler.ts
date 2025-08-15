@@ -1,5 +1,9 @@
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
-import { AmplifyClient, CreateAppCommand } from "@aws-sdk/client-amplify";
+import {
+  AmplifyClient,
+  CreateAppCommand,
+  ListAppsCommand,
+} from "@aws-sdk/client-amplify";
 
 const ssmClient = new SSMClient();
 const amplifyClient = new AmplifyClient();
@@ -10,6 +14,7 @@ export interface Input {
   paramNameForBuildSpec: string;
   amplifyServiceRoleARN: string;
   repositoryURL: string;
+  controlPlaneAppName: string;
 }
 export interface Output {
   appId: string;
@@ -49,6 +54,17 @@ export const handler = async (event: Input): Promise<Output> => {
     throw Error(`パラメータ[${event.paramNameForBuildSpec}]の取得に失敗`);
   }
 
+  console.log("コントロールプレーンのIDを取得");
+  const listAppsResponse = await amplifyClient.send(new ListAppsCommand({}));
+  const apps = (listAppsResponse.apps ?? []).filter((app) => {
+    return app.name === event.controlPlaneAppName;
+  });
+  if (apps.length === 0) {
+    throw Error(
+      `コントロールプレーンのアプリケーション名[${event.controlPlaneAppName}]に対応するIDの取得に失敗`
+    );
+  }
+
   const createAppResponse = await amplifyClient.send(
     new CreateAppCommand({
       name: `application-plane-${event.tenantId}`,
@@ -68,7 +84,8 @@ export const handler = async (event: Input): Promise<Output> => {
       enableBranchAutoDeletion: false,
       environmentVariables: {
         AMPLIFY_DIFF_DEPLOY: "false",
-        AMPLIFY_MONOREPO_APP_ROOT: "projects/intersection",
+        AMPLIFY_MONOREPO_APP_ROOT: "apps/application-plane",
+        CONTROL_PLANE_APP_ID: apps[0].appId!,
       },
       iamServiceRoleArn: event.amplifyServiceRoleARN,
       platform: "WEB",

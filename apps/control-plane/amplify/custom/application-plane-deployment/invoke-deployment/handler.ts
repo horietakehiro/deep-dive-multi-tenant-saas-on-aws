@@ -16,27 +16,29 @@ export const handler: Schema["invokeApplicationPlaneDeployment"]["functionHandle
   async (event) => {
     console.log(event);
     console.log("パラメータストアからステートマシンのARNを取得する");
-    return "aaa";
-    // const ssmRes = await ssmClient.send(
-    //   new GetParameterCommand({
-    //     Name: paramNameForSFNArn,
-    //   })
-    // );
-    // console.log(ssmRes);
-    // if (ssmRes.Parameter === undefined || ssmRes.Parameter.Value === undefined) {
-    //   throw Error(`パラメータ[${paramNameForSFNArn}]からARNの取得に失敗`);
-    // }
-    // const arn = ssmRes.Parameter.Value;
+    const ssmRes = await ssmClient.send(
+      new GetParameterCommand({
+        Name: paramNameForSFNArn,
+      })
+    );
+    console.log(ssmRes);
+    if (
+      ssmRes.Parameter === undefined ||
+      ssmRes.Parameter.Value === undefined
+    ) {
+      throw Error(`パラメータ[${paramNameForSFNArn}]からARNの取得に失敗`);
+    }
+    const arn = ssmRes.Parameter.Value;
 
-    // console.log("アプリケーションプレーンのデプロイジョブを非同期実行");
-    // const res = await sfnClient.send(
-    //   new StartExecutionCommand({
-    //     stateMachineArn: arn,
-    //     input: JSON.stringify({
-    //       tenantId: event.request.userAttributes["custom:tenantId"],
-    //     }),
-    //   })
-    // );
-    // console.log(res);
-    // return event;
+    console.log("アプリケーションプレーンのデプロイジョブを非同期実行");
+    const res = await sfnClient.send(
+      new StartExecutionCommand({
+        stateMachineArn: arn,
+        input: JSON.stringify({
+          tenantId: event.arguments.tenantId,
+        }),
+      })
+    );
+    console.log(res);
+    return res.executionArn!;
   };

@@ -63,6 +63,7 @@ export interface ApplicationPlaneDeploymentProps {
   domainName: string;
   branchName: string;
   updateTenantFunction: lambda.IFunction;
+  controlPlaneAppName: string;
 }
 export class ApplicationPlaneDeployment extends Construct {
   public readonly stateMachine: sfn.IStateMachine;
@@ -157,7 +158,8 @@ export class ApplicationPlaneDeployment extends Construct {
           repositoryURL: props.repositoryURL,
           tenantId: "{% $states.input.tenantId %}",
           paramNameForBuildSpec: buildSpecParameter.parameterName,
-        } as CreateAppFunctionInput),
+          controlPlaneAppName: props.controlPlaneAppName,
+        } satisfies CreateAppFunctionInput),
         assign: {
           appId: "{% $states.result.Payload.appId %}",
           tenantId: "{% $states.input.tenantId %}",

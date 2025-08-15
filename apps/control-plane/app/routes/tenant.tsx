@@ -1,5 +1,5 @@
 import { Button, Stack } from "@mui/material";
-import { Show, type DataSource } from "@toolpad/core";
+import { Show, useNotifications, type DataSource } from "@toolpad/core";
 import { useNavigate, useOutletContext } from "react-router";
 import type { RootContext } from "../models/context";
 import { status } from "../models/tenant";
@@ -56,9 +56,9 @@ export const tenantDataSourceFactory: (
 };
 
 export default function Tenant() {
-  console.error(useOutletContext());
   const { tenant, setTenant, client } = useOutletContext() as RootContext;
   const navigate = useNavigate();
+  const notifications = useNotifications();
 
   return (
     tenant !== undefined && (
@@ -79,7 +79,44 @@ export default function Tenant() {
             sx={{
               width: "50%",
             }}
-            onClick={async () => {}}
+            onClick={async () => {
+              console.log(`tenant ${tenant.id} activation starting`);
+              const updateTenantResponse = await client.updateTenant({
+                ...tenant,
+                status: "activating",
+              });
+              console.log(updateTenantResponse);
+              if (
+                updateTenantResponse.errors !== undefined ||
+                updateTenantResponse.data === null
+              ) {
+                notifications.show("Tenant activation failed", {
+                  autoHideDuration: 3000,
+                  severity: "error",
+                });
+                return;
+              }
+              const activateTenantResponse = await client.activateTenant({
+                tenantId: tenant.id,
+              });
+              console.log(activateTenantResponse);
+              if (
+                activateTenantResponse.errors !== undefined ||
+                activateTenantResponse.data === null
+              ) {
+                notifications.show("Tenant activation failed", {
+                  autoHideDuration: 3000,
+                  severity: "error",
+                });
+                return;
+              }
+              setTenant({ ...updateTenantResponse.data });
+              notifications.show("Tenant activation starting...", {
+                autoHideDuration: 3000,
+                severity: "success",
+              });
+            }}
+            disabled={tenant.status !== "pending"}
           >
             ACTIVATE TENANT
           </Button>
