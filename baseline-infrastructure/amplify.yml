@@ -59,7 +59,7 @@ applications:
             # コントロールプレーンのバックエンドスタックが更新中の場合はoutputsファイルを生成できないため、更新が完了するまで待機する
             - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
             - sudo dnf install -y jq
-            - STACK_ARN=$(aws amplify get-branch --app-id  ${CONTROL_PLANE_APP_ID}  --branch-name main | jq -r .branch.backend.stackArn)
+            - STACK_ARN=$(aws amplify get-branch --app-id  ${CONTROL_PLANE_APP_ID}  --branch-name ${AWS_BRANCH} | jq -r .branch.backend.stackArn)
             - STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_ARN | jq -r .Stacks[0].StackStatus)
             - echo stack status of ${STACK_ARN} is ${STACK_STATUS}
             - | 
