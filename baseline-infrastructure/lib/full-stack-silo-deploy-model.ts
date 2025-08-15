@@ -126,7 +126,7 @@ export class FullStackSiloDeployModelStack extends cdk.Stack {
 
     new ControlPlane(this, "ControlPlane", {
       certArn: props.cert.certificateArn,
-      branch: "restructuring",
+      branch: "main",
     });
   }
 }

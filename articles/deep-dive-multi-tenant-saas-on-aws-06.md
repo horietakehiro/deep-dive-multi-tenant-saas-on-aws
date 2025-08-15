@@ -10,10 +10,75 @@ published: false
 
 本記事では、「[【第 04 回】Deep Dive マルチテナント SaaS on AWS - 第 3 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-04)」で取り上げたデプロイモデル、及び、「[【第 05 回】Deep Dive マルチテナント SaaS on AWS - 第 4 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-05)」で取り上げたオンボーディングプロセスを、実際の React + Amplify のアプリケーションでどの様に実現出来るのかを探っていきます。
 
-まずはベースライン環境をデプロイし、第 3 章で取り上げた下記 2 種類のデプロイモデルそれぞれについて、オンボーディングプロセスを通した具体的なデプロイプロセスを実現してみます。
+---
 
-- フルスタックのサイロデプロイモデル
-- 混合モードのデプロイモデル
+## 前提
+
+本題に入る前に、本記事(及び以降の記事で)使用する技術スタック及びリポジトリの構成について簡単に述べておきます。
+
+### 技術スタック
+
+- [Amplify Gen2](https://docs.amplify.aws/)
+- [React Router v7](https://reactrouter.com/home)
+- [Material UI](https://mui.com/material-ui/getting-started/)/[Toolpad Core](https://mui.com/toolpad/core/introduction/)(※Reactコンポーネントライブラリ)
+
+### フォルダ構成
+
+今回は単一のリポジトリで複数のアプリケーション(コントロールプレーン/アプリケーションプレーン)を管理するために、所謂モノレポ構成を採用しました。主な理由としてはコントロールプレーン↔アプリケーションプレーン間でのスキーマやロジック・AWSリソースを共有しやすいようにするためです。
+
+```bash
+# ※一部省略
+.
+├── .gitignore
+├── .vscode
+├── LICENSE
+├── README.md
+├── apps
+│   ├── application-plane # アプリケーションプレーン用ワークスペース
+│   │   ├── amplify # Amplifyコード
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── app # React Routerコード
+│   │   ├── package.json
+│   │   ├── public
+│   │   │   └── favicon.ico
+│   │   ├── react-router.config.ts
+│   │   ├── tsconfig.app.json
+│   │   ├── tsconfig.json
+│   │   ├── tsconfig.node.json
+│   │   ├── vite.config.ts
+│   │   └── vitest.config.ts
+│   └── control-plane # コントロールプレーン用ワークスペース
+│       ├── amplify # Amplifyコード
+│       │   ├── package.json
+│       │   └── tsconfig.json
+│       ├── app # React Routerコード
+│       ├── package.json
+│       ├── public
+│       │   └── favicon.ico
+│       ├── react-router.config.ts
+│       ├── tsconfig.app.json
+│       ├── tsconfig.json
+│       ├── tsconfig.node.json
+│       ├── vite.config.ts
+│       └── vitest.config.ts
+├── baseline-infrastructure # ベースライン環境用ワークスペース
+│   ├── amplify.yml
+│   ├── bin
+│   │   └── cdk.ts
+│   ├── cdk.context.json
+│   ├── cdk.json
+│   ├── lib
+│   │   └── full-stack-silo-deploy-model.ts
+│   ├── package.json
+│   └── tsconfig.json
+├── package-lock.json
+├── package.json # ワークスペースに分割して複数アプリケーションプレーンを管理
+├── tsconfig.base.json
+└── tsconfig.json
+```
+
+それでは本題に入っていきます。まずはベースライン環境をデプロイし、第 3 章で取り上げたフルスタックのサイロデプロイモデルの具体的なオンボーディング・デプロイプロセスを検討し実現していきます。
 
 ## フルスタックのサイロデプロイモデル
 
@@ -36,27 +101,22 @@ published: false
 cdk deploy ...(省略)...
 ```
 
-- まずは適当な空のページからスタートします。ここにテナントのオンボーディングに必要なロジックを実装していきます。
-
-![](/images/06/empty-control-plane.png)
+では、次に、コントロールプレーン及びテナントのオンボーディングに必要な最低限の機能を実装していきます
 
 #### オンボーディング機能の実装
 
 実現方法は様々ありますが、ここでは具体的に以下のようなオンボーディングプロセスを実現したいと思います。
 
 1. テナント所有者のサインアップ(≒ ユーザーアイデンティティの作成)の過程で、テナントアイデンティティも併せて作成する
+   1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを DynamoDB に作成し、そのテナントIDをCognito ユーザープールのユーザーアイデンティティにカスタム属性として関連づける
+   2. テナント所有者のサインアップ完了直後のテナントの初期状態は`pending`としておく
 
-   1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを DynamoDB に作成し、Cognito ユーザープールのユーザーアイデンティティと関連づける
-   2. テナント所有者のサインアップ完了直後のテナントの初期状態は`pending`とする
+2. サインアップが完了したら、コントロールプレーンのテナント管理画面でテナントのアクティベーションを実行する
+   1. 具体的には、テナント管理画面上でテナントの状態を`activating`に更新し、バックエンド(AWS)にアプリケーションプレーンのデプロイジョブの開始を非同期リクエストする
+   2. デプロイジョブの一連の処理は StepFunctions で実装する
+   3. アプリケーションプレーンのデプロイが完了したら、テナントの状態は`active`に更新され、テナント管理画面上にアプリケーションプレーンのアクセスURLが表示される
 
-2. サインアップが完了したら、非同期でテナント個別のアプリケーションプレーンのデプロイを実行する
-
-   1. 具体的には Cognito の`confirmSignUp`トリガーを用いてアプリケーションプレーンのデプロイジョブを非同期実行する
-   2. デプロイジョブは StepFunctions で実装する
-   3. アプリケーションプレーンのデプロイが完了したら、テナントの状態を`active`に更新する
-
-3. テナント所有者はコントロールプレーンと同じ認証情報で、デプロイが完了したアプリケーションプレーンにアクセス出来る
-
+3. テナント所有者はコントロールプレーンと同じ認証情報で、デプロイが完了したアプリケーションプレーンにアクセスする
    1. 具体的には、Cognito の`userMigration`機能を使用して、アプリケーションプレーンへの初回サインイン時に、コントロールプレーンの Cognito ユーザープールからユーザーアイデンティティをアプリケーションプレーンに移行(レプリケーションする)
 
 ![](/images/06/full-silo-onboarding-flow.drawio.png)
@@ -65,13 +125,13 @@ cdk deploy ...(省略)...
 
 - まずは DynamoDB に保管する為のテナントアイデンティティをモデリングします。
 
-```js: projects/control-plane/amplify/data/resource.ts
+```js: apps/control-plane/amplify/data/resource.ts
 const schema = a.schema({
   Tenant: a
     .model({
       id: a.id().required(),
       name: a.string().required(),
-      status: a.enum(["pending", "active", "inactive"]),
+      status: a.enum(["pending", "active", "inactive", "activating"]),
       url: a.url(),
     })
     .authorization((allow) => [
@@ -80,9 +140,10 @@ const schema = a.schema({
 });
 ```
 
-- 次に、ユーザーアイデンティティとテナントアイデンティティとを関連付けられるようユーザープールを設定します。具体的には、カスタム属性としてユーザーアイデンティティにテナント ID(及びテナント名) を設定出来るようにします。また、サインアップの過程で、ユーザ属性に設定されたテナント情報に基づき DynamoDB 上にテナントアイデンティティを作成するための Lambda 関数も用意しトリガーとして設定します。
+- 次に、ユーザーアイデンティティとテナントアイデンティティとを関連付けられるようユーザープールを設定します。具体的には、カスタム属性としてユーザーアイデンティティにテナント ID(及びテナント名) を設定出来るようにします。
+- また、サインアップの過程でユーザ属性に設定されたテナント情報に基づき DynamoDB 上にテナントアイデンティティを作成するための Lambda 関数も用意しトリガーとして設定します。
 
-```js: projects/control-plane/amplify/auth/resource.ts
+```js: apps/control-plane/amplify/auth/resource.ts
 export const auth = defineAuth({
   loginWith: {
     email: true,
@@ -103,7 +164,7 @@ export const auth = defineAuth({
 });
 ```
 
-```js: projects/control-plane/amplify/auth/pre-sign-up/handler.ts
+```js: apps/control-plane/amplify/auth/pre-sign-up/handler.ts
 /**
  * テナント所有者に対応するテナントアイデンティティを作成する
  * @param event
@@ -125,119 +186,127 @@ export const handler: PreSignUpTriggerHandler = async (event) => {
 
 - 最後に、サインアップの過程でテナント ID(及びテナント名) を上記の Lambda 関数に渡せるよう、サインアップの UI をカスタマイズします。
 
-```js: projects/control-plane/src/components/Authenticator.tsx
-  const services = {
-    /**
-     * サインアップ時にカスタムのユーザー属性としてテナント情報を渡す
-     * @param input
-     * @returns
-     */
-    handleSignUp: async (input: SignUpInput) => {
-      const userAttributes: SignUpUserAttributes = {
-        // テナントIDはUUIDを生成し、テナント名はユーザから入力してもらう
-        "custom:tenantId": uuidv4(),
-        "custom:tenantName":
-          input.options!.userAttributes[
-            SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME
-          ]!,
-        email: input.options!.userAttributes["email"]!,
-      };
-      console.log(input);
-      return signUp({
-        ...input,
-        options: {
-          ...input.options,
-          userAttributes: {
-            ...input.options?.userAttributes,
-            ...userAttributes,
-          },
-        },
-      });
+```js: apps/control-plane/app/models/authenticator.ts
+export const formFileds: AuthenticatorProps["formFields"] = {
+  signUp: {
+    [CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
+      label: "Tenant Name",
+      isRequired: true,
+      order: 1,
+      placeholder: "tenant-1",
     },
-  };
-  return (
-    <>
-      <AmplifyAuthenticator
-        formFields={{
-          // サインアップ時にテナント名をユーザーに入力してもらう
-          signUp: {
-            [SIGNUP_CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
-              label: "Tenant Name",
-              isRequired: true,
-              order: 1,
-            },
-          },
+  },
+};
+
+export const services: AuthContext["services"] = {
+  /**
+   * テナント管理者のサインアップ時にカスタムユーザー属性としてテナント情報を渡す
+   * @param input
+   */
+  handleSignUp: async (input: SignUpInput) => {
+    console.log(input);
+    const requiredUserAttributes: SignupUserAttributes = {
+      "custom:tenantId": uuidv4(),
+      "custom:tenantName":
+        input.options!.userAttributes[CUSTOM_USER_ATTRIBUTES.TENANT_NAME]!,
+      email: input.options?.userAttributes["email"]!,
+    };
+
+    console.log(requiredUserAttributes);
+    return signUp({
+      ...input,
+      options: {
+        ...input.options,
+        userAttributes: {
+          ...input.options?.userAttributes,
+          ...requiredUserAttributes,
+        },
+      },
+    });
+  },
+};
+```
+
+```js: apps/control-plane/app/root.tsx
+      <Authenticator services={services} formFields={formFileds}>
+        {({ user }) => {
+          if (user === undefined) {
+            return <></>;
+          }
+          return (
+            <Outlet
+              context={{authUser: user,}}
+            />
+          );
         }}
-        services={services}
-      >
-        {props.children}
-      </AmplifyAuthenticator>
-    </>
-  );
+      </Authenticator>
 ```
 
 - これによって、以下のようなサインアップの UI が作成されます。
 
 ![](/images/06/full-silo-signup-with-tenant.png)
 
-- 実際にサインアップを行うとその過程でトリガー関数によって DynamoDB 上にテナントアイデンティティが作成されること、及び、サインアップ成功後にフロントエンドからそのテナントアイデンティティを取得出来るところまで確認出来ました。
+- 実際にサインアップを行うとその過程でトリガー関数によって DynamoDB 上にテナントアイデンティティが作成されること、及び、サインアップ成功後にテナント管理画面でテナントアイデンティティを表示出来る点まで確認出来ました。
 
 ![](/images/06/full-silo-after-signup.png)
 
 `1.`(サインアップ及びテナントアイデンティティの作成)まで完了したので、次に`2.`(アプリケーションプレーンのデプロイジョブの実行)の実装に移ります
 
-- サインアップ成功後(`ConfirmSignUp`)にトリガーされ、アプリケーションプレーンデプロイジョブ(ステートマシン)を実行するための Lambda 関数を用意します。
+- テナント管理画面上のアクティベーションボタンをクリックすることで呼び出され、アプリケーションプレーンデプロイジョブ(ステートマシン)を実行するための Lambda 関数を用意します。
   - この時、AWS SDK を使用してステートマシンの ARN をパラメータストアから取得してステートマシンを実行します
   - また、ステートマシンの ARN が格納されたパラメータストア上のパラメータ名は環境変数に設定しておきます。
   - そのため、ロジックの実装と共に、必要な IAM 権限及び環境変数も合わせて設定します
 
-```js: projects/control-plane/amplify/auth/confirm-sign-up/handler.ts
-
+```js: apps/control-plane/amplify/custom/application-plane-deployment/invoke-deployment/handler.ts
 /**
  * テナント専用のアプリケーションプレーンのデプロイジョブを実行する
  * @param event
  */
-export const handler: PostConfirmationTriggerHandler = async (event) => {
-  console.log(event);
-  console.log("パラメータストアからステートマシンのARNを取得する");
-  const ssmRes = await ssmClient.send(
-    new GetParameterCommand({
-      Name: paramNameForSFNArn,
-    })
-  );
-  console.log(ssmRes);
-  if (ssmRes.Parameter === undefined || ssmRes.Parameter.Value === undefined) {
-    throw Error(`パラメータ[${paramNameForSFNArn}]からARNの取得に失敗`);
-  }
-  const arn = ssmRes.Parameter.Value;
+export const handler: Schema["invokeApplicationPlaneDeployment"]["functionHandler"] =
+  async (event) => {
+    console.log(event);
+    console.log("パラメータストアからステートマシンのARNを取得する");
+    const ssmRes = await ssmClient.send(
+      new GetParameterCommand({
+        Name: paramNameForSFNArn,
+      })
+    );
+    console.log(ssmRes);
+    if (
+      ssmRes.Parameter === undefined ||
+      ssmRes.Parameter.Value === undefined
+    ) {
+      throw Error(`パラメータ[${paramNameForSFNArn}]からARNの取得に失敗`);
+    }
+    const arn = ssmRes.Parameter.Value;
 
-  console.log("アプリケーションプレーンのデプロイジョブを非同期実行");
-  const res = await sfnClient.send(
-    new StartExecutionCommand({
-      stateMachineArn: arn,
-      input: JSON.stringify({
-        tenantId: event.request.userAttributes["custom:tenantId"],
-      }),
-    })
-  );
-  console.log(res);
-  return event;
-};
+    console.log("アプリケーションプレーンのデプロイジョブを非同期実行");
+    const res = await sfnClient.send(
+      new StartExecutionCommand({
+        stateMachineArn: arn,
+        input: JSON.stringify({
+          tenantId: event.arguments.tenantId,
+        }),
+      })
+    );
+    console.log(res);
+    return res.executionArn!;
+  };
 
 ```
 
-```js: projects/control-plane/amplify/backend.ts
+```js: apps/control-plane/amplify/backend.ts
 const backend = defineBackend({
   auth,
   data,
   // 必要なIAM権限を下のコードで別途追加出来るよう、明示的にバックエンドに追加する
-  confirmSignUp,
+  invokeDeploymentFunction,
 });
 
 ...(省略)...
 
 // アプリケーションプレーンのデプロイに必要な権限をconfirmSignUpトリガー関数に追加する
-backend.confirmSignUp.resources.lambda.addToRolePolicy(
+backend.invokeDeploymentFunction.resources.lambda.addToRolePolicy(
   new iam.PolicyStatement({
     effect: iam.Effect.ALLOW,
     actions: ["ssm:GetParameter", "states:StartExecution"],
@@ -245,7 +314,8 @@ backend.confirmSignUp.resources.lambda.addToRolePolicy(
   })
 );
 // ステートマシンのARNを参照するためのパラメータ名を環境変数に設定する
-const cfnFunction = backend.confirmSignUp.resources.cfnResources.cfnFunction;
+const cfnFunction =
+  backend.invokeDeploymentFunction.resources.cfnResources.cfnFunction;
 cfnFunction.environment = {
   variables: {
     [PARAM_NAME_FOR_SFN_ARN]: applicationPlaneDeployment.arnParam.parameterName,
@@ -256,7 +326,7 @@ cfnFunction.environment = {
 
 - 次に、アプリケーションプレーンの一連のデプロイジョブを実行するためのステートマシン及び関連リソース(サービスロールやステートマシンから呼び出される Lambda 関数)をカスタムリソースとして定義しコントロールプレーンのバックエンドリソースとして追加します。
 
-```js projects/control-plane/amplify/backend.ts
+```js apps/control-plane/amplify/backend.ts
 const backend = defineBackend({
   auth,
   data,
@@ -276,6 +346,7 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
       "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
     branchName: "main",
     updateTenantFunction: backend.updateTenantFunction.resources.lambda,
+    controlPlaneAppName: "full-stack-silo-deploy-model-control-plane",
   }
 );
 ```
@@ -291,7 +362,7 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
 
 - 最後に、テナント所有者がアプリケーションプレーンに初回サインインした際に、コントロールプレーン側のユーザープール上のテナント所有者のユーザーアイデンティティをアプリケーションプレーン側に移行するためのトリガーを実装します。これによって、再度サインアップを実施することなく、コントロールプレーン側と同じ認証情報(パスワード)でアプリケーションプレーンにもテナント所有者がサインインすることが出来るようになります。
 
-```js projects/intersection/amplify/auth/user-migration/handler.ts
+```js apps/application-plane/amplify/auth/user-migration/handler.ts
 export const handler = async (
   event: UserMigrationAuthenticationTriggerEvent
 ): Promise<UserMigrationAuthenticationTriggerEvent> => {
@@ -346,7 +417,7 @@ export const handler = async (
 };
 ```
 
-```js: projects/intersection/amplify/backend.ts
+```js apps/application-plane/amplify/backend.ts
 const backend = defineBackend({
   auth,
   userMigration,
@@ -380,142 +451,21 @@ backend.userMigration.resources.lambda.addToRolePolicy(
 
 ![](/images/06/full-silo-control-plane-signup.png)
 
-- アプリケーションプレーンへのサインインに成功
+- アプリケーションプレーンへのサインイン(ユーザーの移行含む)に成功
 
-![](/images/06/full-silo-application-plane-signin.png)
-
-- 初回サインイン時に、コントロールプレーン側のユーザープール上のユーザーアイデンティティが、アプリケーションプレーン側のユーザープールに移行されていることも確認
-
-![](/images/06/full-silo-migrated-user.png)
-
-## 混合モードのデプロイモデル
-
-ここでは下図のように、アプリケーションプレーン内の S3 バケットのみサイロデプロイモデルとして運用し、残りのリソース(Amplify のホスティング及び Cognito ユーザープール)はプールデプロイモデルとして運用する混合デプロイモデルを実装したいと思います。
-
-![](/images/06/mix-resource-separation.drawio.png)
-
-:::message alert
-2025 年 6 月 1 日時点の Amplify では、一つの Amplify アプリケーション内で複数の`data`リソース(DynamoDB,AppSync)や`Auth`リソース(Cognito ユーザープール)を定義し使用する機能が提供されていません。そのため、それらのリソースを個別にサイロデプロイモデルとして運用したい場合は、Amplify に依らないフレームワークやアーキテクチャを選定する必要があると言えます。
-本記事ではあくまで、Amplify のフレームワークの中でデプロイモデルを使い分ける方法を実演していくため、ここでは一つの Amplify アプリケーション内で複数種類の定義が可能な、`storage`リソース(S3 バケット)を実装例として使用します。
-:::
-
-### アプリケーションプレーンの実装
-
-#### ベースライン環境のデプロイ
-
-- ベースライン環境として、コントロールプレーンとアプリケーションプレーン(プールリソースのみ)をそれぞれ個別の Amplify アプリケーションとしてデプロイします。
-
-#### オンボーディング機能の実装
-
-大枠は[フルスタックのサイロデプロイモデルで実装したオンボーディング機能](#オンボーディング機能の実装)を踏襲しつつ、以下のようなオンボーディング機能を実装していきます。
-
-1. テナント所有者のサインアップ(≒ ユーザーアイデンティティの作成)の過程で、テナントアイデンティティも併せて作成する
-
-   1. 具体的には Cognito の`preSignUp`トリガーを用いてテナントアイデンティティを DynamoDB に作成し、Cognito ユーザープールのユーザーアイデンティティと関連づける
-   2. テナント所有者のサインアップ完了直後のテナントの初期状態は`pending`とする
-
-2. サインアップが完了したら、非同期でテナント個別のサイロリソース(今回は`storage`リソース(S3 バケット))アプリケーションプレーンにデプロイする
-
-   1. 具体的には Cognito の`confirmSignUp`トリガーを用いてアプリケーションプレーン内のサイロリソースのデプロイジョブを非同期実行する
-   2. デプロイジョブは StepFunctions で実装する
-   3. アプリケーションプレーンのサイロリソースのデプロイが完了したら、テナントの状態を`active`に更新する
-
-3. テナントの状態が`active`になったら、アプリケーションプレーンにアクセスして、テナント個別のサイロリソース(S3 バケット)にアクセス出来る
-
-   1. 具体的には、Cognito の`userMigration`機能を使用して、アプリケーションプレーンへの初回サインイン時に、コントロールプレーンの Cognito ユーザープールからユーザーアイデンティティをアプリケーションプレーンに移行(レプリケーションする)
-   2. ユーザーアイデンティティに紐づくテナントアイデンティティに基づいで、データを取得すべき S3 バケットを動的に決定してデータを取得する
-
-![](/images/06/mix-onboarding-flow.drawio.png)
-
-- `1.`はフルスタックのサイロデプロイモデルで実装した内容と同じなので割愛します。
-
-- `2.`で実行するステートマシンの具体的なデプロイジョブの中身は以下の通りです。
-
-  - アプリケーションプレーン用の作成済みの Amplify アプリケーションでデプロイジョブを手動実行する
-    - デプロイジョブの中で、コントロールプレーンの DynamoDB に格納されているテナント情報のリストを取得する
-    - 取得したテナントそれぞれについてサイロリソースをデプロイする。
-  - デプロイが完了するまで待機する
-  - DB 上のテナント情報を更新する(ステータスを`active`に更新する)
-
-- アプリケーションプレーン用の`data`リソース及びバックエンドを以下のように定義することで、デプロイ時にテナント情報のリストをコントロールプレーン上の DynamoDB から動的に取得し、テナント個別に`data`リソースを動的にデプロイ出来るようにします。
-
-```js: projects/intersection/amplify/storage/resource.ts
-import { generateClient } from "aws-amplify/data";
-import { type Schema } from "../../../control-plane/amplify/data/resource";
-import { defineStorage } from "@aws-amplify/backend";
-
-// コントロールプレーン上のDynamoDBにアクセスするためのGraphQLクライアントを構成
-import { Amplify } from "aws-amplify";
-import sharedOutputs from "../../shared/amplify_outputs.json";
-Amplify.configure(sharedOutputs);
-const client = generateClient<Schema>();
-
-export const storages: {
-  [tenantName: string]: ReturnType<typeof defineStorage>;
-} = {
-  // Amplifyの仕様上デフォルトのストレージを設定する必要がある(アクセスは許可しない)
-  defaultStorage: defineStorage({
-    name: "defaultStorage",
-    isDefault: true,
-    access: (allow) => ({}),
-  }),
-};
-console.log("コントロールプレーンからテナントのリストを取得");
-const { data, errors } = await client.models.Tenant.list();
-if (errors !== undefined) {
-  console.error("コントロールプレーンからテナントのリストの取得に失敗");
-  console.error(errors);
-}
-console.log("取得に成功したコントロールプレーン : ");
-console.log(data);
-data.forEach((tenant) => {
-  storages[`storage${tenant.id}`] = defineStorage({
-    name: `storage-${tenant.id}`,
-    access: (allow) => ({
-      "data/*": [allow.authenticated.to(["list", "get", "write"])],
-    }),
-  });
-});
-
-```
-
-```js:　projects/intersection/amplify/backend.ts
-import { storages } from "./storage/resource";
-
-const backend = defineBackend({
-  auth,
-  userMigration,
-  ...storages,
-});
-```
-
-- コントロールプレーンに 2 つのアカウントでサインアップして、テナントリソース 2 つ分のオンボーディングプロセスを実行させ、結果を確認します。
-
-- コントロールプレーンにサインアップすると、StepFunctions によってオンボーディングプロセスが実行され、サイロリソースのデプロイとテナント情報の更新が実行されます。
-
-![](/images/06/mix-onboarding-process-result.png)
-
-- テストテナント ① としてアプリケーションプレーンにサインインし、適当にファイルを幾つかアップロードします。
-
-![](/images/06/mix-test-tenant-1-app.png)
-
-- 次にテストテナント ② としてアプリケーションプレーンにサインインすると、テストテナント ① とは別の(テナントごとに個別の)S3 バケットを使用していることを確認出来ました。
-
-![](/images/06/mix-test-tenant-2-app.png)
+![](/images/06/full-silo-application-plane-signin.png)TODO:
 
 ---
 
 ## おわりに
 
-ここでは、フルスタックのサイロデプロイモデルと混合モードのデプロイモデルの 2 種類のオンボーディングプロセスの一例を、Amplify を活用して実装しました。
-Amplify Gen2 はこの取り組みを通して始めて利用してみましたが、CDK(バックエンド AWS リソース)とのシームレスな統合やバックエンド<->フロントエンド間でスキーマ/型情報の共有が可能で、非常に効率的にオンボーディングプロセスを実装出来たという実感があります。一方で、Amplify を使用することによって、デプロイモデルの選択に制約がもたらされる一例(サービスクォートの存在や、サイロ化可能なリソースの種類)を確認することも出来ました。
+ここでは、フルスタックのサイロデプロイモデルのオンボーディングプロセスの一例を、Amplify を活用して実装しました。
+Amplify Gen2 はこの取り組みを通して始めて利用してみましたが、CDK(バックエンド AWS リソース)とのシームレスな統合やバックエンド<->フロントエンド間でスキーマ/型情報の共有が可能で、非常に効率的にオンボーディングプロセスを実装出来たという実感があります。一方で、Amplify を使用することによって、デプロイモデルの選択に制約がもたらされる一例(サービスクォートの存在等)や、Amplifyを使用したアプリケーションプレーンの動的なデプロイにはそれなりに時間と複雑さが伴うという点も確認することが出来ました。
+
+---
 
 ### 参考資料
 
 - [Amplify Documentation](https://docs.amplify.aws/)
 - [Amplify UI Authenticator](https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls)
 - [AWS Amplify で認証中のユーザー情報を取得・表示してみた](https://dev.classmethod.jp/articles/amplify-auth-get-user-info/)
-
-```
-
-```
