@@ -27,7 +27,7 @@ applications:
           commands:
             - npm ci --cache .npm --prefer-offlinei -w ${W}
             # ampxをインストールする手間を省くためにデフォルトインストールされたampxを使用する
-            - cd ${W} && ampx  pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+            - cd ${W} && npx ampx  pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
   - appRoot: apps/application-plane
     env:
       variables:
@@ -73,4 +73,4 @@ applications:
 
             # 自分自身のリソースをデプロイする
             - npm ci --cache .npm --prefer-offlinei -w ${W}
-            - cd ${W} && ampx  pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+            - cd ${W} && npx ampx  pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
