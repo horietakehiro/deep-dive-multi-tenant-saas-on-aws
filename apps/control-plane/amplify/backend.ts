@@ -6,6 +6,7 @@ import { updateTenantFunction } from "./custom/application-plane-deployment/upda
 import { ApplicationPlaneDeployment } from "./custom/application-plane-deployment/resource";
 import { invokeDeploymentFunction } from "./custom/application-plane-deployment/invoke-deployment/resource";
 import { PARAM_NAME_FOR_SFN_ARN } from "./custom/application-plane-deployment/invoke-deployment/handler";
+import { preSignUp } from "./auth/pre-sign-up/resource";
 /**
  * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
  */
@@ -14,6 +15,7 @@ const backend = defineBackend({
   data,
   invokeDeploymentFunction,
   updateTenantFunction,
+  preSignUp,
 });
 
 const { cfnUserPoolClient } = backend.auth.resources.cfnResources;

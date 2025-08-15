@@ -2,6 +2,7 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { status } from "../../app/models/tenant";
 import { invokeDeploymentFunction } from "../custom/application-plane-deployment/invoke-deployment/resource";
 import { updateTenantFunction } from "../custom/application-plane-deployment/update-tenant/resource";
+import { preSignUp } from "../auth/pre-sign-up/resource";
 const schema = a
   .schema({
     Tenant: a
@@ -22,7 +23,10 @@ const schema = a
       .authorization((allow) => [allow.publicApiKey(), allow.authenticated()])
       .handler(a.handler.function(invokeDeploymentFunction)),
   })
-  .authorization((allow) => [allow.resource(updateTenantFunction)]);
+  .authorization((allow) => [
+    allow.resource(updateTenantFunction),
+    allow.resource(preSignUp),
+  ]);
 
 export type Schema = ClientSchema<typeof schema>;
 
