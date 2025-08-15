@@ -139,7 +139,7 @@ export class ApplicationPlaneDeployment extends Construct {
     createAppFunction.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ["amplify:CreateApp"],
+        actions: ["amplify:CreateApp", "amplify:ListApps"],
         resources: ["*"],
       })
     );
