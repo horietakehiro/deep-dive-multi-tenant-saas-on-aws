@@ -3,7 +3,7 @@ title: "【第06回】Deep Dive マルチテナントSaaS on AWS - 第4章幕間
 emoji: "🤿"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas"]
-published: false
+published: true
 ---
 
 ## はじめに
@@ -326,7 +326,7 @@ cfnFunction.environment = {
 
 - 次に、アプリケーションプレーンの一連のデプロイジョブを実行するためのステートマシン及び関連リソース(サービスロールやステートマシンから呼び出される Lambda 関数)をカスタムリソースとして定義しコントロールプレーンのバックエンドリソースとして追加します。
 
-```js apps/control-plane/amplify/backend.ts
+```js: apps/control-plane/amplify/backend.ts
 const backend = defineBackend({
   auth,
   data,
@@ -362,7 +362,7 @@ const applicationPlaneDeployment = new ApplicationPlaneDeployment(
 
 - 最後に、テナント所有者がアプリケーションプレーンに初回サインインした際に、コントロールプレーン側のユーザープール上のテナント所有者のユーザーアイデンティティをアプリケーションプレーン側に移行するためのトリガーを実装します。これによって、再度サインアップを実施することなく、コントロールプレーン側と同じ認証情報(パスワード)でアプリケーションプレーンにもテナント所有者がサインインすることが出来るようになります。
 
-```js apps/application-plane/amplify/auth/user-migration/handler.ts
+```js: apps/application-plane/amplify/auth/user-migration/handler.ts
 export const handler = async (
   event: UserMigrationAuthenticationTriggerEvent
 ): Promise<UserMigrationAuthenticationTriggerEvent> => {
@@ -417,7 +417,7 @@ export const handler = async (
 };
 ```
 
-```js apps/application-plane/amplify/backend.ts
+```js: apps/application-plane/amplify/backend.ts
 const backend = defineBackend({
   auth,
   userMigration,
@@ -453,7 +453,7 @@ backend.userMigration.resources.lambda.addToRolePolicy(
 
 - アプリケーションプレーンへのサインイン(ユーザーの移行含む)に成功
 
-![](/images/06/full-silo-application-plane-signin.png)TODO:
+![](/images/06/full-silo-application-plane-signin.png)
 
 ---
 
@@ -469,3 +469,5 @@ Amplify Gen2 はこの取り組みを通して始めて利用してみました�
 - [Amplify Documentation](https://docs.amplify.aws/)
 - [Amplify UI Authenticator](https://ui.docs.amplify.aws/react/connected-components/authenticator/customization#override-function-calls)
 - [AWS Amplify で認証中のユーザー情報を取得・表示してみた](https://dev.classmethod.jp/articles/amplify-auth-get-user-info/)
+- [React Router](https://reactrouter.com/home#react-router-home)
+- [React components that implement Material Design](https://mui.com/material-ui/)
