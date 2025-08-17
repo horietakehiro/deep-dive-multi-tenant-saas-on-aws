@@ -5,7 +5,7 @@ import { Outlet, useOutletContext } from "react-router";
 import React from "react";
 import { fetchUserAttributes, signOut } from "aws-amplify/auth";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
-import type { Route } from "../+types/root";
+import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../models/context";
 import { getTenantFromUserAttributes } from "../../../control-plane/app/models/tenant";
 import type { CustomUserAttributes } from "apps/control-plane/app/models/admin-user";

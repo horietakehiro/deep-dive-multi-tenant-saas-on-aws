@@ -18,8 +18,15 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "composite": true
   },
   // "include": ["**/*.ts", "**/*.tsx", "**/amplify_outputs.json"],
-  "exclude": ["**/build"]
+  "exclude": ["**/build"],
+  "include": [
+    "**/*",
+    "**/.server/**/*",
+    "**/.client/**/*",
+    "**/.react-router/types/**/*"
+  ]
 }

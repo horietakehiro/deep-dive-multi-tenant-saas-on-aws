@@ -2,6 +2,8 @@
   // TODO:extendsに配列を設定するとts-node使用時にエラーとなるので、
   // ひとまずは文字列で継承対象のtsconfigファイルを指定する
   "extends": "../tsconfig.base.json",
-  "compilerOptions": {},
+  "compilerOptions": {
+    "composite": true
+  },
   "exclude": ["../node_modules", "./cdk.out"]
 }

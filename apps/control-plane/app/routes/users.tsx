@@ -43,6 +43,7 @@ export const usersDataSourceFactory: (
     getMany: async (params) => {
       // TODO: filter and sort and pagination
       const res = await client.listUsers();
+      console.log(res);
       if (res.errors !== undefined || res.data === null) {
         throw Error("list users failed");
       }

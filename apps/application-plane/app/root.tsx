@@ -19,8 +19,7 @@ import type { Schema as cpSchema } from "../../control-plane/amplify/data/resour
 
 import { Authenticator } from "@aws-amplify/ui-react";
 
-import type { RootContext as cpRootContext } from "../../control-plane/app/models/context";
-import type { RootContext } from "./models/context";
+import type { RootContext, CPRootContext } from "./models/context";
 import { generateClient } from "aws-amplify/data";
 import type { Route } from "./+types/root";
 // import type { Schema } from "../amplify/data/resource";
@@ -31,7 +30,7 @@ Amplify.configure(outputs);
 
 export default function App() {
   const [tenant, setTenant] =
-    React.useState<cpRootContext["tenant"]>(undefined);
+    React.useState<CPRootContext["tenant"]>(undefined);
   return (
     <React.StrictMode>
       <Authenticator hideSignUp services={services}>
