@@ -48,6 +48,12 @@ export default function App() {
                       client.queries.invokeApplicationPlaneDeployment,
                     listTenantStatuses: () =>
                       client.enums.TenantStatus.values(),
+
+                    getUser: client.models.User.get,
+                    updateUser: client.models.User.update,
+                    deleteUser: client.models.User.delete,
+                    listUsers: client.models.User.list,
+                    createUser: client.models.User.create,
                   },
                 } satisfies RootContext
               }

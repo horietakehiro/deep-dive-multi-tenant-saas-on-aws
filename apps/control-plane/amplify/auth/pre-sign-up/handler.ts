@@ -5,10 +5,11 @@ import { Amplify } from "aws-amplify";
 import type { SignupUserAttributes } from "../../../app/models/admin-user";
 import { getAmplifyDataClientConfig } from "@aws-amplify/backend/function/runtime";
 import { env } from "../../../.amplify/generated/env/pre-sign-up";
-import type { F } from "../../../app/utils";
+import type { AmplifyFunction } from "../../../app/utils";
 export interface Client {
-  createTenant: F<
-    ReturnType<typeof generateClient<Schema>>["models"]["Tenant"]["create"]
+  createTenant: AmplifyFunction<
+    ReturnType<typeof generateClient<Schema>>["models"]["Tenant"]["create"],
+    Schema["Tenant"]["type"]
   >;
 }
 export const handlerFactory = (

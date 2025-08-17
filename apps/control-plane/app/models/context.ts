@@ -1,27 +1,41 @@
 import type { Schema } from "./../../amplify/data/resource";
 import type { AuthUser } from "aws-amplify/auth";
 import { generateClient } from "aws-amplify/api";
-import type { F } from "../utils";
+import type { AmplifyFunction } from "../utils";
 
 type C = ReturnType<typeof generateClient<Schema>>;
 export type AmplifyClient = {
-  getTenant: F<C["models"]["Tenant"]["get"]>;
-  updateTenant: F<C["models"]["Tenant"]["update"]>;
-  activateTenant: F<C["queries"]["invokeApplicationPlaneDeployment"]>;
-  listTenantStatuses: F<C["enums"]["TenantStatus"]["values"]>;
-  // getTenant: <T extends AmplifyClient["models"]["Tenant"]["get"]>(
-  //   ...args: Parameters<T>
-  // ) => ReturnType<T>;
+  getTenant: AmplifyFunction<
+    C["models"]["Tenant"]["get"],
+    Schema["Tenant"]["type"]
+  >;
+  updateTenant: AmplifyFunction<
+    C["models"]["Tenant"]["update"],
+    Schema["Tenant"]["type"]
+  >;
+  activateTenant: AmplifyFunction<
+    C["queries"]["invokeApplicationPlaneDeployment"],
+    Schema["invokeApplicationPlaneDeployment"]["type"]
+  >;
+  listTenantStatuses: C["enums"]["TenantStatus"]["values"];
 
-  // updateTenant: <T extends AmplifyClient["models"]["Tenant"]["update"]>(
-  //   ...args: Parameters<T>
-  // ) => ReturnType<T>;
-
-  // activateTenant: <
-  //   T extends AmplifyClient["queries"]["invokeApplicationPlaneDeployment"],
-  // >(
-  //   ...args: Parameters<T>
-  // ) => ReturnType<T>;
+  getUser: AmplifyFunction<C["models"]["User"]["get"], Schema["User"]["type"]>;
+  createUser: AmplifyFunction<
+    C["models"]["User"]["create"],
+    Schema["User"]["type"]
+  >;
+  deleteUser: AmplifyFunction<
+    C["models"]["User"]["delete"],
+    Schema["User"]["type"]
+  >;
+  updateUser: AmplifyFunction<
+    C["models"]["User"]["update"],
+    Schema["User"]["type"]
+  >;
+  listUsers: AmplifyFunction<
+    C["models"]["User"]["list"],
+    Schema["User"]["type"][]
+  >;
 };
 export interface RootContext {
   authUser: AuthUser;

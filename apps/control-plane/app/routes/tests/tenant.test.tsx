@@ -35,6 +35,15 @@ describe("テナント管理画面", () => {
             status: "pending",
             createdAt: "",
             updatedAt: "",
+            users: () => {
+              throw Error("このテストでは不要");
+            },
+            appointments: () => {
+              throw Error("このテストでは不要");
+            },
+            spots: () => {
+              throw Error("このテストでは不要");
+            },
           });
           mockUseOutletContext.mockReturnValue({
             tenant,
@@ -81,6 +90,15 @@ describe("テナント管理画面", () => {
           status: "pending",
           createdAt: "",
           updatedAt: "",
+          users: () => {
+            throw Error("このテストでは不要");
+          },
+          appointments: () => {
+            throw Error("このテストでは不要");
+          },
+          spots: () => {
+            throw Error("このテストでは不要");
+          },
         });
         mockUseOutletContext.mockReturnValue({
           tenant,
@@ -132,6 +150,15 @@ describe("テナント管理画面", () => {
             url: null,
             createdAt: "",
             updatedAt: "",
+            users: () => {
+              throw Error("このテストでは不要");
+            },
+            appointments: () => {
+              throw Error("このテストでは不要");
+            },
+            spots: () => {
+              throw Error("このテストでは不要");
+            },
           });
           mockUseOutletContext.mockReturnValue({
             tenant,
@@ -147,6 +174,15 @@ describe("テナント管理画面", () => {
                     url: null,
                     createdAt: "",
                     updatedAt: "",
+                    users: () => {
+                      throw Error("このテストでは不要");
+                    },
+                    appointments: () => {
+                      throw Error("このテストでは不要");
+                    },
+                    spots: () => {
+                      throw Error("このテストでは不要");
+                    },
                   },
                 });
               },

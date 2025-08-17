@@ -10,6 +10,6 @@ export default [
     index("./routes/home.tsx"),
     route("tenant", "./routes/tenant.tsx"),
     route("tenant/edit", "./routes/tenant-edit.tsx"),
-    // route("admin-users/:userId", "./routes/admin-users.tsx"),
+    route("users/*", "./routes/users.tsx"),
   ]),
 ] satisfies RouteConfig;

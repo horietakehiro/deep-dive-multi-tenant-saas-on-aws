@@ -17,7 +17,6 @@ export const tenantDataSourceFactory: (
   Required<
     Pick<DataSource<NonNullable<Context["tenant"]>>, "getOne" | "updateOne">
   > = (client, tenant, setTenant) => {
-  console.log(client.listTenantStatuses());
   return {
     fields: [
       {
@@ -116,7 +115,7 @@ export default function Tenant() {
               });
               return;
             }
-            setTenant({ ...updateTenantResponse.data });
+            setTenant({ ...(updateTenantResponse.data as typeof tenant) });
             notifications.show("Tenant activation starting...", {
               autoHideDuration: 3000,
               severity: "success",

@@ -11,8 +11,17 @@ describe("サインアップトリガー", () => {
           name: props.name!,
           status: "pending",
           url: null,
-          createdAt: "",
-          updatedAt: "",
+          // createdAt: "",
+          // updatedAt: "",
+          // users: () => {
+          //   throw Error("このテストでは不要");
+          // },
+          // appointments: () => {
+          //   throw Error("このテストでは不要");
+          // },
+          // spots: () => {
+          //   throw Error("このテストでは不要");
+          // },
         },
       });
     });
