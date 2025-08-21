@@ -1,6 +1,40 @@
 import type { AuthContext } from "@aws-amplify/ui";
 
-import { signIn } from "aws-amplify/auth";
+import {
+  signIn as amplifySignIn,
+  getCurrentUser as amplifyGetCurrentUser,
+} from "aws-amplify/auth";
+const skipAuth: string | undefined = import.meta.env.VITE_SKIP_AUTH;
+console.log(skipAuth);
+const signInFactory = (): typeof amplifySignIn => {
+  if (skipAuth !== undefined) {
+    return () => {
+      return Promise.resolve({
+        isSignedIn: true,
+        nextStep: {
+          signInStep: "DONE",
+        },
+      });
+    };
+  }
+  return amplifySignIn;
+};
+const getCurrentUserFactory = (): typeof amplifyGetCurrentUser => {
+  if (skipAuth !== undefined) {
+    return () => {
+      return Promise.resolve({
+        userId: "dummy-id",
+        username: "dummy-name",
+        signInDetails: {
+          authFlowType: "USER_SRP_AUTH",
+          loginId: "dummy@example.com",
+        },
+      });
+    };
+  }
+};
+const signIn = signInFactory();
+const getCurrentUser = getCurrentUserFactory();
 
 export const services: AuthContext["services"] = {
   /**
@@ -38,4 +72,5 @@ export const services: AuthContext["services"] = {
       throw error;
     }
   },
+  getCurrentUser: getCurrentUser,
 };
