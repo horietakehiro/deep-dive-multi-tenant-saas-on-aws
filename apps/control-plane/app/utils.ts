@@ -7,7 +7,7 @@ import type { GraphQLFormattedError } from "@aws-amplify/data-schema/runtime";
 export type AmplifyFunction<Function extends (...args: any) => any, T> = (
   ...args: Parameters<Function>
 ) => Promise<{
-  data: Partial<T> | null;
+  data: T | null;
   errors?: GraphQLFormattedError[];
 }>;
 // export type F<T extends (...args: any) => any> = (

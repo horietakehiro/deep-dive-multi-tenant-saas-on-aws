@@ -3,11 +3,13 @@ import type { AuthContext } from "@aws-amplify/ui";
 import {
   signIn as amplifySignIn,
   getCurrentUser as amplifyGetCurrentUser,
+  fetchUserAttributes as amplifyFetchUserAttributes,
+  signOut as amplifySignOut,
 } from "aws-amplify/auth";
-const skipAuth: string | undefined = import.meta.env.VITE_SKIP_AUTH;
-console.log(skipAuth);
-const signInFactory = (): typeof amplifySignIn => {
-  if (skipAuth !== undefined) {
+import { config, type Config } from "./config";
+import type { CustomUserAttributes } from "../../../control-plane/app/models/admin-user";
+const signInFactory = (config: Config): typeof amplifySignIn => {
+  if (config.noAmplify) {
     return () => {
       return Promise.resolve({
         isSignedIn: true,
@@ -19,8 +21,10 @@ const signInFactory = (): typeof amplifySignIn => {
   }
   return amplifySignIn;
 };
-const getCurrentUserFactory = (): typeof amplifyGetCurrentUser => {
-  if (skipAuth !== undefined) {
+const getCurrentUserFactory = (
+  config: Config
+): typeof amplifyGetCurrentUser => {
+  if (config.noAmplify) {
     return () => {
       return Promise.resolve({
         userId: "dummy-id",
@@ -32,10 +36,10 @@ const getCurrentUserFactory = (): typeof amplifyGetCurrentUser => {
       });
     };
   }
+  return amplifyGetCurrentUser;
 };
-const signIn = signInFactory();
-const getCurrentUser = getCurrentUserFactory();
-
+const signIn = signInFactory(config);
+const getCurrentUser = getCurrentUserFactory(config);
 export const services: AuthContext["services"] = {
   /**
    * テナント管理者がアプリケーションに初回ログインする際にコントロールプレーン側のユーザープール
@@ -74,3 +78,28 @@ export const services: AuthContext["services"] = {
   },
   getCurrentUser: getCurrentUser,
 };
+
+const fetchUserAttributeFactory = (
+  config: Config
+): typeof amplifyFetchUserAttributes => {
+  if (config.noAmplify === undefined) {
+    return amplifyFetchUserAttributes;
+  }
+  return () => {
+    return Promise.resolve({
+      "custom:tenantId": "00000000-0000-0000-0000-000000000000",
+      "custom:tenantName": "dummy-tenant",
+    } satisfies CustomUserAttributes);
+  };
+};
+const signOutFactory = (config: Config): typeof amplifySignOut => {
+  if (config.noAmplify === undefined) {
+    return amplifySignOut;
+  }
+  return (input) => {
+    console.debug(input);
+    return Promise.resolve();
+  };
+};
+export const fetchUserAttributes = fetchUserAttributeFactory(config);
+export const signOut = signOutFactory(config);

@@ -5,7 +5,7 @@ import { signUp, type SignUpInput } from "aws-amplify/auth";
 import {
   CUSTOM_USER_ATTRIBUTES,
   type SignupUserAttributes,
-} from "./admin-user";
+} from "./admin-user.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const formFileds: AuthenticatorProps["formFields"] = {

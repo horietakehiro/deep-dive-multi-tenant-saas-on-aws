@@ -1,7 +1,7 @@
 import { type DataSource, Crud } from "@toolpad/core/Crud";
-import type { AmplifyClient } from "../models/context";
-import type { Schema } from "../..//amplify/data/resource";
 import { useOutletContext } from "react-router";
+import type { AmplifyClient } from "../models/data";
+import type { Schema } from "../../amplify/data/resource";
 
 type User = Schema["User"]["type"];
 export type Context = {

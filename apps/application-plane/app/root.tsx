@@ -12,19 +12,13 @@ import "@aws-amplify/ui-react/styles.css";
 import "./styles/app.css";
 import "./styles/amplify.css";
 
-import { Amplify, type ResourcesConfig } from "aws-amplify";
-import outputs from "../amplify_outputs.json";
-import cpOutputs from "../../control-plane/amplify_outputs.json";
-import type { Schema as cpSchema } from "../../control-plane/amplify/data/resource";
-
 import { Authenticator } from "@aws-amplify/ui-react";
+import { client } from "./models/data";
 
 import type { RootContext, CPRootContext } from "./models/context";
-import { generateClient } from "aws-amplify/data";
 import type { Route } from "./+types/root";
 // import type { Schema } from "../amplify/data/resource";
-import { services } from "./models/authenticator";
-Amplify.configure(outputs);
+import { services } from "./models/auth";
 
 // const client = generateClient<Schema>();
 
@@ -43,28 +37,9 @@ export default function App() {
               context={
                 {
                   authUser: user,
-                  cpAmplifyConfig: cpOutputs as ResourcesConfig,
                   tenant: tenant,
                   setTenant: setTenant,
-                  client: {
-                    getTenant: async (props) => {
-                      try {
-                        Amplify.configure(cpOutputs);
-                        const cpClient = generateClient<cpSchema>();
-                        console.log(
-                          cpClient,
-                          cpClient.models,
-                          cpClient.models.Tenant
-                        );
-                        return await cpClient.models.Tenant.get({
-                          // id: "c3d1e00c-a497-4054-a49d-84ead07ea03d",
-                          ...props,
-                        });
-                      } finally {
-                        Amplify.configure(outputs);
-                      }
-                    },
-                  },
+                  client: client,
                 } satisfies RootContext
               }
             />

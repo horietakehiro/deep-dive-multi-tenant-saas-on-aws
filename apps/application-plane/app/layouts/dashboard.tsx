@@ -3,12 +3,12 @@ import type { Branding, Navigation, Session } from "@toolpad/core/AppProvider";
 import { DashboardLayout as ToolpadDashboardLayout } from "@toolpad/core/DashboardLayout";
 import { Outlet, useOutletContext } from "react-router";
 import React from "react";
-import { fetchUserAttributes, signOut } from "aws-amplify/auth";
+import { fetchUserAttributes, signOut } from "../models/auth";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
 import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../models/context";
 import { getTenantFromUserAttributes } from "../../../control-plane/app/models/tenant";
-import type { CustomUserAttributes } from "apps/control-plane/app/models/admin-user";
+import type { CustomUserAttributes } from "../../../control-plane/app/models/admin-user";
 export default function DashboardLayout({}: Route.ComponentProps) {
   const { authUser, client, setTenant, tenant } =
     useOutletContext<RootContext>();

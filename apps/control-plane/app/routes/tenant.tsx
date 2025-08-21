@@ -1,7 +1,8 @@
 import { Button, Stack } from "@mui/material";
 import { Show, useNotifications, type DataSource } from "@toolpad/core";
 import { useNavigate, useOutletContext } from "react-router";
-import type { AmplifyClient, RootContext } from "../models/context";
+import type { RootContext } from "../models/context";
+import type { AmplifyClient } from "../models/data";
 
 export type Context = Pick<RootContext, "tenant" | "setTenant"> & {
   client: Pick<

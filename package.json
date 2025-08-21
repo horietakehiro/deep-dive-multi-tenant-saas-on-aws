@@ -21,7 +21,8 @@
     "baseline-infrastructure",
     "apps/control-plane",
     "apps/application-plane",
-    "apps/admin-dashboard"
+    "apps/admin-dashboard",
+    "apps/backend"
   ],
   "devDependencies": {
     "@aws-amplify/backend": "^1.16.1",

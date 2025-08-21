@@ -1,6 +1,6 @@
 import type { signUp } from "aws-amplify/auth";
 import { CUSTOM_USER_ATTRIBUTES } from "../admin-user";
-import { handleSignUpFactory } from "../authenticator";
+import { handleSignUpFactory } from "../auth";
 
 describe("認証ロジック", () => {
   test("サインアップ時にテナント情報をカスタム属性として渡す", async () => {

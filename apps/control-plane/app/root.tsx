@@ -18,7 +18,7 @@ import "@aws-amplify/ui-react/styles.css";
 import "./styles/app.css";
 import "./styles/amplify.css";
 import type { RootContext } from "./models/context";
-import { formFileds, services } from "./models/authenticator";
+import { formFileds, services } from "./models/auth";
 
 Amplify.configure(outputs);
 const client = generateClient<Schema>();
