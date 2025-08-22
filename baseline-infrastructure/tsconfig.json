@@ -5,5 +5,5 @@
   "compilerOptions": {
     "composite": true
   },
-  "exclude": ["../node_modules", "./cdk.out"]
+  "exclude": ["./cdk.out"]
 }

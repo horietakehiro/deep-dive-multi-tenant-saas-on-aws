@@ -9,9 +9,10 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "$amplify/*": [
-        "../.amplify/generated/*"
-      ]
-    }
-  }
+      "$amplify/*": ["./../.amplify/generated/*"]
+    },
+    "baseUrl": "."
+  },
+  "extends": "../../../tsconfig.base.json",
+  "include": ["../**/*", "../.amplify/**/*"]
 }

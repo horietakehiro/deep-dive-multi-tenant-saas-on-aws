@@ -4,16 +4,13 @@
       "path": "./baseline-infrastructure/"
     },
     {
-      "path": "./apps/control-plane/"
+      "path": "./apps/backend/"
     },
     {
-      "path": "./apps/application-plane/"
+      "path": "./apps/backend/amplify/"
     },
     {
-      "path": "./apps/control-plane/amplify"
-    },
-    {
-      "path": "./apps/application-plane/amplify"
+      "path": "./apps/frontends/control-plane/"
     }
   ],
   "files": []

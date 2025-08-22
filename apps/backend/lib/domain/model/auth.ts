@@ -1,0 +1,59 @@
+import type { AuthContext as AmplifyAuthContext } from "@aws-amplify/ui";
+import {
+  signIn as amplifySignIn,
+  getCurrentUser as amplifyGetCurrentUser,
+  fetchUserAttributes as amplifyFetchUserAttributes,
+  signOut as amplifySignOut,
+} from "aws-amplify/auth";
+import type { Config } from "./config.js";
+
+export const signInFactory = (config: Config): typeof amplifySignIn => {
+  if (config.type === "NO_AMPLIFY") {
+    return () => {
+      return Promise.resolve({
+        isSignedIn: true,
+        nextStep: {
+          signInStep: "DONE",
+        },
+      });
+    };
+  }
+  return amplifySignIn;
+};
+export const getCurrentUserFactory = (
+  config: Config
+): typeof amplifyGetCurrentUser => {
+  if (config.type === "NO_AMPLIFY") {
+    return () => {
+      return Promise.resolve({
+        userId: "dummy-id",
+        username: "dummy-name",
+        signInDetails: {
+          authFlowType: "USER_SRP_AUTH",
+          loginId: "dummy@example.com",
+        },
+      });
+    };
+  }
+  return amplifyGetCurrentUser;
+};
+
+export const fetchUserAttributesFactory = (
+  config: Config
+): typeof amplifyFetchUserAttributes => {
+  if (config.type === "NO_AMPLIFY") {
+    return () => Promise.resolve({ ...config.dummyUserAttributes });
+  }
+  return amplifyFetchUserAttributes;
+};
+export const signOutFactory = (config: Config): typeof amplifySignOut => {
+  if (config.type === "NO_AMPLIFY") {
+    return (input) => {
+      console.debug(input);
+      return Promise.resolve();
+    };
+  }
+  return amplifySignOut;
+};
+
+export type AuthContext = AmplifyAuthContext;

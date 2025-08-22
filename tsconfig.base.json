@@ -5,6 +5,7 @@
     "lib": ["es2020", "dom", "ESNext"],
     /* Linting */
     "declaration": true,
+    "declarationMap": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -18,15 +19,8 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "baseUrl": "./",
-    "composite": true
+    "composite": true,
+    "noEmit": true
   },
-  // "include": ["**/*.ts", "**/*.tsx", "**/amplify_outputs.json"],
-  "exclude": ["**/build"],
-  "include": [
-    "**/*",
-    "**/.server/**/*",
-    "**/.client/**/*",
-    "**/.react-router/types/**/*"
-  ]
+  "exclude": ["**/build/**/*", "node_modules"]
 }
