@@ -1,0 +1,7 @@
+{
+  "name": "@intersection/amplify",
+  "type": "module",
+  "private": true,
+  "devDependencies": {},
+  "scripts": {}
+}

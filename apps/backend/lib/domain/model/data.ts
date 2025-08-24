@@ -1,5 +1,6 @@
+import type { Client as AmplifyClient } from "aws-amplify/api";
+import type { GraphQLFormattedError } from "@aws-amplify/data-schema/runtime";
 import { a, type ClientSchema } from "@aws-amplify/backend";
-import type { generateClient } from "aws-amplify/data";
 
 export const schema = a.schema({
   Spot: a.model({
@@ -49,10 +50,16 @@ export const schema = a.schema({
     name: a.string().required(),
     status: a.ref("TenantStatus").required(),
     url: a.url(),
-    spots: a.hasMany("Spot", "tenantId"),
-    appointments: a.hasMany("Appointment", "tenantId"),
-    users: a.hasMany("User", "tenantId"),
+    // spots: a.hasMany("Spot", "tenantId"),
+    // appointments: a.hasMany("Appointment", "tenantId"),
+    // users: a.hasMany("User", "tenantId"),
   }),
 });
 export type Schema = ClientSchema<typeof schema>;
-export type Client = ReturnType<typeof generateClient<Schema>>;
+export type Client = AmplifyClient<Schema>;
+export type F<Fn extends (...args: any) => any, Type> = (
+  ...arg: Parameters<Fn>
+) => Promise<{
+  data: Type | null;
+  errors?: GraphQLFormattedError[];
+}>;

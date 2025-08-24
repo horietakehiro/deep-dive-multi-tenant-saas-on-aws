@@ -1,0 +1,13 @@
+{
+  "name": "@intersection/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "ampx": "npx ampx",
+    "build": "npx tsc -b"
+  },
+  "dependencies": {
+    "aws-amplify": "^6.15.5"
+  }
+}

@@ -5,7 +5,6 @@ import {
   signOutFactory,
 } from "../auth";
 import type { Config } from "../config";
-
 describe("Amplifyを使用せず認証ロジックを疑似出来る", () => {
   const config: Config = {
     type: "NO_AMPLIFY",

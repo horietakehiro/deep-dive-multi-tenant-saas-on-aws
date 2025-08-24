@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true
+  },
+  "include": ["lib", "amplify", "./.amplify/**/*"],
+  "exclude": [],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

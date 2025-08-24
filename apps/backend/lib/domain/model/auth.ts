@@ -1,4 +1,3 @@
-import type { AuthContext as AmplifyAuthContext } from "@aws-amplify/ui";
 import {
   signIn as amplifySignIn,
   getCurrentUser as amplifyGetCurrentUser,
@@ -93,4 +92,3 @@ export const signUpFactory = (
     });
   };
 };
-export type AuthContext = AmplifyAuthContext;

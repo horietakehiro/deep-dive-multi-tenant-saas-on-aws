@@ -1,0 +1,33 @@
+{
+  "name": "intersection",
+  "private": true,
+  "version": "1.0.0",
+  "homepage": "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws#readme",
+  "bugs": {
+    "url": "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws.git"
+  },
+  "license": "ISC",
+  "type": "module",
+  "scripts": {},
+  "workspaces": [
+    "apps/backend",
+    "apps/frontends/control-plane"
+  ],
+  "devDependencies": {
+    "@aws-amplify/backend": "^1.16.1",
+    "@aws-amplify/backend-cli": "^1.8.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.3.0",
+    "jest": "^30.0.5",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^6.3.5",
+    "vite-plugin-devtools-json": "^1.0.0",
+    "vite-plugin-env-compatible": "^2.0.1",
+    "vitest": "^3.2.4"
+  }
+}
