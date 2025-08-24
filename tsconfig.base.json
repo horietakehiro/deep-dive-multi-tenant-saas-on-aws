@@ -22,5 +22,6 @@
     "composite": true,
     "noEmit": true
   },
+  "include": [],
   "exclude": ["**/build/**/*", "node_modules"]
 }

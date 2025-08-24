@@ -1,10 +1,10 @@
 import type { ResourcesConfig } from "aws-amplify";
 import type { CustomUserAttributes } from "./user";
-interface ProductionConfig {
+export interface ProductionConfig {
   type: "PRODUCTION";
-  amplifyConfiguration: ResourcesConfig;
+  amplifyConfigFn: () => Promise<ResourcesConfig>;
 }
-interface NoAmplifyConfig {
+export interface NoAmplifyConfig {
   type: "NO_AMPLIFY";
   dummyUserAttributes: CustomUserAttributes;
 }

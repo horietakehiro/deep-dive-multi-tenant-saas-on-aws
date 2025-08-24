@@ -1,5 +1,6 @@
 {
   "name": "deep-dive-multi-tenant-saas-on-aws",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "homepage": "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws#readme",
@@ -20,7 +21,8 @@
   "workspaces": [
     "baseline-infrastructure",
     "apps/backend",
-    "apps/frontends/control-plane"
+    "apps/frontends/control-plane",
+    "apps/backend/amplify"
   ],
   "devDependencies": {
     "@aws-amplify/backend": "^1.16.1",

@@ -14,8 +14,9 @@ import "./styles/app.css";
 import "./styles/amplify.css";
 import type { RootContext } from "./lib/domain/model/context";
 import type { Schema } from "backend/lib/domain/model/data";
-import { services } from "./lib/domain/model/auth";
 import { repository } from "./lib/adaptor/repository";
+import { signUp } from "./lib/domain/model/auth";
+import { CUSTOM_USER_ATTRIBUTES } from "backend/lib/domain/model/user";
 
 export default function App() {
   const [tenant, setTenant] = React.useState<
@@ -23,7 +24,21 @@ export default function App() {
   >(undefined);
   return (
     <React.StrictMode>
-      <Authenticator services={services}>
+      <Authenticator
+        services={{
+          handleSignUp: signUp,
+        }}
+        formFields={{
+          signUp: {
+            [CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
+              label: "Tenant Name",
+              isRequired: true,
+              order: 1,
+              placeholder: "tenant-1",
+            },
+          },
+        }}
+      >
         {({ user }) => {
           if (user === undefined) {
             return <></>;

@@ -14,9 +14,10 @@
     "composite": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
-    "moduleDetection": "force"
-    // "baseUrl": "."
+    "moduleDetection": "auto",
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["lib", "amplify", ".amplify/generated"],
+  "include": ["./lib/**/*", "./amplify/**/*", "./.amplify/generated/**/*"],
+  "exclude": ["node_modules", "dist", "build"],
   "extends": "../../tsconfig.base.json"
 }

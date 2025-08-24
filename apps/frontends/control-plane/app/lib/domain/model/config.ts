@@ -1,5 +1,6 @@
-import type { Config } from "backend/lib/domain/model/config";
-import outputs from "../../../../amplify_outputs.json";
+import { Amplify } from "aws-amplify";
+import type { Config, ProductionConfig } from "backend/lib/domain/model/config";
+import outputs from "backend/amplify_outputs.json";
 
 const configFactory = (): Config => {
   const noAmplify: string | undefined = import.meta.env.VITE_NO_AMPLIFY;
@@ -7,7 +8,7 @@ const configFactory = (): Config => {
   if (noAmplify === undefined) {
     return {
       type: "PRODUCTION",
-      amplifyConfiguration: outputs,
+      amplifyConfigFn: async () => await Amplify.configure(outputs),
     };
   }
   return {
@@ -20,4 +21,5 @@ const configFactory = (): Config => {
   };
 };
 
+Amplify.configure(outputs);
 export const config = configFactory();

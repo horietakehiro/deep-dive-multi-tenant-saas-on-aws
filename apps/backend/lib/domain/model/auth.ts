@@ -4,8 +4,10 @@ import {
   getCurrentUser as amplifyGetCurrentUser,
   fetchUserAttributes as amplifyFetchUserAttributes,
   signOut as amplifySignOut,
+  signUp as amplifySignUp,
 } from "aws-amplify/auth";
-import type { Config } from "./config.js";
+import type { Config } from "./config";
+import { CUSTOM_USER_ATTRIBUTES, type SignupUserAttributes } from "./user";
 
 export const signInFactory = (config: Config): typeof amplifySignIn => {
   if (config.type === "NO_AMPLIFY") {
@@ -56,4 +58,39 @@ export const signOutFactory = (config: Config): typeof amplifySignOut => {
   return amplifySignOut;
 };
 
+export const signUpFactory = (
+  config: Config,
+  idFn: () => string
+): typeof amplifySignUp => {
+  if (config.type === "NO_AMPLIFY") {
+    return (input) => {
+      console.debug(input);
+      return Promise.resolve({
+        isSignUpComplete: true,
+        nextStep: {
+          signUpStep: "DONE",
+        },
+      });
+    };
+  }
+  return async (input) => {
+    const requiredUserAttributes: SignupUserAttributes = {
+      "custom:tenantId": idFn(),
+      "custom:tenantName":
+        input.options!.userAttributes[CUSTOM_USER_ATTRIBUTES.TENANT_NAME]!,
+      email: input.options?.userAttributes["email"]!,
+      "custom:tenantRole": "ADMIN",
+    };
+    return amplifySignUp({
+      ...input,
+      options: {
+        ...input.options,
+        userAttributes: {
+          ...input.options?.userAttributes,
+          ...requiredUserAttributes,
+        },
+      },
+    });
+  };
+};
 export type AuthContext = AmplifyAuthContext;

@@ -1,5 +1,6 @@
 import { defineAuth } from "@aws-amplify/backend";
 import { CUSTOM_USER_ATTRIBUTES } from "../../lib/domain/model/user";
+import { preSignUp } from "./pre-sign-up/resource";
 
 /**
  * Define and configure your auth resource
@@ -28,5 +29,7 @@ export const auth = defineAuth({
       mutable: true,
     },
   },
-  triggers: {},
+  triggers: {
+    preSignUp,
+  },
 });
