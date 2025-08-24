@@ -50,9 +50,9 @@ export const schema = a.schema({
     name: a.string().required(),
     status: a.ref("TenantStatus").required(),
     url: a.url(),
-    // spots: a.hasMany("Spot", "tenantId"),
-    // appointments: a.hasMany("Appointment", "tenantId"),
-    // users: a.hasMany("User", "tenantId"),
+    spots: a.hasMany("Spot", "tenantId"),
+    appointments: a.hasMany("Appointment", "tenantId"),
+    users: a.hasMany("User", "tenantId"),
   }),
 });
 export type Schema = ClientSchema<typeof schema>;

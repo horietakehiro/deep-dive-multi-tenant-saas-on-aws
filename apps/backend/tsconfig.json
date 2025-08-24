@@ -1,7 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "$amplify/*": [".amplify/generated/*"]
+    }
   },
   "include": ["lib", "amplify", "./.amplify/**/*"],
   "exclude": [],
