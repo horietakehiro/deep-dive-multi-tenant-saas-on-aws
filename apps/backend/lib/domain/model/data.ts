@@ -1,5 +1,3 @@
-import type { Client as AmplifyClient } from "aws-amplify/api";
-import type { GraphQLFormattedError } from "@aws-amplify/data-schema/runtime";
 import { a, type ClientSchema } from "@aws-amplify/backend";
 
 export const schema = a.schema({
@@ -54,10 +52,3 @@ export const schema = a.schema({
   }),
 });
 export type Schema = ClientSchema<typeof schema>;
-export type Client = AmplifyClient<Schema>;
-export type F<Fn extends (...args: any) => any, Type> = (
-  ...arg: Parameters<Fn>
-) => Promise<{
-  data: Type | null;
-  errors?: GraphQLFormattedError[];
-}>;

@@ -1,22 +1,29 @@
 import { amplifyRepositoryFactory } from "../../../adaptor/repository";
 import type { CustomUserAttributes } from "../../model/user";
-import type { IRepository } from "../../port/repository";
+import type { IRepository, TenantClient } from "../../port/repository";
 import { preSingUpServiceFactory } from "../pre-sign-up";
-
 describe("サインアップ前プロセス", () => {
   test("ユーザのカスタム属性に対応したテナントアイデンティティを作成出来る", async () => {
-    const mockCreateTenant = vi.fn<IRepository["createTenant"]>((props) => {
-      return Promise.resolve({
-        data: {
-          id: props.id!,
-          name: props.name!,
-          status: "pending",
-          url: null,
-          createdAt: "",
-          updatedAt: "",
-        },
-      });
-    });
+    const mockCreateTenant = vi.fn<IRepository["createTenant"]>(
+      async (props) => {
+        return {
+          data: {
+            id: props.id!,
+            name: props.name!,
+            status: "pending",
+            url: null,
+            createdAt: "",
+            updatedAt: "",
+            spots: () => {
+              throw Error();
+            },
+            users: () => {
+              throw Error();
+            },
+          },
+        };
+      }
+    );
 
     const userAttributes = {
       "custom:tenantId": "dummy-id",

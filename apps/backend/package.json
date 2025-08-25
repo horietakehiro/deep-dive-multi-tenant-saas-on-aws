@@ -5,7 +5,8 @@
   "scripts": {
     "test": "vitest",
     "ampx": "npx ampx",
-    "build": "npx tsc -b"
+    "build": "npx tsc && npx vite build",
+    "check": "npx tsc"
   },
   "dependencies": {
     "aws-amplify": "^6.15.5"

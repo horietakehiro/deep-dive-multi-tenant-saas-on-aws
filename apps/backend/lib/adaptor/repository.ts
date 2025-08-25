@@ -4,6 +4,7 @@ import { NotImplementedError } from "../domain/model/error";
 import type {
   IRepository,
   IRepositoryFactory,
+  TenantClient,
 } from "../domain/port/repository";
 import type { Schema } from "../domain/model/data";
 
@@ -14,10 +15,11 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
 
   await c.amplifyConfigFn();
   const ac = generateClient<Schema>();
-
+  ac.models.Tenant.create;
   return {
-    getTenant: async (props) => await ac.models.Tenant.get(props),
-    createTenant: async (props) => await ac.models.Tenant.create(props),
-    listTenant: async (props) => await ac.models.Tenant.list(props),
+    createTenant: ac.models.Tenant.create,
+    listTenant: ac.models.Tenant.list,
+    // listTenants: async (props) => await ac.models.Tenant.list(props),
+    // updateTenant: async (props) => await ac.models.Tenant.update(props),
   } satisfies IRepository;
 };
