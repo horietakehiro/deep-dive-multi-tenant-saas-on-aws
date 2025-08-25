@@ -2,9 +2,14 @@ import type {
   PreSignUpTriggerEvent,
   PreSignUpTriggerHandler,
 } from "aws-lambda";
-import type { IRepository, IRepositoryFactory } from "../port/repository";
+import type {
+  IRepository,
+  IRepositoryFactory,
+  TenantClient,
+} from "../port/repository";
 import type { SignupUserAttributes } from "../model/user";
 import type { Config } from "../model/config";
+import { amplifyRepositoryFactory } from "lib/adaptor/repository";
 
 export const preSingUpServiceFactory = (
   config: Config,
@@ -13,16 +18,22 @@ export const preSingUpServiceFactory = (
   event: Pick<PreSignUpTriggerEvent, "request">
 ) => ReturnType<PreSignUpTriggerHandler>) => {
   return async (event: Pick<PreSignUpTriggerEvent, "request">) => {
-    const repository = await repositoryFactory(config);
+    const { createTenant } = await repositoryFactory(config);
     console.log(event);
     const userAttributes = event.request.userAttributes as SignupUserAttributes;
 
     // テナントアイデンティティを作成
-    const tenant = await repository.createTenant({
-      id: userAttributes["custom:tenantId"],
-      name: userAttributes["custom:tenantName"],
-      status: "pending",
-    });
+    // TODO: 妥協案
+    const tenant = await (createTenant as unknown as TenantClient["create"])(
+      {
+        id: userAttributes["custom:tenantId"],
+        name: userAttributes["custom:tenantName"],
+        status: "pending",
+      },
+      {
+        selectionSet: ["id", "name", "status"],
+      }
+    );
     console.log(tenant);
     return event;
   };

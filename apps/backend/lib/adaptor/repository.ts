@@ -15,7 +15,6 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
 
   await c.amplifyConfigFn();
   const ac = generateClient<Schema>();
-  ac.models.Tenant.create;
   return {
     createTenant: ac.models.Tenant.create,
     listTenant: ac.models.Tenant.list,

@@ -45,3 +45,5 @@ export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
 ) => [T] extends "*"
   ? Promise<IRepository>
   : Promise<Pick<IRepository, Exclude<T, "*">>>;
+
+// export type IRepositoryFactory = (c: Config) => Promise<IRepository>;
