@@ -1,0 +1,12 @@
+{
+  "name": "@intersection/baseline-infrastructure",
+  "version": "1.0.0",
+  "scripts": {
+    "cdk": "npx cdk",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.212.0",
+    "constructs": "^10.4.2"
+  }
+}

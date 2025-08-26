@@ -15,13 +15,16 @@
   "scripts": {},
   "workspaces": [
     "apps/backend",
-    "apps/frontends/control-plane"
+    "apps/frontends/control-plane",
+    "baseline-infrastructure"
   ],
   "devDependencies": {
     "@aws-amplify/backend": "^1.16.1",
     "@aws-amplify/backend-cli": "^1.8.0",
+    "@horietakehiro/aws-cdk-utul": "^0.41.19",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
+    "aws-cdk": "^2.1026.0",
     "jest": "^30.0.5",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",

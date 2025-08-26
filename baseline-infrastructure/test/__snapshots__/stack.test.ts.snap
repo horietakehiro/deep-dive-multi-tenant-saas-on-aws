@@ -1,0 +1,269 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`コントロールプレーンコンストラクタ > スナップショットテスト 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "ControlPlaneAccessTokenF660E7BE": {
+      "NoEcho": true,
+      "Type": "String",
+    },
+  },
+  "Resources": {
+    "ControlPlaneApp8CAC7211": {
+      "Properties": {
+        "AccessToken": {
+          "Ref": "ControlPlaneAccessTokenF660E7BE",
+        },
+        "AutoBranchCreationConfig": {
+          "EnableAutoBranchCreation": false,
+        },
+        "BasicAuthConfig": {
+          "EnableBasicAuth": false,
+        },
+        "BuildSpec": "applications:
+  - appRoot: apps/control-plane
+    env:
+      variables:
+        W: apps/control-plane
+    frontend:
+      buildPath: '/'
+      phases:
+        preBuild:
+          commands:
+            - npm install -w \${W}
+        build:
+          commands:
+            - npm run build -w \${W}
+      artifacts:
+        baseDirectory: apps/control-plane/build/client
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - .npm/**/*
+          - node_modules/**/*
+    backend:
+      buildPath: "/"
+      phases:
+        build:
+          commands:
+            - npm ci --cache .npm --prefer-offlinei -w \${W}
+            - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
+            - npm run -w \${W} ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+  - appRoot: apps/application-plane
+    env:
+      variables:
+        W: apps/application-plane
+        # CONTROL_PLANE_APP_ID: "アプリケーション作成時に設定される"
+    frontend:
+      buildPath: "/"
+      phases:
+        preBuild:
+          commands:
+            - npm install -w \${W}
+        build:
+          commands:
+            - npm run build -w \${W}
+      artifacts:
+        baseDirectory: apps/application-plane/build/client
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - .npm/**/*
+          - node_modules/**/*
+    backend:
+      phases:
+        build:
+          commands:
+
+            - npm ci --cache .npm --prefer-offlinei -w \${W}
+            - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
+            - sudo dnf install -y jq
+            # # リソースを共有したい、作成済みのコントロールプレーン側のリソース設定をエクスポートする
+            # コントロールプレーンのバックエンドスタックが更新中の場合はoutputsファイルを生成できないため、更新が完了するまで待機する
+            - STACK_ARN=$(aws amplify get-branch --app-id  \${CONTROL_PLANE_APP_ID}  --branch-name \${AWS_BRANCH} | jq -r .branch.backend.stackArn)
+            - STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_ARN | jq -r .Stacks[0].StackStatus)
+            - echo stack status of \${STACK_ARN} is \${STACK_STATUS}
+            - | 
+              while [[ $STACK_STATUS != *"COMPLETE" ]]
+              do
+                echo wait for 15 sec...
+                sleep 15
+                STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_ARN | jq -r .Stacks[0].StackStatus)
+                echo stack status of \${STACK_ARN} is \${STACK_STATUS}
+              done
+            - npm run -w apps/control-plane ampx -- generate outputs --branch $AWS_BRANCH --app-id $CONTROL_PLANE_APP_ID
+            # 自分自身のリソースをデプロイする
+            - npm run -w \${W} ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+",
+        "CacheConfig": {
+          "Type": "AMPLIFY_MANAGED_NO_COOKIES",
+        },
+        "CustomRules": [
+          {
+            "Source": "/<*>",
+            "Status": "404-200",
+            "Target": "/index.html",
+          },
+        ],
+        "Description": "control plane",
+        "EnableBranchAutoDeletion": false,
+        "EnvironmentVariables": [
+          {
+            "Name": "AMPLIFY_DIFF_DEPLOY",
+            "Value": "false",
+          },
+          {
+            "Name": "AMPLIFY_MONOREPO_APP_ROOT",
+            "Value": "apps/control-plane",
+          },
+        ],
+        "IAMServiceRole": {
+          "Fn::GetAtt": [
+            "ControlPlaneServiceRole9996ABB7",
+            "Arn",
+          ],
+        },
+        "Name": "full-stack-silo-deploy-model-control-plane",
+        "Platform": "WEB",
+        "Repository": "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
+      },
+      "Type": "AWS::Amplify::App",
+    },
+    "ControlPlaneBranch31C563C5": {
+      "Properties": {
+        "AppId": {
+          "Fn::GetAtt": [
+            "ControlPlaneApp8CAC7211",
+            "AppId",
+          ],
+        },
+        "BranchName": "main",
+        "EnableAutoBuild": true,
+        "Framework": "web",
+        "Stage": "PRODUCTION",
+      },
+      "Type": "AWS::Amplify::Branch",
+    },
+    "ControlPlaneDomain7AAF1873": {
+      "Properties": {
+        "AppId": {
+          "Fn::GetAtt": [
+            "ControlPlaneApp8CAC7211",
+            "AppId",
+          ],
+        },
+        "AutoSubDomainCreationPatterns": [],
+        "CertificateSettings": {
+          "CertificateType": "CUSTOM",
+          "CustomCertificateArn": "arn:aws:acm:Region:444455556666:certificate/certificate_ID",
+        },
+        "DomainName": "ht-burdock.com",
+        "SubDomainSettings": [
+          {
+            "BranchName": "main",
+            "Prefix": "control-plane",
+          },
+        ],
+      },
+      "Type": "AWS::Amplify::Domain",
+    },
+    "ControlPlaneServiceRole9996ABB7": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "amplify.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmplifyBackendDeployFullAccess",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/ReadOnlyAccess",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:CreateLogGroup",
+                    "logs:DescribeLogGroups",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "root",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

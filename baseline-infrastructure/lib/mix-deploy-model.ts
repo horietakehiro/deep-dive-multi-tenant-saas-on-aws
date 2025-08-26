@@ -59,8 +59,6 @@ class Plane extends Construct {
       cacheConfig: {
         type: "AMPLIFY_MANAGED_NO_COOKIES",
       },
-      computeRoleArn: undefined,
-      customHeaders: undefined,
       customRules: [
         {
           source: "/<*>",
@@ -81,7 +79,6 @@ class Plane extends Construct {
         },
       ],
       iamServiceRole: serviceRole.roleArn,
-      oauthToken: undefined,
       platform: "WEB",
       repository:
         "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",

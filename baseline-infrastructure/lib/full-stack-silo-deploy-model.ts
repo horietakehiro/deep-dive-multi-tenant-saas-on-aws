@@ -12,7 +12,7 @@ export interface ControlPlaneProps {
   certArn: string;
   branch: string;
 }
-class ControlPlane extends Construct {
+export class ControlPlane extends Construct {
   constructor(scope: Construct, id: string, props: ControlPlaneProps) {
     super(scope, id);
     const accessToken = new cdk.CfnParameter(this, "AccessToken", {
@@ -59,8 +59,6 @@ class ControlPlane extends Construct {
       cacheConfig: {
         type: "AMPLIFY_MANAGED_NO_COOKIES",
       },
-      computeRoleArn: undefined,
-      customHeaders: undefined,
       customRules: [
         {
           source: "/<*>",
@@ -81,7 +79,6 @@ class ControlPlane extends Construct {
         },
       ],
       iamServiceRole: serviceRole.roleArn,
-      oauthToken: undefined,
       platform: "WEB",
       repository:
         "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",

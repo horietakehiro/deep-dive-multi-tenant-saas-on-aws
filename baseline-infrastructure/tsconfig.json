@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["bin", "lib", "tests"],
+  "exclude": ["cdk.out"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/cfn-types": [
+        "../node_modules/@horietakehiro/aws-cdk-utul/lib/types/cfn-resource-types"
+      ],
+      "@/cfn-types/*": [
+        "../node_modules/@horietakehiro/aws-cdk-utul/lib/types/cfn-resource-types/*"
+      ]
+    }
+  },
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
