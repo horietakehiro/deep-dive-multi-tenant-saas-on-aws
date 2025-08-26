@@ -1,9 +1,10 @@
-import type { Tenant } from "@intersection/backend/lib/domain/model/data";
-import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 import { Stack } from "@mui/material";
 import { Show, type DataSource } from "@toolpad/core";
-import type { RootContext } from "app/lib/domain/model/context";
 import { useNavigate, useOutletContext } from "react-router";
+
+import type { Tenant } from "@intersection/backend/lib/domain/model/data";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
+import type { RootContext } from "../lib/domain/model/context";
 
 export const tenantDataSourceFactory: (
   repository: Pick<IRepository, "getTenant" | "updateTenant">,

@@ -1,15 +1,16 @@
 import { render, waitFor, screen } from "@testing-library/react";
+import { createRoutesStub } from "react-router";
 import type { Tenant as TenantType } from "@intersection/backend/lib/domain/model/data";
 import { NotImplementedError } from "@intersection/backend/lib/domain/model/error";
-import React from "react";
-import { createRoutesStub } from "react-router";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
-// import "@testing-library/jest-dom";
+// import { useState } from "react";
+import "@testing-library/jest-dom";
 import Tenant, { type Context } from "../tenant";
+import { useState } from "react";
 
 const mockUseOutletContext = vi.hoisted(() => {
   return vi.fn<() => Context>(() => {
-    throw NotImplementedError;
+    throw new NotImplementedError("hogefuga");
   });
 });
 vi.mock("react-router", async () => {
@@ -25,17 +26,20 @@ describe("テナント詳細画面", () => {
     const Stub = createRoutesStub([
       {
         path: "/tenant",
+        // Component: Tenant,
         Component: () => {
-          console.log("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
-          const [tenant, setTenant] = React.useState<Context["tenant"]>({
+          const [tenant, setTenant] = useState<Context["tenant"]>({
             id: "test-id",
             name: "test-name",
             status: "pending",
           } as TenantType);
+          console.log("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
 
           mockUseOutletContext.mockReturnValue({
             tenant,
             setTenant,
+            // tenant: undefined,
+            // setTenant: () => {},
             repository: {
               getTenant: async () => ({
                 data: {
@@ -64,7 +68,7 @@ describe("テナント詳細画面", () => {
     render(<Stub initialEntries={["/tenant"]} />);
     screen.debug();
     // テナントの詳細情報が表示される
-    // await waitFor(() => screen.findByText(/test-id/));
-    // await waitFor(() => screen.findByText(/test-name/));
+    await waitFor(() => screen.findByText(/test-id/));
+    await waitFor(() => screen.findByText(/test-name/));
   });
 });

@@ -42,12 +42,12 @@
 
     // custom
     // "rootDir": "${configDir}",
-    "outDir": "${configDir}/dist",
+    // "outDir": "${configDir}/dist",
     "composite": true,
     "moduleResolution": "bundler",
     // "noEmit": true,
     // "emitDeclarationOnly": true
-    "types": ["node", "vite/client", "vitest/globals"],
+    // "types": ["node", "vite/client", "vitest/globals"],
     "resolveJsonModule": true
   }
 }
