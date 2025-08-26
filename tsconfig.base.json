@@ -41,12 +41,13 @@
     "skipLibCheck": true,
 
     // custom
-    "rootDir": "${configDir}",
+    // "rootDir": "${configDir}",
     "outDir": "${configDir}/dist",
     "composite": true,
     "moduleResolution": "bundler",
     // "noEmit": true,
     // "emitDeclarationOnly": true
-    "types": ["node", "vite/client", "vitest/globals"]
+    "types": ["node", "vite/client", "vitest/globals"],
+    "resolveJsonModule": true
   }
 }

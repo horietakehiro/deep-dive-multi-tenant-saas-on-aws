@@ -11,13 +11,13 @@ import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../lib/domain/model/context";
 import { signOut } from "../lib/domain/model/auth";
 export default function DashboardLayout({}: Route.ComponentProps) {
-  const { authUser, setTenant, tenant, repository } =
-    useOutletContext<RootContext>();
+  const { authUser, setTenant, tenant } = useOutletContext<RootContext>();
+
   const [session, setSession] = React.useState<Session | null>({
     user: {
-      id: authUser.userId,
-      name: authUser.signInDetails?.loginId,
-      email: authUser.signInDetails?.loginId,
+      id: authUser?.userId ?? null,
+      name: authUser?.signInDetails?.loginId ?? null,
+      email: authUser?.signInDetails?.loginId ?? null,
     },
   });
 
@@ -51,7 +51,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
   ];
   React.useEffect(() => {
     const f = async () => {
-      setTenant();
+      //   setTenant();
       // await getTenantFromUserAttributes(
       //   () => fetchUserAttributes() as Promise<CustomUserAttributes>,
       //   { getTenant: client.getTenant }
@@ -75,9 +75,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       session={session}
     >
       <ToolpadDashboardLayout>
-        <Outlet
-          context={{ authUser, tenant, setTenant } satisfies RootContext}
-        />
+        <Outlet context={{ authUser, tenant, setTenant }} />
       </ToolpadDashboardLayout>
     </ReactRouterAppProvider>
   );

@@ -1,16 +1,13 @@
 import type { Client as AmplifyClient } from "aws-amplify/api";
 import type {
-  GraphQLFormattedError,
   ListReturnValue,
   SingularReturnValue,
-  SelectionSet,
 } from "@aws-amplify/data-schema/runtime";
 import type { Config } from "../model/config";
-import type { Schema } from "../model/data";
+import type { Schema, Tenant } from "../model/data";
 
 export type Client = AmplifyClient<Schema>;
 
-type Tenant = Schema["Tenant"]["type"];
 export type TenantClient = Client["models"]["Tenant"];
 
 // FIXME: 複雑なモデルでselectionSetをそのままにしておくとtscの処理が激重になるので

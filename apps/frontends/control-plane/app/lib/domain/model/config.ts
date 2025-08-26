@@ -1,25 +1,16 @@
-import { Amplify } from "aws-amplify";
-import type { Config, ProductionConfig } from "backend/lib/domain/model/config";
-import outputs from "backend/amplify_outputs.json";
-
+import { Amplify, type ResourcesConfig } from "aws-amplify";
+import type { Config } from "@intersection/backend/lib/domain/model/config";
+import outputs from "@intersection/backend/amplify_outputs.json";
+// import outputs from "../../../../../../backend/amplify_outputs.json";
 const configFactory = (): Config => {
-  const noAmplify: string | undefined = import.meta.env.VITE_NO_AMPLIFY;
-  console.debug(noAmplify);
-  if (noAmplify === undefined) {
-    return {
-      type: "PRODUCTION",
-      amplifyConfigFn: async () => await Amplify.configure(outputs),
-    };
-  }
+  // const noAmplify: string | undefined = import.meta.env.VITE_NO_AMPLIFY;
   return {
-    type: "NO_AMPLIFY",
-    dummyUserAttributes: {
-      "custom:tenantId": "dummy-id",
-      "custom:tenantName": "dummy-name",
-      "custom:tenantRole": "ADMIN",
+    type: "PRODUCTION",
+    amplifyConfigFn: async () => {
+      Amplify.configure(outputs);
+      return outputs as ResourcesConfig;
     },
   };
 };
 
-Amplify.configure(outputs);
 export const config = configFactory();

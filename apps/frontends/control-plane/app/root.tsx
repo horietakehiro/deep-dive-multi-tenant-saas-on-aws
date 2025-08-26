@@ -7,56 +7,41 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { Authenticator } from "@aws-amplify/ui-react";
+// import { Authenticator } from "@aws-amplify/ui-react";
 import type { Route } from "./+types/root";
+import type { RootContext } from "./lib/domain/model/context";
 import "@aws-amplify/ui-react/styles.css";
 import "./styles/app.css";
 import "./styles/amplify.css";
-import type { RootContext } from "./lib/domain/model/context";
-import type { Schema } from "backend/lib/domain/model/data";
-import { repository } from "./lib/adaptor/repository";
-import { signUp } from "./lib/domain/model/auth";
-import { CUSTOM_USER_ATTRIBUTES } from "backend/lib/domain/model/user";
+import { config } from "./lib/domain/model/config";
+import { amplifyRepositoryFactory } from "@intersection/backend/lib/adaptor/repository";
+// import type { RootContext } from "./lib/domain/model/context";
+// import { repository } from "./lib/adaptor/repository";
+// import { signUp } from "./lib/domain/model/auth";
 
-export default function App() {
-  const [tenant, setTenant] = React.useState<
-    Schema["Tenant"]["type"] | undefined
-  >(undefined);
+export const clientLoader = async () => {
+  if (config.type === "PRODUCTION") {
+    console.log("configure amplify...");
+    await config.amplifyConfigFn();
+  }
+  const repository = await amplifyRepositoryFactory(config);
+  return { config, repository };
+};
+export default function App({
+  loaderData: { repository },
+}: Route.ComponentProps) {
+  const [tenant, setTenant] = React.useState<RootContext["tenant"]>(undefined);
   return (
     <React.StrictMode>
-      <Authenticator
-        services={{
-          handleSignUp: signUp,
-        }}
-        formFields={{
-          signUp: {
-            [CUSTOM_USER_ATTRIBUTES.TENANT_NAME]: {
-              label: "Tenant Name",
-              isRequired: true,
-              order: 1,
-              placeholder: "tenant-1",
-            },
-          },
-        }}
-      >
-        {({ user }) => {
-          if (user === undefined) {
-            return <></>;
-          }
-          return (
-            <Outlet
-              context={
-                {
-                  authUser: user,
-                  tenant,
-                  setTenant,
-                  repository,
-                } satisfies RootContext
-              }
-            />
-          );
-        }}
-      </Authenticator>
+      <Outlet
+        context={
+          {
+            tenant,
+            setTenant,
+            repository,
+          } as RootContext
+        }
+      />
     </React.StrictMode>
   );
 }

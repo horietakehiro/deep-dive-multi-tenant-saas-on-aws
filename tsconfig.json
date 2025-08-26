@@ -2,10 +2,13 @@
   "files": [],
   "references": [
     {
-      "path": "apps/backend/"
+      "path": "./apps/backend/"
     },
     {
-      "path": "baseline-infrastructure/"
+      "path": "./apps/frontends/control-plane/"
+    },
+    {
+      "path": "./baseline-infrastructure/"
     }
   ]
 }

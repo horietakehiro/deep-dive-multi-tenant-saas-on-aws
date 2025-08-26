@@ -1,4 +1,4 @@
-import type { RootContext } from "../../lib/domain/model/context";
+// import type { RootContext } from "../../lib/domain/model/context";
 import { render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import Home from "../home";
@@ -12,7 +12,7 @@ const useOutletContext = vi.hoisted(() =>
           loginId: "test@example.com",
         },
       },
-    } satisfies Pick<RootContext, "authUser">;
+    };
   })
 );
 vi.mock("react-router", async () => {

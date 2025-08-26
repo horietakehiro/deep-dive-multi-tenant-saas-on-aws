@@ -1,9 +1,8 @@
 import { generateClient } from "aws-amplify/api";
-import { amplifyRepositoryFactory } from "../../../adaptor/repository";
 import type { CustomUserAttributes } from "../../model/user";
-import type { IRepository, TenantClient } from "../../port/repository";
+import type { IRepository } from "../../port/repository";
 import { preSingUpServiceFactory } from "../pre-sign-up";
-import type { Schema } from "../..//model/data";
+import type { Schema } from "../../model/data";
 
 const clientForType = async () => {
   return await generateClient<Schema>()["models"]["Tenant"]["get"](

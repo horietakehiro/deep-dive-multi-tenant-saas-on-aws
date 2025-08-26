@@ -1,11 +1,10 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { PageContainer } from "@toolpad/core";
+import type { RootContext } from "app/lib/domain/model/context";
 import { useOutletContext } from "react-router";
 // import type { RootContext } from "../models/context";
 
-import { CUSTOM_USER_ATTRIBUTES } from "backend/lib/domain/model/user";
-import { type RootContext } from "control-plane/app/lib/domain/model/context";
 export default function Home() {
   const { authUser } = useOutletContext<RootContext>();
   return (
@@ -19,8 +18,7 @@ export default function Home() {
         }}
       >
         <Typography variant="h2">
-          WELCOME {authUser.signInDetails?.loginId}{" "}
-          {CUSTOM_USER_ATTRIBUTES.ROLE}
+          WELCOME {authUser?.signInDetails?.loginId}
         </Typography>
       </Box>
     </PageContainer>

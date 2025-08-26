@@ -1,10 +1,8 @@
 import { generateClient } from "aws-amplify/api";
-import type { Config } from "../domain/model/config";
 import { NotImplementedError } from "../domain/model/error";
 import type {
   IRepository,
   IRepositoryFactory,
-  TenantClient,
 } from "../domain/port/repository";
 import type { Schema } from "../domain/model/data";
 

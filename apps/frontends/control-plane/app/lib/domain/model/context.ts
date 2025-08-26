@@ -1,9 +1,12 @@
 import type { AuthUser } from "aws-amplify/auth";
-import type { Schema } from "backend/lib/domain/model/data";
-import type { IRepository } from "backend/lib/domain/port/repository";
+// import type { Tenant } from "../../../../../backend/lib/domain/model/data";
+import type { Tenant } from "@intersection/backend/lib/domain/model/data";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
+// import type { Schema } from "backend/lib/domain/model/data";
+// import type { IRepository } from "backend/lib/domain/port/repository";
 export interface RootContext {
-  authUser: AuthUser;
-  tenant?: Schema["Tenant"]["type"];
-  setTenant: (tenant: Schema["Tenant"]["type"]) => void;
+  authUser?: AuthUser;
+  tenant?: Tenant;
+  setTenant: (tenant: Tenant) => void;
   repository: IRepository;
 }

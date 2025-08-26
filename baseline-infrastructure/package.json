@@ -1,6 +1,7 @@
 {
   "name": "@intersection/baseline-infrastructure",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "cdk": "npx cdk",
     "test": "vitest"

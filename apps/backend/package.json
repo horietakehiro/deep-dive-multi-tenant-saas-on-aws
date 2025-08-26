@@ -2,6 +2,7 @@
   "name": "@intersection/backend",
   "version": "1.0.0",
   "type": "module",
+  "private": true,
   "scripts": {
     "test": "vitest",
     "ampx": "npx ampx",

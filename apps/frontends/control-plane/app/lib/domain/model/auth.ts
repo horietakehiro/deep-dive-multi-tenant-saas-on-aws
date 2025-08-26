@@ -3,7 +3,7 @@ import {
   fetchUserAttributesFactory,
   signOutFactory,
   signUpFactory,
-} from "backend/lib/domain/model/auth";
+} from "@intersection/backend/lib/domain/model/auth";
 import { config } from "./config";
 
 export const fetchUserAttributes = fetchUserAttributesFactory(config);
