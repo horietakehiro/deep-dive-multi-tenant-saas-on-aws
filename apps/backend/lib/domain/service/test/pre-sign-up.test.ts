@@ -1,30 +1,25 @@
+import { generateClient } from "aws-amplify/api";
 import { amplifyRepositoryFactory } from "../../../adaptor/repository";
 import type { CustomUserAttributes } from "../../model/user";
 import type { IRepository, TenantClient } from "../../port/repository";
 import { preSingUpServiceFactory } from "../pre-sign-up";
+import type { Schema } from "../..//model/data";
+
+const clientForType = async () => {
+  return await generateClient<Schema>()["models"]["Tenant"]["get"](
+    { id: "" },
+    {
+      selectionSet: ["id", "name"],
+    }
+  );
+};
 describe("サインアップ前プロセス", () => {
   test("ユーザのカスタム属性に対応したテナントアイデンティティを作成出来る", async () => {
-    const mockCreateTenant = vi.fn<IRepository["createTenant"]>(
-      async (props) => {
-        return {
-          data: {
-            id: props.id!,
-            name: props.name!,
-            status: "pending",
-            url: null,
-            createdAt: "",
-            updatedAt: "",
-            spots: () => {
-              throw Error();
-            },
-            users: () => {
-              throw Error();
-            },
-          },
-        };
-      }
-    );
-
+    const mockCreateTenant = vi.fn<typeof clientForType>(async () => {
+      return {
+        data: { id: "dummy-id", name: "dummy-name" },
+      };
+    });
     const userAttributes = {
       "custom:tenantId": "dummy-id",
       "custom:tenantName": "dummy-name",
@@ -37,7 +32,7 @@ describe("サインアップ前プロセス", () => {
       },
       async () => {
         return {
-          createTenant: mockCreateTenant,
+          createTenant: mockCreateTenant as IRepository["createTenant"],
         };
       }
     );
@@ -48,10 +43,15 @@ describe("サインアップ前プロセス", () => {
         },
       },
     });
-    expect(mockCreateTenant).toHaveBeenCalledWith({
-      id: "dummy-id",
-      name: "dummy-name",
-      status: "pending",
-    });
+    expect(mockCreateTenant).toHaveBeenCalledWith(
+      {
+        id: "dummy-id",
+        name: "dummy-name",
+        status: "pending",
+      },
+      {
+        selectionSet: ["id", "name", "status"],
+      }
+    );
   });
 });
