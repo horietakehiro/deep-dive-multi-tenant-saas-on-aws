@@ -35,6 +35,7 @@ type ListFn<
 
 export interface IRepository {
   createTenant: SingularFn<TenantClient["create"], Tenant>;
+  getTenant: SingularFn<TenantClient["get"], Tenant>;
   listTenant: ListFn<TenantClient["list"], Tenant>;
 }
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (

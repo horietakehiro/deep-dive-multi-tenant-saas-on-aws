@@ -9,9 +9,15 @@ import ApartmentIcon from "@mui/icons-material/Apartment";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../lib/domain/model/context";
-import { signOut } from "../lib/domain/model/auth";
+import { fetchUserAttributes, signOut } from "../lib/domain/model/auth";
+import { getTenantByUserAttributes } from "app/lib/domain/service/get-tenant-by-user-attributes";
 export default function DashboardLayout({}: Route.ComponentProps) {
-  const { authUser, setTenant, tenant } = useOutletContext<RootContext>();
+  const {
+    authUser,
+    setTenant,
+    tenant,
+    repository: { getTenant },
+  } = useOutletContext<RootContext>();
 
   const [session, setSession] = React.useState<Session | null>({
     user: {
@@ -51,11 +57,11 @@ export default function DashboardLayout({}: Route.ComponentProps) {
   ];
   React.useEffect(() => {
     const f = async () => {
-      //   setTenant();
-      // await getTenantFromUserAttributes(
-      //   () => fetchUserAttributes() as Promise<CustomUserAttributes>,
-      //   { getTenant: client.getTenant }
-      // )
+      const tenant = await getTenantByUserAttributes(
+        fetchUserAttributes,
+        getTenant
+      );
+      setTenant(tenant);
     };
     f();
   }, []);

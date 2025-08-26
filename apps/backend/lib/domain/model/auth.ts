@@ -3,10 +3,9 @@ import {
   getCurrentUser as amplifyGetCurrentUser,
   fetchUserAttributes as amplifyFetchUserAttributes,
   signOut as amplifySignOut,
-  signUp as amplifySignUp,
 } from "aws-amplify/auth";
 import type { Config } from "./config";
-import { CUSTOM_USER_ATTRIBUTES, type SignupUserAttributes } from "./user";
+import type { CustomUserAttributes } from "./user";
 
 export const signInFactory = (config: Config): typeof amplifySignIn => {
   if (config.type === "NO_AMPLIFY") {
@@ -41,11 +40,11 @@ export const getCurrentUserFactory = (
 
 export const fetchUserAttributesFactory = (
   config: Config
-): typeof amplifyFetchUserAttributes => {
+): (() => Promise<CustomUserAttributes>) => {
   if (config.type === "NO_AMPLIFY") {
     return () => Promise.resolve({ ...config.dummyUserAttributes });
   }
-  return amplifyFetchUserAttributes;
+  return amplifyFetchUserAttributes as () => Promise<CustomUserAttributes>;
 };
 export const signOutFactory = (config: Config): typeof amplifySignOut => {
   if (config.type === "NO_AMPLIFY") {
@@ -55,40 +54,4 @@ export const signOutFactory = (config: Config): typeof amplifySignOut => {
     };
   }
   return amplifySignOut;
-};
-
-export const signUpFactory = (
-  config: Config,
-  idFn: () => string
-): typeof amplifySignUp => {
-  if (config.type === "NO_AMPLIFY") {
-    return (input) => {
-      console.debug(input);
-      return Promise.resolve({
-        isSignUpComplete: true,
-        nextStep: {
-          signUpStep: "DONE",
-        },
-      });
-    };
-  }
-  return async (input) => {
-    const requiredUserAttributes: SignupUserAttributes = {
-      "custom:tenantId": idFn(),
-      "custom:tenantName":
-        input.options!.userAttributes[CUSTOM_USER_ATTRIBUTES.TENANT_NAME]!,
-      email: input.options?.userAttributes["email"]!,
-      "custom:tenantRole": "ADMIN",
-    };
-    return amplifySignUp({
-      ...input,
-      options: {
-        ...input.options,
-        userAttributes: {
-          ...input.options?.userAttributes,
-          ...requiredUserAttributes,
-        },
-      },
-    });
-  };
 };

@@ -2,14 +2,9 @@ import type {
   PreSignUpTriggerEvent,
   PreSignUpTriggerHandler,
 } from "aws-lambda";
-import type {
-  IRepository,
-  IRepositoryFactory,
-  TenantClient,
-} from "../port/repository";
+import type { IRepositoryFactory, TenantClient } from "../port/repository";
 import type { SignupUserAttributes } from "../model/user";
 import type { Config } from "../model/config";
-import { amplifyRepositoryFactory } from "lib/adaptor/repository";
 
 export const preSingUpServiceFactory = (
   config: Config,

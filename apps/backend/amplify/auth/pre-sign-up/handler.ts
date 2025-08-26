@@ -5,7 +5,7 @@ import { env } from "$amplify/env/pre-sign-up";
 
 import { amplifyRepositoryFactory } from "../../../lib/adaptor/repository";
 import type { IRepositoryFactory } from "../../../lib/domain/port/repository";
-import { preSingUpServiceFactory } from "../../../lib/domain/service/pre-sign-up";
+import { preSingUpServiceFactory } from "../../../lib/domain/service/pre-sign-up-service";
 
 export const handler = preSingUpServiceFactory(
   {
