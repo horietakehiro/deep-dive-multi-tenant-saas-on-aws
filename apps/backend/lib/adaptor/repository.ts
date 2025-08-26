@@ -16,6 +16,8 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
   return {
     createTenant: ac.models.Tenant.create,
     listTenant: ac.models.Tenant.list,
+    getTenant: ac.models.Tenant.get,
+    updateTenant: ac.models.Tenant.update,
     // listTenants: async (props) => await ac.models.Tenant.list(props),
     // updateTenant: async (props) => await ac.models.Tenant.update(props),
   } satisfies IRepository;

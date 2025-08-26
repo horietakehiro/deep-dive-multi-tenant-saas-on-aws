@@ -10,15 +10,14 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../lib/domain/model/context";
 import { fetchUserAttributes, signOut } from "../lib/domain/model/auth";
-import { getTenantByUserAttributes } from "app/lib/domain/service/get-tenant-by-user-attributes";
+import { getTenantByUserAttributes } from "../lib/domain/service/get-tenant-by-user-attributes";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 export default function DashboardLayout({}: Route.ComponentProps) {
-  const {
-    authUser,
-    setTenant,
-    tenant,
-    repository: { getTenant },
-  } = useOutletContext<RootContext>();
-
+  const { authUser, setTenant, tenant, repository } = useOutletContext<
+    Omit<RootContext, "repository"> & {
+      repository: Pick<IRepository, "getTenant">;
+    }
+  >();
   const [session, setSession] = React.useState<Session | null>({
     user: {
       id: authUser?.userId ?? null,
@@ -59,7 +58,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
     const f = async () => {
       const tenant = await getTenantByUserAttributes(
         fetchUserAttributes,
-        getTenant
+        repository.getTenant
       );
       setTenant(tenant);
     };
@@ -81,7 +80,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       session={session}
     >
       <ToolpadDashboardLayout>
-        <Outlet context={{ authUser, tenant, setTenant }} />
+        <Outlet context={{ authUser, tenant, setTenant, repository }} />
       </ToolpadDashboardLayout>
     </ReactRouterAppProvider>
   );
