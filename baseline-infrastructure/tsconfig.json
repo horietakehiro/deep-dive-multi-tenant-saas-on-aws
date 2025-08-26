@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.base.json",
-  "include": ["bin", "lib", "tests"],
+  "include": ["bin", "lib", "test"],
   "exclude": ["cdk.out"],
   "compilerOptions": {
     "baseUrl": ".",

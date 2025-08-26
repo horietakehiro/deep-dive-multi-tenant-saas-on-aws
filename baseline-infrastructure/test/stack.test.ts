@@ -1,10 +1,10 @@
 import { App, Stack } from "aws-cdk-lib";
 import { ControlPlane } from "../lib/full-stack-silo-deploy-model";
-import { AWS_AMPLIFY_APP } from "@horietakehiro/aws-cdk-utul/lib/types/cfn-resource-types";
 import {
   TypedTemplate,
   ExtraMatch,
 } from "@horietakehiro/aws-cdk-utul/lib/assertions";
+import { AWS_AMPLIFY_APP } from "@/cfn-types";
 
 describe("コントロールプレーンコンストラクタ", () => {
   const app = new App();
@@ -21,7 +21,7 @@ describe("コントロールプレーンコンストラクタ", () => {
       Type: "String",
     });
     expect(params.length).toBe(1);
-    const { id } = params[0];
+    const { id } = params[0]!;
     template.hasResource(
       AWS_AMPLIFY_APP({
         Properties: {
