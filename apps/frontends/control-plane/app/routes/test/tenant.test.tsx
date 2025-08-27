@@ -9,7 +9,10 @@ import { AppProvider } from "@toolpad/core";
 // import { useState } from "react";
 import "@testing-library/jest-dom";
 import Tenant, { type Context } from "../tenant";
-import { useState } from "react";
+import React, { useState } from "react";
+import TenantEdit from "../tenant-edit";
+import userEvent from "@testing-library/user-event";
+// import type { EmotionJSX } from "@emotion/react/dist/declarations/src/jsx-namespace";
 
 const mockUseOutletContext = vi.hoisted(() => {
   return vi.fn<() => Context>(() => {
@@ -40,8 +43,6 @@ describe("テナント詳細画面", () => {
           mockUseOutletContext.mockReturnValue({
             tenant,
             setTenant,
-            // tenant: undefined,
-            // setTenant: () => {},
             repository: {
               getTenant: async () => ({
                 data: {
@@ -75,5 +76,60 @@ describe("テナント詳細画面", () => {
     // テナントの詳細情報が表示される
     await waitFor(() => screen.findByText(/test-id/));
     await waitFor(() => screen.findByText(/test-name/));
+    await waitFor(() => screen.findByText(/pending/));
+  });
+
+  test("編集ボタンをクリックすることで編集画面に遷移出来る", async () => {
+    const Component = (CUT: typeof Tenant) => {
+      return () => {
+        const [tenant, setTenant] = React.useState<Context["tenant"]>({
+          id: "test-id",
+          name: "test-name",
+          status: "pending",
+        } as TenantType);
+        mockUseOutletContext.mockReturnValue({
+          tenant,
+          setTenant,
+          repository: {
+            getTenant: async () => ({
+              data: {
+                id: "test-id",
+                name: "test-name",
+                status: "pending",
+              } as TenantType,
+            }),
+            updateTenant: async (...args) => ({
+              data: {
+                id: "test-id",
+                name: args[0].name!,
+                status: "pending",
+              } as TenantType,
+            }),
+          },
+        });
+        return (
+          <AppProvider>
+            <CUT />
+          </AppProvider>
+        );
+      };
+    };
+    const Stub = createRoutesStub([
+      {
+        path: "/tenant",
+        Component: Component(Tenant),
+      },
+      {
+        path: "/tenant/edit",
+        Component: Component(TenantEdit),
+      },
+    ]);
+    render(<Stub initialEntries={["/tenant"]} />);
+    screen.debug();
+    const editButton = await waitFor(() =>
+      screen.getByRole("button", { name: "Edit" })
+    );
+    userEvent.click(editButton);
+    await waitFor(() => screen.findByText(/Edit Tenant Information/));
   });
 });

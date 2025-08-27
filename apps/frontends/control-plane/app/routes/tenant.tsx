@@ -65,7 +65,7 @@ export default function Tenant() {
     repository: { updateTenant, getTenant },
   } = useOutletContext<Context>();
 
-  //   const navigate = useNavigate();
+  const navigate = useNavigate();
   //   const notifications = useNotifications();
 
   const tenantDataSource = tenantDataSourceFactory(
@@ -84,9 +84,9 @@ export default function Tenant() {
           dataSource={tenantDataSource}
           pageTitle="Detail"
           onEditClick={() => {
-            //   navigate("/tenant/edit", {});
+            navigate("/tenant/edit", {});
           }}
-        ></Show>
+        />
       </Stack>
     </>
   );

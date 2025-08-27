@@ -10,7 +10,7 @@ export default [
     layout("./layouts/dashboard.tsx", [
       index("./routes/home.tsx"),
       route("tenant", "routes/tenant.tsx"),
-      // route("tenant/edit", "routes/tenant-edit.tsx"),
+      route("tenant/edit", "routes/tenant-edit.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;
