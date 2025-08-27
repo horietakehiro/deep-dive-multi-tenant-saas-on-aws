@@ -2,7 +2,10 @@ import { render, waitFor, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import type { Tenant as TenantType } from "@intersection/backend/lib/domain/model/data";
 import { NotImplementedError } from "@intersection/backend/lib/domain/model/error";
-import { ReactRouterAppProvider } from "@toolpad/core/react-router";
+// TODO: ReactRouterAppProviderではなくAppProviderを使うのが正しい？
+// ※後者を使用すると`useLocation() may be used only in the context of a <Router> component.`というエラーが発生する
+import { AppProvider } from "@toolpad/core";
+// import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 // import { useState } from "react";
 import "@testing-library/jest-dom";
 import Tenant, { type Context } from "../tenant";
@@ -33,7 +36,6 @@ describe("テナント詳細画面", () => {
             name: "test-name",
             status: "pending",
           } as TenantType);
-          console.log("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
 
           mockUseOutletContext.mockReturnValue({
             tenant,
@@ -58,9 +60,12 @@ describe("テナント詳細画面", () => {
             },
           });
           return (
-            <ReactRouterAppProvider>
+            // <ReactRouterAppProvider>
+            //   <Tenant />
+            // </ReactRouterAppProvider>
+            <AppProvider>
               <Tenant />
-            </ReactRouterAppProvider>
+            </AppProvider>
           );
         },
       },
