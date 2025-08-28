@@ -1,10 +1,11 @@
-import { Stack } from "@mui/material";
-import { Show, type DataSource } from "@toolpad/core";
+import { Button, Stack } from "@mui/material";
+import { Show, useNotifications, type DataSource } from "@toolpad/core";
 import { useNavigate, useOutletContext } from "react-router";
 
 import type { Tenant } from "@intersection/backend/lib/domain/model/data";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 import type { RootContext } from "../lib/domain/model/context";
+import { activateTenant } from "app/lib/domain/service/activate-tenant";
 
 export const tenantDataSourceFactory: (
   repository: Pick<IRepository, "getTenant" | "updateTenant">,
@@ -67,7 +68,7 @@ export default function Tenant() {
   } = useOutletContext<Context>();
 
   const navigate = useNavigate();
-  //   const notifications = useNotifications();
+  const notifications = useNotifications();
 
   const tenantDataSource = tenantDataSourceFactory(
     { getTenant, updateTenant },
@@ -88,6 +89,22 @@ export default function Tenant() {
             navigate("/tenant/edit", {});
           }}
         />
+        <Button
+          variant="contained"
+          size="large"
+          sx={{ width: "50%" }}
+          onClick={async () => {
+            const updatedTenant = await activateTenant(tenant, updateTenant);
+            setTenant(updatedTenant);
+            notifications.show("Tenant activation successfully started", {
+              severity: "success",
+              autoHideDuration: 5 * 1000,
+            });
+          }}
+          disabled={tenant.status !== "pending"}
+        >
+          ACTIVATE TENANT
+        </Button>
       </Stack>
     </>
   );

@@ -9,6 +9,7 @@ import type { Schema, Tenant } from "../model/data";
 export type Client = AmplifyClient<Schema>;
 
 export type TenantClient = Client["models"]["Tenant"];
+export type Queries = Client["queries"];
 
 // FIXME: 複雑なモデルでselectionSetをそのままにしておくとtscの処理が激重になるので
 // インターフェース化する際は一旦無効化する
@@ -38,6 +39,7 @@ export interface IRepository {
   getTenant: SingularFn<TenantClient["get"], Tenant>;
   listTenant: ListFn<TenantClient["list"], Tenant>;
   updateTenant: SingularFn<TenantClient["update"], Tenant>;
+  requestTenantActivation: Queries["requestTenantActivation"];
 }
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
   c: Config

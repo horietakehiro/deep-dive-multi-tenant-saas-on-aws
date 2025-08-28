@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { Authenticator as AmplifyAuthenticator } from "@aws-amplify/ui-react";
-import { signUpFactory } from "../lib/domain/service/sign-up-service";
+import { signUpFactory } from "../lib/domain/service/sign-up";
 import type { RootContext } from "../lib/domain/model/context";
 import { Outlet, useOutletContext } from "react-router";
 import { CUSTOM_USER_ATTRIBUTES } from "@intersection/backend/lib/domain/model/user";

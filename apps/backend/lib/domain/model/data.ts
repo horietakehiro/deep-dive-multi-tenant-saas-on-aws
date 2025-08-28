@@ -50,6 +50,13 @@ export const schema = a.schema({
     // appointments: a.hasMany("Appointment", "tenantId"),
     users: a.hasMany("User", "tenantId"),
   }),
+
+  requestTenantActivation: a
+    .query()
+    .arguments({
+      tenantId: a.id().required(),
+    })
+    .returns(a.string()),
 });
 export type Schema = ClientSchema<typeof schema>;
 export type Tenant = Schema["Tenant"]["type"];

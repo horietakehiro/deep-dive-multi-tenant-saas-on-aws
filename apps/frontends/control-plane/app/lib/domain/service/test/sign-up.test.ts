@@ -1,5 +1,5 @@
 import type { signUp as amplifySignUp } from "aws-amplify/auth";
-import { signUpFactory } from "../sign-up-service";
+import { signUpFactory } from "../sign-up";
 import type { SignupUserAttributes } from "@intersection/backend/lib/domain/model/user";
 
 describe("サインアップサービス", () => {
