@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import {
   tenantDataSourceFactory,
   type Context as TenantContext,
@@ -12,14 +12,15 @@ export default function TenantEdit() {
     tenant,
     setTenant
   );
+  const navigate = useNavigate();
   return tenant === undefined ? (
     <></>
   ) : (
     <Edit<typeof tenant>
       id={tenant.id}
       dataSource={tenantDataSource}
-      pageTitle="Edit Tenant Information"
-      // onSubmitSuccess={}
+      pageTitle="Edit Tenant Detail"
+      onSubmitSuccess={() => navigate("/tenant")}
     />
   );
 }

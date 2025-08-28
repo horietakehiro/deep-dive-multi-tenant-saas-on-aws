@@ -35,6 +35,7 @@ export const tenantDataSourceFactory: (
       },
     ],
     getOne: async (id) => {
+      // getOne内でステートの更新はしない(無限ループに陥るため)
       const res = await repository.getTenant({ id: id.toString() });
       if (res.data == null) {
         throw Error("tenant get failed");

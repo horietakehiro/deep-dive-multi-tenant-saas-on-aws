@@ -130,6 +130,8 @@ describe("テナント詳細画面", () => {
       screen.getByRole("button", { name: "Edit" })
     );
     userEvent.click(editButton);
-    await waitFor(() => screen.findByText(/Edit Tenant Information/));
+    await waitFor(() =>
+      screen.findByRole("heading", { name: "Edit Tenant Detail" })
+    );
   });
 });
