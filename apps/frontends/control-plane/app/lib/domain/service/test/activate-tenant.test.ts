@@ -1,29 +1,36 @@
 import type { Tenant } from "@intersection/backend/lib/domain/model/data";
 import { activateTenant } from "../activate-tenant";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 
 describe("テナントアクティベーションサービス", () => {
+  const mockUpdateTenant: IRepository["updateTenant"] = async (...args) => ({
+    data: { status: args[0].status, id: "test-id" } as Tenant,
+  });
+
   test("pending状態のテナントのステータスを更新してアクティベーションの開始をリクエスト出来る", async () => {
-    const activatedTenant = await activateTenant(
+    const res = await activateTenant(
       { id: "test-id", status: "pending" } as Tenant,
-      async (...args) => ({
-        data: { status: args[0].status, id: "test-id" } as Tenant,
-      })
+      mockUpdateTenant,
+      async () => ({ data: "" })
     );
-    expect(activatedTenant.status).toBe("activating");
+    expect(res.result).toBe("OK");
+    expect(res.tenant.status).toBe("activating");
   });
-  test("pending状態以外の場合はエラーとなる", async () => {
-    const f = async () =>
-      await activateTenant(
-        { id: "test-id", status: "inactive" } as Tenant,
-        async (...args) => ({
-          data: { status: args[0].status, id: "test-id" } as Tenant,
-        })
-      );
-    expect(() => f()).rejects.toThrow(
-      "tenant with status inactive cannot be activated"
+  test("pending状態以外の場合はNGがレスポンスされる", async () => {
+    const res = await activateTenant(
+      { id: "test-id", status: "inactive" } as Tenant,
+      mockUpdateTenant,
+      async () => ({ data: "" })
     );
+    expect(res.result).toBe("NG");
+    expect(res.message).toBe("tenant with status inactive cannot be activated");
+    expect(res.tenant.status).toBe("inactive");
   });
-  test("アクティベーションの開始のリクエストに失敗した場合はステータスをactivationFailedに更新する", async () => {
-    // TODO
-  });
+  // test("テナントステータス更新後のアクティベーションの開始のリクエストに失敗した場合はステータスをactivationFailedに更新する", async () => {
+  //   const activationFailedTenant = await activateTenant(
+  //     { id: "test-id", status: "pending" } as Tenant,
+  //     mockUpdateTenant,
+  //     async () => (throw Error(""))
+  //   );
+  // });
 });
