@@ -12,6 +12,9 @@ import Tenant, { type Context } from "../tenant";
 import React, { useState } from "react";
 import TenantEdit from "../tenant-edit";
 import userEvent from "@testing-library/user-event";
+import { notImplementedFn } from "@intersection/backend/lib/util";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
+import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 // import type { EmotionJSX } from "@emotion/react/dist/declarations/src/jsx-namespace";
 
 const mockUseOutletContext = vi.hoisted(() => {
@@ -58,6 +61,7 @@ describe("テナント詳細画面", () => {
                   status: "pending",
                 } as TenantType,
               }),
+              requestTenantActivation: notImplementedFn,
             },
           });
           return (
@@ -105,6 +109,7 @@ describe("テナント詳細画面", () => {
                 status: "pending",
               } as TenantType,
             }),
+            requestTenantActivation: notImplementedFn,
           },
         });
         return (
@@ -133,5 +138,97 @@ describe("テナント詳細画面", () => {
     await waitFor(() =>
       screen.findByRole("heading", { name: "Edit Tenant Detail" })
     );
+  });
+
+  describe("テナントアクティベーション機能", () => {
+    const ComponentFn = (
+      status: TenantType["status"],
+      fn: IRepository["requestTenantActivation"]
+    ) => {
+      const t = { id: "test-id", name: "test-name", status } as TenantType;
+      let tenant: TenantType | undefined;
+      let setTenant: (tenant: TenantType) => void;
+      return () => {
+        if (tenant === undefined) {
+          [tenant, setTenant] = useState<Context["tenant"]>({
+            ...t,
+          } as TenantType);
+        }
+        mockUseOutletContext.mockReturnValue({
+          tenant,
+          setTenant,
+          repository: {
+            getTenant: async () => ({
+              data: {
+                ...tenant,
+              } as TenantType,
+            }),
+            updateTenant: async (...args) => ({
+              data: { ...tenant, status: args[0].status } as TenantType,
+            }),
+            requestTenantActivation: fn,
+          },
+        });
+        return (
+          <ReactRouterAppProvider>
+            <Tenant />
+          </ReactRouterAppProvider>
+        );
+      };
+    };
+    test("テナントステータスがpengin時にのみアクティベーションボタンをクリック出来る", async () => {
+      const Stub = createRoutesStub([
+        {
+          path: "/tenant",
+          Component: ComponentFn("pending", async () => ({ data: "" })),
+        },
+      ]);
+      render(<Stub initialEntries={["/tenant"]} />);
+
+      const button = await waitFor(() =>
+        screen.getByRole("button", { name: "ACTIVATE TENANT" })
+      );
+      await userEvent.click(button);
+      const alert = await waitFor(() => screen.getByRole("alert", {}));
+      expect(alert.textContent).toBe(
+        "tenant activation successfully requested"
+      );
+    });
+    test("テナントステータスがpendingでなければアクティベーションボタンはクリック出来ない", async () => {
+      const Stub = createRoutesStub([
+        { path: "/tenant", Component: ComponentFn("active", notImplementedFn) },
+      ]);
+      render(<Stub initialEntries={["/tenant"]} />);
+
+      const button = await waitFor(() =>
+        screen.getByRole("button", { name: "ACTIVATE TENANT" })
+      );
+      expect(button).toBeDisabled();
+    });
+    test("テナントのアクティベーションボタンに失敗した場合はエラーアラートが表示される", async () => {
+      const Stub = createRoutesStub([
+        {
+          path: "/tenant",
+          Component: ComponentFn("pending", async () => ({
+            data: null,
+            errors: [
+              {
+                errorInfo: {},
+                errorType: "",
+                message: "",
+              },
+            ],
+          })),
+        },
+      ]);
+      render(<Stub initialEntries={["/tenant"]} />);
+
+      const button = await waitFor(() =>
+        screen.getByRole("button", { name: "ACTIVATE TENANT" })
+      );
+      await userEvent.click(button);
+      screen.debug();
+      await waitFor(() => screen.findByTestId("ErrorOutlineIcon"));
+    });
   });
 });

@@ -1,6 +1,14 @@
-import { a, type ClientSchema } from "@aws-amplify/backend";
+import { a, defineFunction, type ClientSchema } from "@aws-amplify/backend";
 
-export const schema = a.schema({
+/**
+ * カスタムクエリのハンドラに依存するのではなく、ハンドラがこのスキーマに依存出来るよう、
+ * スキーマ情報そのものではなくスキーマのファクトリのみをエクスポートする
+ * @param handlerFunction
+ * @returns
+ */
+export const schemaFactory = (
+  handlerFunction: ReturnType<typeof defineFunction>
+) => ({
   AppointmentStatus: a.enum(["requested", "approved", "rejected"]),
   Appointment: a.model({
     id: a.id().required(),
@@ -40,7 +48,13 @@ export const schema = a.schema({
     // appointmentMadeWith: a.hasMany("Appointment", "userIdMadeWith"),
   }),
 
-  TenantStatus: a.enum(["pending", "activating", "active", "inactive"]),
+  TenantStatus: a.enum([
+    "pending",
+    "activating",
+    "active",
+    "inactive",
+    "activationFailed",
+  ]),
   Tenant: a.model({
     // id: a.id().required(),
     name: a.string().required(),
@@ -56,7 +70,14 @@ export const schema = a.schema({
     .arguments({
       tenantId: a.id().required(),
     })
-    .returns(a.string()),
+    .returns(a.string())
+    .handler(a.handler.function(handlerFunction)),
 });
+
+const h = defineFunction({
+  entry: "./dummy-handler.ts",
+});
+// 型情報だけ公開するためにダミーのハンドラを使用する
+const schema = a.schema(schemaFactory(h));
 export type Schema = ClientSchema<typeof schema>;
 export type Tenant = Schema["Tenant"]["type"];

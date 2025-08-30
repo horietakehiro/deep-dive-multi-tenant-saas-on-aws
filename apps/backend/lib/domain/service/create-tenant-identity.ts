@@ -6,7 +6,7 @@ import type { IRepositoryFactory, TenantClient } from "../port/repository";
 import type { SignupUserAttributes } from "../model/user";
 import type { Config } from "../model/config";
 
-export const preSingUpServiceFactory = (
+export const createTenantIdentityFactory = (
   config: Config,
   repositoryFactory: IRepositoryFactory<"createTenant">
 ): ((

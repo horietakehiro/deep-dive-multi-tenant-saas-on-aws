@@ -5,7 +5,7 @@ import { useNavigate, useOutletContext } from "react-router";
 import type { Tenant } from "@intersection/backend/lib/domain/model/data";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 import type { RootContext } from "../lib/domain/model/context";
-import { activateTenant } from "app/lib/domain/service/activate-tenant";
+import { activateTenant } from "../lib/domain/service/activate-tenant";
 
 export const tenantDataSourceFactory: (
   repository: Pick<IRepository, "getTenant" | "updateTenant">,
@@ -58,13 +58,16 @@ export const tenantDataSourceFactory: (
 };
 
 export type Context = Pick<RootContext, "tenant" | "setTenant"> & {
-  repository: Pick<IRepository, "updateTenant" | "getTenant">;
+  repository: Pick<
+    IRepository,
+    "updateTenant" | "getTenant" | "requestTenantActivation"
+  >;
 };
 export default function Tenant() {
   const {
     tenant,
     setTenant,
-    repository: { updateTenant, getTenant },
+    repository: { updateTenant, getTenant, requestTenantActivation },
   } = useOutletContext<Context>();
 
   const navigate = useNavigate();
@@ -94,10 +97,14 @@ export default function Tenant() {
           size="large"
           sx={{ width: "50%" }}
           onClick={async () => {
-            const updatedTenant = await activateTenant(tenant, updateTenant);
-            setTenant(updatedTenant);
-            notifications.show("Tenant activation successfully started", {
-              severity: "success",
+            const res = await activateTenant(
+              tenant,
+              updateTenant,
+              requestTenantActivation
+            );
+            setTenant(res.tenant);
+            notifications.show(res.message, {
+              severity: res.result === "OK" ? "success" : "error",
               autoHideDuration: 5 * 1000,
             });
           }}

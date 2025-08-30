@@ -26,11 +26,16 @@ describe("テナントアクティベーションサービス", () => {
     expect(res.message).toBe("tenant with status inactive cannot be activated");
     expect(res.tenant.status).toBe("inactive");
   });
-  // test("テナントステータス更新後のアクティベーションの開始のリクエストに失敗した場合はステータスをactivationFailedに更新する", async () => {
-  //   const activationFailedTenant = await activateTenant(
-  //     { id: "test-id", status: "pending" } as Tenant,
-  //     mockUpdateTenant,
-  //     async () => (throw Error(""))
-  //   );
-  // });
+  test("テナントステータス更新後のアクティベーションの開始のリクエストに失敗した場合はステータスをactivationFailedに更新する", async () => {
+    const res = await activateTenant(
+      { id: "test-id", status: "pending" } as Tenant,
+      mockUpdateTenant,
+      async () => {
+        throw Error();
+      }
+    );
+    expect(res.result).toBe("NG");
+    expect(res.message).toBe("activation tenant failed");
+    expect(res.tenant.status).toBe("activationFailed");
+  });
 });

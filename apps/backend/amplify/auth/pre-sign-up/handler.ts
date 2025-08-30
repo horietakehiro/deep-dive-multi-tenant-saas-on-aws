@@ -5,9 +5,9 @@ import { env } from "$amplify/env/pre-sign-up";
 
 import { amplifyRepositoryFactory } from "../../../lib/adaptor/repository";
 import type { IRepositoryFactory } from "../../../lib/domain/port/repository";
-import { preSingUpServiceFactory } from "../../../lib/domain/service/pre-sign-up-service";
+import { createTenantIdentityFactory } from "../../../lib/domain/service/create-tenant-identity";
 
-export const handler = preSingUpServiceFactory(
+export const handler = createTenantIdentityFactory(
   {
     type: "PRODUCTION",
     amplifyConfigFn: async () => {
