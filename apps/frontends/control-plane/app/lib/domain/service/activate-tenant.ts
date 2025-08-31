@@ -1,22 +1,18 @@
 import type { Tenant } from "@intersection/backend/lib/domain/model/data";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
+import type { ServiceResponse } from "app/lib/domain/service/type";
 
-export interface ActivateTenantResponse {
-  result: "OK" | "NG";
-  message: string;
-  tenant: Tenant;
-}
 export const activateTenant = async (
   tenant: Tenant,
   updateTenant: IRepository["updateTenant"],
   requestTenantActivation: IRepository["requestTenantActivation"]
-): Promise<ActivateTenantResponse> => {
+): Promise<ServiceResponse<Tenant>> => {
   // validation
   if (tenant.status !== "pending") {
     return {
       result: "NG",
       message: `tenant with status ${tenant.status} cannot be activated`,
-      tenant,
+      data: tenant,
     };
   }
 
@@ -29,7 +25,7 @@ export const activateTenant = async (
     return {
       result: "NG",
       message: "updating tenant status failed",
-      tenant,
+      data: tenant,
     };
   }
   const activationResponse = await requestTenantActivation({
@@ -45,13 +41,13 @@ export const activateTenant = async (
     return {
       result: "NG",
       message: "activating tenant failed",
-      tenant: rollbackTenant.data!,
+      data: rollbackTenant.data!,
     };
   }
 
   return {
     result: "OK",
     message: "tenant activation successfully requested",
-    tenant: updateResponse.data,
+    data: updateResponse.data,
   };
 };

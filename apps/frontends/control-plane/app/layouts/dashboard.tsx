@@ -7,6 +7,7 @@ import React from "react";
 
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import RoomIcon from "@mui/icons-material/Room";
 import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../lib/domain/model/context";
 import { fetchUserAttributes, signOut } from "../lib/domain/model/auth";
@@ -40,6 +41,11 @@ export default function DashboardLayout({}: Route.ComponentProps) {
       segment: "tenant",
       title: "Tenant",
       icon: <ApartmentIcon />,
+    },
+    {
+      kind: "page",
+      segment: "Spots",
+      icon: <RoomIcon />,
     },
     {
       kind: "page",

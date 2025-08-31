@@ -18,9 +18,18 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
     listTenant: ac.models.Tenant.list,
     getTenant: ac.models.Tenant.get,
     updateTenant: ac.models.Tenant.update,
-    requestTenantActivation: ac.queries.requestTenantActivation,
-    // requestTenantActivation: async () => ({ data: "" }),
-    // listTenants: async (props) => await ac.models.Tenant.list(props),
-    // updateTenant: async (props) => await ac.models.Tenant.update(props),
+    requestTenantActivation: ac.mutations.requestTenantActivation,
+    createSpot: ac.models.Spot.create,
+    getSpot: ac.models.Spot.get,
+    updateSpot: ac.models.Spot.update,
+    deleteSpot: ac.models.Spot.delete,
+
+    getUser: ac.models.User.get,
+    updateUser: ac.models.User.update,
+    deleteUser: ac.models.User.delete,
+    createUser: ac.models.User.create,
+    createCognitoUser: ac.mutations.createCognitoUser,
+    deleteCognitoUser: ac.mutations.deleteCognitoUser,
+    listUserRoles: ac.enums.UserRole.values,
   } satisfies IRepository;
 };

@@ -19,7 +19,7 @@ import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 
 const mockUseOutletContext = vi.hoisted(() => {
   return vi.fn<() => Context>(() => {
-    throw new NotImplementedError("hogefuga");
+    throw NotImplementedError;
   });
 });
 vi.mock("react-router", async () => {

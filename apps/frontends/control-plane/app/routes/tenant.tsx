@@ -102,7 +102,7 @@ export default function Tenant() {
               updateTenant,
               requestTenantActivation
             );
-            setTenant(res.tenant);
+            setTenant(res.data);
             notifications.show(res.message, {
               severity: res.result === "OK" ? "success" : "error",
               autoHideDuration: 5 * 1000,

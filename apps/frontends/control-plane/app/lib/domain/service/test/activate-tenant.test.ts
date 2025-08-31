@@ -14,7 +14,7 @@ describe("テナントアクティベーションサービス", () => {
       async () => ({ data: "" })
     );
     expect(res.result).toBe("OK");
-    expect(res.tenant.status).toBe("activating");
+    expect(res.data.status).toBe("activating");
   });
   test("pending状態以外の場合はNGがレスポンスされる", async () => {
     const res = await activateTenant(
@@ -24,18 +24,19 @@ describe("テナントアクティベーションサービス", () => {
     );
     expect(res.result).toBe("NG");
     expect(res.message).toBe("tenant with status inactive cannot be activated");
-    expect(res.tenant.status).toBe("inactive");
+    expect(res.data.status).toBe("inactive");
   });
   test("テナントステータス更新後のアクティベーションの開始のリクエストに失敗した場合はステータスをactivationFailedに更新する", async () => {
     const res = await activateTenant(
       { id: "test-id", status: "pending" } as Tenant,
       mockUpdateTenant,
-      async () => {
-        throw Error();
-      }
+      async () => ({
+        data: null,
+        errors: [{ errorInfo: {}, errorType: "", message: "" }],
+      })
     );
     expect(res.result).toBe("NG");
-    expect(res.message).toBe("activation tenant failed");
-    expect(res.tenant.status).toBe("activationFailed");
+    expect(res.message).toBe("activating tenant failed");
+    expect(res.data.status).toBe("activationFailed");
   });
 });

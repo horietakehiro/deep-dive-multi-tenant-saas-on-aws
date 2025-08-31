@@ -8,6 +8,7 @@ import { createRoutesStub } from "react-router";
 import Tenant from "../tenant";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { notImplementedFn } from "@intersection/backend/lib/util";
 
 const mockUseOutletContext = vi.hoisted(() => {
   return vi.fn<() => Context>(() => {
@@ -48,6 +49,7 @@ describe("テナント情報編集画面", () => {
                 status: tenant?.status,
               } as TenantType,
             }),
+            requestTenantActivation: notImplementedFn,
           },
         });
         return (

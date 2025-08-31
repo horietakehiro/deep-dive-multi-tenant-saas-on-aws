@@ -4,12 +4,14 @@ import type {
   SingularReturnValue,
 } from "@aws-amplify/data-schema/runtime";
 import type { Config } from "../model/config";
-import type { Schema, Tenant } from "../model/data";
+import type { Schema, Spot, Tenant, User } from "../model/data";
 
 export type Client = AmplifyClient<Schema>;
 
 export type TenantClient = Client["models"]["Tenant"];
-export type Queries = Client["queries"];
+export type SpotClient = Client["models"]["Spot"];
+export type UserClient = Client["models"]["User"];
+export type Mutations = Client["mutations"];
 
 // FIXME: 複雑なモデルでselectionSetをそのままにしておくとtscの処理が激重になるので
 // インターフェース化する際は一旦無効化する
@@ -39,7 +41,20 @@ export interface IRepository {
   getTenant: SingularFn<TenantClient["get"], Tenant>;
   listTenant: ListFn<TenantClient["list"], Tenant>;
   updateTenant: SingularFn<TenantClient["update"], Tenant>;
-  requestTenantActivation: Queries["requestTenantActivation"];
+  requestTenantActivation: Mutations["requestTenantActivation"];
+
+  createSpot: SingularFn<SpotClient["create"], Spot>;
+  getSpot: SingularFn<SpotClient["get"], Spot>;
+  updateSpot: SingularFn<SpotClient["update"], Spot>;
+  deleteSpot: SingularFn<SpotClient["delete"], Spot>;
+
+  createUser: SingularFn<UserClient["create"], User>;
+  getUser: SingularFn<UserClient["get"], User>;
+  updateUser: SingularFn<UserClient["update"], User>;
+  deleteUser: SingularFn<UserClient["delete"], User>;
+  listUserRoles: () => Schema["UserRole"]["type"][];
+  createCognitoUser: Mutations["createCognitoUser"];
+  deleteCognitoUser: Mutations["deleteCognitoUser"];
 }
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
   c: Config

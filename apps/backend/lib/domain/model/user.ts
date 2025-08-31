@@ -1,3 +1,5 @@
+import type { Schema } from "./data";
+
 export const CUSTOM_USER_ATTRIBUTES = {
   TENANT_ID: "custom:tenantId",
   TENANT_NAME: "custom:tenantName",
@@ -6,7 +8,7 @@ export const CUSTOM_USER_ATTRIBUTES = {
 export type CustomUserAttributes = {
   [key in (typeof CUSTOM_USER_ATTRIBUTES)["TENANT_ID" | "TENANT_NAME"]]: string;
 } & {
-  [key in (typeof CUSTOM_USER_ATTRIBUTES)["ROLE"]]: "OWNER" | "ADMIN" | "USER";
+  [key in (typeof CUSTOM_USER_ATTRIBUTES)["ROLE"]]: Schema["UserRole"]["type"];
 };
 
 export type SignupUserAttributes = {
