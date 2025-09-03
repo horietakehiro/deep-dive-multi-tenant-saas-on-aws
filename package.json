@@ -16,7 +16,8 @@
   "workspaces": [
     "apps/backend",
     "apps/frontends/control-plane",
-    "baseline-infrastructure"
+    "baseline-infrastructure",
+    "apps/frontends/application-plane"
   ],
   "devDependencies": {
     "@aws-amplify/backend": "^1.16.1",

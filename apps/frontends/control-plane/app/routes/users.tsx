@@ -1,13 +1,19 @@
+import { useOutletContext } from "react-router";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 import type { RootContext } from "../lib/domain/model/context";
-import { useOutletContext } from "react-router";
 import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
 import { Crud, type DataSource } from "@toolpad/core";
-import { createUserIdentity } from "app/lib/domain/service/create-user-identity";
+import { createUserIdentity } from "../lib/domain/service/create-user-identity";
 
 type Repository = Pick<
   IRepository,
-  "getUser" | "createUser" | "deleteUser" | "updateUser" | "listUserRoles"
+  | "getUser"
+  | "createUser"
+  | "deleteUser"
+  | "updateUser"
+  | "listUserRoles"
+  | "createCognitoUser"
+  | "deleteCognitoUser"
 >;
 export type Context = Pick<RootContext, "tenant"> & {
   repository: Repository;
@@ -19,13 +25,14 @@ const usersDataSourceFactory: (
   return {
     fields: [
       { field: "id", headerName: "ID", editable: false },
-      { field: "name", headerName: "Name", editable: false },
-      { field: "email", headerName: "Email", editable: false },
+      { field: "name", headerName: "Name", editable: true },
+      { field: "email", headerName: "Email", editable: true },
       {
         field: "role",
         headerName: "Role",
         editable: true,
         valueOptions: repository.listUserRoles(),
+        type: "singleSelect",
       },
       { field: "departmentName", headerName: "Department", editable: true },
       { field: "teamName", headerName: "Team", editable: true },
@@ -59,6 +66,11 @@ const usersDataSourceFactory: (
         },
         repository
       );
+      console.log(res);
+      if (res.result === "NG") {
+        throw Error("create user failed");
+      }
+      return res.data;
     },
   };
 };
