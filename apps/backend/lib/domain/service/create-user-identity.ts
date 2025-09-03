@@ -33,7 +33,7 @@ export const createUserIdentityFactory: (
     try {
       const res = await createUser({
         UserPoolId: userPoolId,
-        Username: args.email,
+        Username: undefined,
         UserAttributes: [
           {
             Name: CUSTOM_USER_ATTRIBUTES.TENANT_ID,
