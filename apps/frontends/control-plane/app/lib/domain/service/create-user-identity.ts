@@ -1,6 +1,6 @@
 import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
-import type { ServiceResponse } from "@intersection/backend/lib/domain/service/type";
+import type { ServiceResponse } from "./type";
 
 export const validate = (user: Partial<User>): user is User => {
   return (
