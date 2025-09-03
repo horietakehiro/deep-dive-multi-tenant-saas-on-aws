@@ -15,9 +15,11 @@ type GeneratePassword = (
   input: GetRandomPasswordCommandInput
 ) => Promise<GetRandomPasswordCommandOutput>;
 type CreateUserIdentity = (
-  args: Schema["createCognitoUser"]["args"]
-) => Promise<Schema["createCognitoUser"]["returnType"]>;
-
+  args: Pick<
+    Parameters<Schema["createCognitoUser"]["functionHandler"]>["0"],
+    "arguments"
+  >
+) => ReturnType<Schema["createCognitoUser"]["functionHandler"]>;
 /**
  * Cognitoユーザープール上にユーザーアイデンティティを作成する
  * @returns
@@ -27,7 +29,7 @@ export const createUserIdentityFactory: (
   createUser: CreateUser,
   generatePassword: GeneratePassword
 ) => CreateUserIdentity = (userPoolId, createUser, generatePassowrd) => {
-  return async (args) => {
+  return async ({ arguments: args }) => {
     console.log(args);
     // Cognitoに初期パスワード(ランダム)でユーザを作成
     console.log(args.email);

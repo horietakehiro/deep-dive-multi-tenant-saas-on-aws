@@ -22,9 +22,11 @@ describe("Cognitoユーザープールへのユーザーアイデンティティ
       }
     );
     const res = await f({
-      email: "test@example.com",
-      tenantId: "tenant-id",
-      role: "ADMIN",
+      arguments: {
+        email: "test@example.com",
+        tenantId: "tenant-id",
+        role: "ADMIN",
+      },
     });
     expect(res?.sub).toBe("test-id");
   });
@@ -48,9 +50,11 @@ describe("Cognitoユーザープールへのユーザーアイデンティティ
       };
     });
     await f({
-      email: "test@example.com",
-      tenantId: "tenant-id",
-      role: "ADMIN",
+      arguments: {
+        email: "test@example.com",
+        tenantId: "tenant-id",
+        role: "ADMIN",
+      },
     });
     expect(mockCreateUser).toHaveBeenCalledWith(
       expect.objectContaining({
