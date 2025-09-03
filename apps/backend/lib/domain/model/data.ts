@@ -95,8 +95,7 @@ export const schemaFactory = (handlers: Handlers) => ({
   deleteCognitoUser: a
     .mutation()
     .arguments({
-      tenantId: a.id().required(),
-      email: a.email().required(),
+      userId: a.id().required(),
     })
     .returns(a.string())
     .handler(a.handler.function(handlers.deleteCognitoUser)),

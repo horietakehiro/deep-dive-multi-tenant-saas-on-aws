@@ -4,6 +4,9 @@ import type { RootContext } from "../lib/domain/model/context";
 import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
 import { Crud, type DataSource } from "@toolpad/core";
 import { createUserIdentity } from "../lib/domain/service/create-user-identity";
+import FormControl from "@mui/material/FormControl";
+import { TextField } from "@mui/material";
+import { notImplementedFn } from "@intersection/backend/lib/util";
 
 type Repository = Pick<
   IRepository,
@@ -24,18 +27,34 @@ const usersDataSourceFactory: (
 ) => DataSource<User> = (tenant, repository) => {
   return {
     fields: [
-      { field: "id", headerName: "ID", editable: false },
-      { field: "name", headerName: "Name", editable: true },
-      { field: "email", headerName: "Email", editable: true },
+      { field: "id", headerName: "ID" },
+      { field: "name", headerName: "Name" },
+      {
+        field: "email",
+        headerName: "Email",
+        // Emailは後から更新出来ないようにする
+        renderFormField: ({ value, onChange, error }) => {
+          const onCreate = value === null; // 値が未設定≒新規作成時と判断する
+          return (
+            <FormControl error={!!error} fullWidth>
+              <TextField
+                value={value?.toString()}
+                label={"Email"}
+                disabled={!onCreate}
+                onChange={(event) => onChange(event.target.value)}
+              />
+            </FormControl>
+          );
+        },
+      },
       {
         field: "role",
         headerName: "Role",
-        editable: true,
         valueOptions: repository.listUserRoles(),
         type: "singleSelect",
       },
-      { field: "departmentName", headerName: "Department", editable: true },
-      { field: "teamName", headerName: "Team", editable: true },
+      { field: "departmentName", headerName: "Department" },
+      { field: "teamName", headerName: "Team" },
     ],
     getMany: async () => {
       const res = await tenant.users();
@@ -71,6 +90,19 @@ const usersDataSourceFactory: (
         throw Error("create user failed");
       }
       return res.data;
+    },
+    updateOne: async (...args) => {
+      const res = await repository.updateUser({
+        id: args[0].toString(),
+        ...args[1],
+      });
+      if (res.errors !== undefined || res.data === null) {
+        throw Error("update user failed");
+      }
+      return res.data;
+    },
+    deleteOne: async (...args) => {
+      cosnt res = await repository.deleteUser
     },
   };
 };

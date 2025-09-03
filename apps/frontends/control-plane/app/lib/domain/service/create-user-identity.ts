@@ -21,7 +21,7 @@ export const createUserIdentity = async (
     deleteCognitoUser,
     createUser,
   }: Pick<IRepository, "createUser" | "createCognitoUser" | "deleteCognitoUser">
-): Promise<ServiceResponse<User | null>> => {
+): Promise<ServiceResponse<User>> => {
   if (!validate(user)) {
     return {
       result: "NG",

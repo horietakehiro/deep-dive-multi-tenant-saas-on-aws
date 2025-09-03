@@ -3,11 +3,12 @@ import { preSignUp } from "../auth/pre-sign-up/resource";
 import { schemaFactory } from "lib/domain/model/data";
 import { activateTenant } from "../custom/activate-tenant/resource";
 import { createUserIdentity } from "../custom/create-user-identity/resource";
+import { deleteUserIdentity } from "../custom/delete-user-identity/resource";
 const schema = a.schema(
   schemaFactory({
     requestTenantActivation: activateTenant,
     createCognitoUser: createUserIdentity,
-    deleteCognitoUser: createUserIdentity, // TODO:
+    deleteCognitoUser: deleteUserIdentity,
   })
 );
 schema.authorization((allow) => [

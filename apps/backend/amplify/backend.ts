@@ -3,10 +3,12 @@ import { defineBackend } from "@aws-amplify/backend";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { createUserIdentity } from "./custom/create-user-identity/resource";
+import { deleteUserIdentity } from "./custom/delete-user-identity/resource";
 const backend = defineBackend({
   auth,
   data,
   createUserIdentity,
+  deleteUserIdentity,
 });
 
 const userPoolId = backend.auth.resources.userPool.userPoolId;
@@ -18,6 +20,14 @@ backend.createUserIdentity.resources.lambda.addToRolePolicy(
       "cognito-idp:AdminCreateUser",
       "secretsmanager:GetRandomPassword",
     ],
+    resources: ["*"],
+  })
+);
+backend.deleteUserIdentity.addEnvironment("USER_POOL_ID", userPoolId);
+backend.deleteUserIdentity.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: ["cognito-idp:AdminDeleteUser"],
     resources: ["*"],
   })
 );

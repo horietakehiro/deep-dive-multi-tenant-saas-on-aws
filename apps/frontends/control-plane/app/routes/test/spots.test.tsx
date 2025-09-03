@@ -1,12 +1,12 @@
 import type { Spot, Tenant } from "@intersection/backend/lib/domain/model/data";
 import { createRoutesStub } from "react-router";
 import Spots from "../spots";
-import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import React from "react";
 import type { Context } from "../spots";
 import { NotImplementedError } from "@intersection/backend/lib/domain/model/error";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 const mockUseOutletContext = vi.hoisted(() => {
   return vi.fn<() => Context>(() => {
     throw NotImplementedError;
@@ -58,13 +58,16 @@ describe("スポット管理画面", () => {
         },
       });
       return (
+        // <AppProvider>
+        //   <Spots />
+        // </AppProvider>
         <ReactRouterAppProvider>
           <Spots />
         </ReactRouterAppProvider>
       );
     };
   };
-  test("テナント配下に登録済みのスポットリストがが一覧に表示される", async () => {
+  test("テナント配下に登録済みのスポットが一覧に表示される", async () => {
     const Stub = createRoutesStub([
       {
         path: "/spots",
@@ -77,7 +80,7 @@ describe("スポット管理画面", () => {
       },
     ]);
 
-    render(<Stub initialEntries={["/spots"]} />);
+    render(<Stub initialEntries={["/spots"]} initialIndex={0} />);
     await waitFor(() => screen.findByText("spot-1"));
     await waitFor(() => screen.findByText("spot-2"));
     await waitFor(() => screen.findByText("spot-3"));

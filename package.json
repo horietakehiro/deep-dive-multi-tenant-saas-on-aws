@@ -1,5 +1,8 @@
 {
   "name": "intersection",
+  "engines": {
+    "node": "22.11.x"
+  },
   "private": true,
   "version": "1.0.0",
   "homepage": "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws#readme",
