@@ -30,10 +30,11 @@ export const createUserIdentityFactory: (
   return async (args) => {
     console.log(args);
     // Cognitoに初期パスワード(ランダム)でユーザを作成
+    console.log(args.email);
     try {
       const res = await createUser({
         UserPoolId: userPoolId,
-        Username: undefined,
+        Username: args.email,
         UserAttributes: [
           {
             Name: CUSTOM_USER_ATTRIBUTES.TENANT_ID,
