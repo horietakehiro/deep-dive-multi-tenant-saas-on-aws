@@ -84,7 +84,7 @@ export const schemaFactory = (handlers: Handlers) => ({
     .arguments({
       tenantId: a.id().required(),
       email: a.email().required(),
-      role: a.ref("UserRole"),
+      role: a.ref("UserRole").required(),
     })
     .returns(
       a.customType({

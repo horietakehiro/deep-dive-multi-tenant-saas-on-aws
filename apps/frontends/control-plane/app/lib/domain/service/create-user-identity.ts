@@ -6,7 +6,8 @@ export const validate = (user: Partial<User>): user is User => {
   return (
     user.email !== undefined &&
     user.name !== undefined &&
-    user.role !== undefined
+    user.role !== undefined &&
+    user.role !== null
   );
 };
 /**
@@ -33,6 +34,7 @@ export const createUserIdentity = async (
   const createCognitoUserResponse = await createCognitoUser({
     tenantId: tenant.id,
     email: user.email!,
+    role: user.role,
   });
   if (
     createCognitoUserResponse.errors !== undefined ||

@@ -43,6 +43,10 @@ export const createUserIdentityFactory: (
             Name: CUSTOM_USER_ATTRIBUTES.ROLE,
             Value: args.role!,
           },
+          {
+            Name: "email",
+            Value: args.email,
+          },
         ],
         TemporaryPassword: (
           await generatePassowrd({
