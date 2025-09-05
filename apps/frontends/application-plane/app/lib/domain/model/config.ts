@@ -5,6 +5,7 @@ import outputs from "@intersection/backend/amplify_outputs.json";
 const configFactory = (): Config => {
   // const noAmplify: string | undefined = import.meta.env.VITE_NO_AMPLIFY;
   return {
+    appType: "application-plane",
     type: "PRODUCTION",
     amplifyConfigFn: async () => {
       Amplify.configure(outputs);

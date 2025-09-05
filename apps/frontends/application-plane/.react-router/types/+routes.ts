@@ -13,23 +13,30 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/appointments": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/";
+    page: "/" | "/appointments";
   };
   "./layouts/auth.tsx": {
     id: "layouts/auth";
-    page: "/";
+    page: "/" | "/appointments";
   };
   "./layouts/dashboard.tsx": {
     id: "layouts/dashboard";
-    page: "/";
+    page: "/" | "/appointments";
   };
   "./routes/home.tsx": {
     id: "routes/home";
     page: "/";
+  };
+  "./routes/appointments.tsx": {
+    id: "routes/appointments";
+    page: "/appointments";
   };
 };

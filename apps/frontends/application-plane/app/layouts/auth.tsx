@@ -1,19 +1,16 @@
-import { v4 as uuidv4 } from "uuid";
 import { Authenticator as AmplifyAuthenticator } from "@aws-amplify/ui-react";
-import { signUpFactory } from "../lib/domain/service/sign-up";
 import type { RootContext } from "../lib/domain/model/context";
 import { Outlet, useOutletContext } from "react-router";
 import { CUSTOM_USER_ATTRIBUTES } from "@intersection/backend/lib/domain/model/user";
-import { signUp as amplifySignUp } from "aws-amplify/auth";
+import { signIn } from "../lib/domain/model/auth";
 
 export default function Authenticator() {
   const context = useOutletContext<RootContext>();
-  const signUp = signUpFactory(amplifySignUp, uuidv4);
 
   return (
     <AmplifyAuthenticator
       services={{
-        handleSignUp: signUp,
+        handleSignIn: signIn,
       }}
       formFields={{
         signUp: {
