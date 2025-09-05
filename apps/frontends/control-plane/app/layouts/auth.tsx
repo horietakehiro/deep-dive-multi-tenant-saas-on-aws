@@ -5,6 +5,7 @@ import type { RootContext } from "../lib/domain/model/context";
 import { Outlet, useOutletContext } from "react-router";
 import { CUSTOM_USER_ATTRIBUTES } from "@intersection/backend/lib/domain/model/user";
 import { signUp as amplifySignUp } from "aws-amplify/auth";
+import { signIn } from "app/lib/domain/model/auth";
 
 export default function Authenticator() {
   const context = useOutletContext<RootContext>();
@@ -14,6 +15,7 @@ export default function Authenticator() {
     <AmplifyAuthenticator
       services={{
         handleSignUp: signUp,
+        handleSignIn: signIn,
       }}
       formFields={{
         signUp: {

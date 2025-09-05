@@ -4,21 +4,25 @@ import {
   fetchUserAttributes as amplifyFetchUserAttributes,
   signOut as amplifySignOut,
 } from "aws-amplify/auth";
-import type { Config } from "./config";
+import type { Config, AppType } from "./config";
 import type { CustomUserAttributes } from "./user";
 
+export type ClientMetadata = {
+  appType: AppType;
+};
 export const signInFactory = (config: Config): typeof amplifySignIn => {
-  if (config.type === "NO_AMPLIFY") {
-    return () => {
-      return Promise.resolve({
-        isSignedIn: true,
-        nextStep: {
-          signInStep: "DONE",
-        },
-      });
-    };
-  }
-  return amplifySignIn;
+  return async (input) => {
+    return amplifySignIn({
+      ...input,
+      options: {
+        ...input.options,
+        clientMetadata: {
+          ...input.options?.clientMetadata,
+          appType: config.appType,
+        } satisfies ClientMetadata,
+      },
+    });
+  };
 };
 export const getCurrentUserFactory = (
   config: Config
