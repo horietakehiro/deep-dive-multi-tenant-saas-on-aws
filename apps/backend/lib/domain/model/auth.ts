@@ -10,9 +10,12 @@ import type { CustomUserAttributes } from "./user";
 export type ClientMetadata = {
   appType: AppType;
 };
-export const signInFactory = (config: Config): typeof amplifySignIn => {
+export const signInFactory = (
+  amplifyFn: typeof amplifySignIn,
+  config: Config
+): typeof amplifySignIn => {
   return async (input) => {
-    return amplifySignIn({
+    return amplifyFn({
       ...input,
       options: {
         ...input.options,
@@ -43,19 +46,14 @@ export const getCurrentUserFactory = (
 };
 
 export const fetchUserAttributesFactory = (
+  amplifyFn: typeof amplifyFetchUserAttributes,
   config: Config
 ): (() => Promise<CustomUserAttributes>) => {
-  if (config.type === "NO_AMPLIFY") {
-    return () => Promise.resolve({ ...config.dummyUserAttributes });
-  }
-  return amplifyFetchUserAttributes as () => Promise<CustomUserAttributes>;
+  return amplifyFn as () => Promise<CustomUserAttributes>;
 };
-export const signOutFactory = (config: Config): typeof amplifySignOut => {
-  if (config.type === "NO_AMPLIFY") {
-    return (input) => {
-      console.debug(input);
-      return Promise.resolve();
-    };
-  }
-  return amplifySignOut;
+export const signOutFactory = (
+  amplifyFn: typeof amplifySignOut,
+  config: Config
+): typeof amplifySignOut => {
+  return amplifyFn;
 };

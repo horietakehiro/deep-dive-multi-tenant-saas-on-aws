@@ -1,7 +1,7 @@
 import { defineFunction } from "@aws-amplify/backend";
 
-export const preSignIn = defineFunction({
-  name: "pre-sign-in",
+export const preAuthentication = defineFunction({
+  name: "pre-authentication",
   resourceGroupName: "auth",
   timeoutSeconds: 60,
 });

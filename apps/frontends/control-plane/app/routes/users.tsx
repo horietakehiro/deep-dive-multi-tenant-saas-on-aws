@@ -101,9 +101,7 @@ const usersDataSourceFactory: (
       }
       return res.data;
     },
-    deleteOne: async (...args) => {
-      cosnt res = await repository.deleteUser
-    },
+    deleteOne: async (...args) => {},
   };
 };
 export default function Users() {
