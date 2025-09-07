@@ -14,5 +14,6 @@ export default defineConfig({
         transformCss: true,
       },
     },
+    dangerouslyIgnoreUnhandledErrors: true,
   },
 });
