@@ -213,6 +213,13 @@ export default function Appointments() {
               resources={selectedUsers!}
               // resources={RESOURCES}
               // resources={[{}]}
+              hourFormat="24"
+              day={{
+                startHour: 0,
+                endHour: 23,
+                step: 30,
+              }}
+              // week={}
               resourceFields={{
                 idField: "admin_id",
                 textField: "title",

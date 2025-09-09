@@ -15,7 +15,9 @@
   },
   "license": "ISC",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "ca:login": "aws codeartifact login --tool npm --domain ht-burdock --domain-owner 382098889955 --repository react-scheduler"
+  },
   "workspaces": [
     "apps/backend",
     "apps/frontends/control-plane",
