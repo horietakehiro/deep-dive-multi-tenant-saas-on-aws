@@ -37,7 +37,7 @@ type SelectUsersProps = {
   tenant: Tenant;
   selectedUserIds: string[];
 };
-const SelectUsersDiablog = ({
+export const SelectUsersDiablog = ({
   open,
   onClose,
   payload,
