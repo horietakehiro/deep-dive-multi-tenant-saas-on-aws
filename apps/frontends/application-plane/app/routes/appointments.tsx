@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { PageContainer, useLocalStorageState, type Codec } from "@toolpad/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import {
   DialogsProvider,
@@ -26,7 +26,7 @@ import {
   type DialogProps,
 } from "@toolpad/core/useDialogs";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, type GridRowSelectionModel } from "@mui/x-data-grid";
 import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
 import { useOutletContext } from "react-router";
 import type { RootContext } from "../lib/domain/model/context";
@@ -44,7 +44,11 @@ export const SelectUsersDiablog = ({
 }: DialogProps<SelectUsersProps, User[]>) => {
   const { tenant, selectedUserIds } = payload;
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<(User & { selected: boolean })[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedOnly, setSelectedOnly] = useState(false);
+  const [rowSelectionModel, setRowSelectionModel] =
+    useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
+
   useEffect(() => {
     const f = async () => {
       const res = await tenant.users();
@@ -52,17 +56,28 @@ export const SelectUsersDiablog = ({
       if (res.data === null || res.errors !== undefined) {
         throw Error("list users failed");
       }
+      // TODO: 選択済みユーザー表示切替時にチェックが外れるので良い方法を考える
+      const selectedUsers = res.data.filter((u) =>
+        selectedUserIds.includes(u.id)
+      );
+      setRowSelectionModel({
+        type: "include",
+        ids: new Set(selectedUsers.map((u) => u.id)),
+      });
       setUsers(
-        res.data.map((u) => ({
-          ...u,
-          selected: selectedUserIds.includes(u.id),
-        }))
+        res.data.filter((u) => {
+          if (selectedOnly) {
+            // 選択済みのユーザのみ表示する
+            return rowSelectionModel.ids.has(u.id);
+          }
+          return true;
+        })
       );
       setLoading(false);
     };
 
     f();
-  }, []);
+  }, [selectedOnly]);
   return (
     <Dialog
       fullWidth
@@ -77,9 +92,14 @@ export const SelectUsersDiablog = ({
           <FormGroup>
             <FormControlLabel
               sx={{ justifyContent: "flex-end" }}
-              control={<Switch defaultChecked={false} />}
+              control={<Switch defaultChecked={selectedOnly} />}
               label="show selected users only"
-              value={false}
+              value={selectedOnly}
+              onChange={(event) =>
+                setSelectedOnly(
+                  (event as ChangeEvent<HTMLInputElement>).target.checked
+                )
+              }
             />
           </FormGroup>
           <Box height={500} width={"100%"}>
@@ -88,14 +108,21 @@ export const SelectUsersDiablog = ({
               rows={users}
               columns={[{ field: "email" }, { field: "name" }]}
               checkboxSelection
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={(newRowSelectionModel) => {
+                setRowSelectionModel(newRowSelectionModel);
+              }}
+              keepNonExistentRowsSelected
+              showToolbar
             />
           </Box>
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button
+          // to={""}
           onClick={() =>
-            onClose(users.filter((u) => selectedUserIds.includes(u.id)))
+            onClose(users.filter((u) => rowSelectionModel.ids.has(u.id)))
           }
         >
           OK
@@ -196,12 +223,12 @@ export default function Appointments() {
                     tenant: tenant!,
                     selectedUserIds: [],
                   });
+                  console.log(selectedUsers);
                   setSelectedUsers(selectedUsers);
                   calendarRef.current?.scheduler.handleState(
                     selectedUsers,
                     "resources"
                   );
-                  console.log(selectedUsers);
                 }}
               >
                 SELECT USERS

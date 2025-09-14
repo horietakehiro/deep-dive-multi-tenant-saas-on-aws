@@ -9,6 +9,7 @@ import Appointments, {
 } from "../appointments";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import { notImplementedFn } from "@intersection/backend/lib/util";
+import userEvent from "@testing-library/user-event";
 const mockUseOutletContext = vi.hoisted(() => {
   return vi.fn<() => Context>(() => {
     throw NotImplementedError;
@@ -70,5 +71,63 @@ describe("ユーザー選択ダイアログ", () => {
     await waitFor(() => screen.findByText(/Select Users/));
     await waitFor(() => screen.findByText(/name-1/));
     await waitFor(() => screen.findByText(/name-2/));
+  });
+
+  test("選択済みのユーザはチェックボックスが入力済みの状態で表示される", async () => {
+    render(
+      <SelectUsersDiablog
+        open={true}
+        onClose={notImplementedFn}
+        payload={{
+          tenant: {
+            id: "test-id",
+            users: async () => ({
+              data: [
+                { id: "id-1", name: "name-1" },
+                { id: "id-2", name: "name-2" },
+              ],
+            }),
+          } as Tenant,
+          selectedUserIds: ["id-1"],
+        }}
+      />
+    );
+    const checkboxes = await waitFor(() =>
+      screen.getAllByRole("checkbox", { name: /row$/ })
+    );
+    screen.debug(checkboxes);
+    expect(checkboxes.length).toBe(2);
+    expect(checkboxes[0]).toBeChecked();
+    expect(checkboxes[1]).not.toBeChecked();
+  });
+
+  test("選択済みのユーザーのみ表示するよう一覧表示を切り替えることが出来る", async () => {
+    render(
+      <SelectUsersDiablog
+        open={true}
+        onClose={notImplementedFn}
+        payload={{
+          tenant: {
+            id: "test-id",
+            users: async () => ({
+              data: [
+                { id: "id-1", name: "name-1" },
+                { id: "id-2", name: "name-2" },
+              ],
+            }),
+          } as Tenant,
+          selectedUserIds: ["id-1"],
+        }}
+      />
+    );
+    // 最初は全ユーザが表示されていることを確認
+    await waitFor(() => screen.findByText(/name-1/));
+    await waitFor(() => screen.findByText(/name-2/));
+
+    const toggle = await waitFor(() => screen.getByRole("switch"));
+    await userEvent.click(toggle);
+
+    await waitFor(() => screen.findByText(/name-1/));
+    expect(() => screen.findByText(/name-2/)).rejects.toThrow();
   });
 });
