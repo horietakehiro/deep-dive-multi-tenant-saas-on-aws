@@ -44,19 +44,20 @@ export const SelectUsersDiablog = ({
 }: DialogProps<SelectUsersProps, User[]>) => {
   const { tenant, selectedUserIds } = payload;
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedOnly, setSelectedOnly] = useState(false);
   const [rowSelectionModel, setRowSelectionModel] =
     useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
 
   useEffect(() => {
     const f = async () => {
+      // 全ユーザをDBから取得
       const res = await tenant.users();
-      console.log(res);
       if (res.data === null || res.errors !== undefined) {
         throw Error("list users failed");
       }
-      // TODO: 選択済みユーザー表示切替時にチェックが外れるので良い方法を考える
+
+      // 選択済みのユーザはチェック状態にする
       const selectedUsers = res.data.filter((u) =>
         selectedUserIds.includes(u.id)
       );
@@ -64,26 +65,18 @@ export const SelectUsersDiablog = ({
         type: "include",
         ids: new Set(selectedUsers.map((u) => u.id)),
       });
-      setUsers(
-        res.data.filter((u) => {
-          if (selectedOnly) {
-            // 選択済みのユーザのみ表示する
-            return rowSelectionModel.ids.has(u.id);
-          }
-          return true;
-        })
-      );
+      // 初期状態では全ユーザを表示する
+      setAllUsers([...res.data]);
       setLoading(false);
     };
-
     f();
-  }, [selectedOnly]);
+  }, []);
   return (
     <Dialog
       fullWidth
       open={open}
       onClose={() =>
-        onClose(users.filter((u) => selectedUserIds.includes(u.id)))
+        onClose(allUsers.filter((u) => selectedUserIds.includes(u.id)))
       }
     >
       <DialogTitle>Select Users (up to 5)</DialogTitle>
@@ -92,7 +85,7 @@ export const SelectUsersDiablog = ({
           <FormGroup>
             <FormControlLabel
               sx={{ justifyContent: "flex-end" }}
-              control={<Switch defaultChecked={selectedOnly} />}
+              control={<Switch checked={selectedOnly} />}
               label="show selected users only"
               value={selectedOnly}
               onChange={(event) =>
@@ -105,7 +98,13 @@ export const SelectUsersDiablog = ({
           <Box height={500} width={"100%"}>
             <DataGrid<User>
               loading={loading}
-              rows={users}
+              rows={allUsers.filter((U) => {
+                // 選択状態のユーザのみ表示する
+                if (selectedOnly) {
+                  return rowSelectionModel.ids.has(U.id);
+                }
+                return true;
+              })}
               columns={[{ field: "email" }, { field: "name" }]}
               checkboxSelection
               rowSelectionModel={rowSelectionModel}
@@ -122,7 +121,7 @@ export const SelectUsersDiablog = ({
         <Button
           // to={""}
           onClick={() =>
-            onClose(users.filter((u) => rowSelectionModel.ids.has(u.id)))
+            onClose(allUsers.filter((u) => rowSelectionModel.ids.has(u.id)))
           }
         >
           OK
