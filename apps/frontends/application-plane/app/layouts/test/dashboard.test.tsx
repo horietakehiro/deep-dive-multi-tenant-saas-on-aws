@@ -18,14 +18,6 @@ describe("ダッシュボードレイアウト", () => {
                 useOutletContext: () => ({
                   tenant,
                   setTenant,
-                  authUser: {
-                    userId: "",
-                    username: "",
-                    signInDetails: {
-                      authFlowType: "USER_AUTH",
-                      loginId: "",
-                    },
-                  },
                   repository: {
                     getTenant: notImplementedFn,
                     getTenantByUserAttributes: async () => {

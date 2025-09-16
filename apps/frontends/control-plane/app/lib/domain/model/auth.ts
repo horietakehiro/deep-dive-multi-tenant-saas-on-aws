@@ -16,4 +16,3 @@ export const fetchUserAttributes = fetchUserAttributesFactory(
 );
 export const signOut = signOutFactory(amplifySignOut, config);
 export const signIn = signInFactory(amplifySignIn, config);
-// export const signUp = signUpFactory(config, uuidv4);
