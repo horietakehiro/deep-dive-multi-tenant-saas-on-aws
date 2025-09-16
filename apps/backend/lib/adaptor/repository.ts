@@ -5,6 +5,7 @@ import type {
   IRepositoryFactory,
 } from "../domain/port/repository";
 import type { Schema } from "../domain/model/data";
+import { getTenantByUserAttributes } from "../domain/service/get-tenant-by-user-attributes";
 
 export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
   if (c.type === "NO_AMPLIFY") {
@@ -19,6 +20,7 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
     getTenant: ac.models.Tenant.get,
     updateTenant: ac.models.Tenant.update,
     requestTenantActivation: ac.mutations.requestTenantActivation,
+    getTenantByUserAttributes: getTenantByUserAttributes,
     createSpot: ac.models.Spot.create,
     getSpot: ac.models.Spot.get,
     updateSpot: ac.models.Spot.update,

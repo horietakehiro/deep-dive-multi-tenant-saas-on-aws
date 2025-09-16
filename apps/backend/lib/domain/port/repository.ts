@@ -5,6 +5,7 @@ import type {
 } from "@aws-amplify/data-schema/runtime";
 import type { Config } from "../model/config";
 import type { Schema, Spot, Tenant, User } from "../model/data";
+import type { fetchUserAttributes } from "aws-amplify/auth";
 
 export type Client = AmplifyClient<Schema>;
 
@@ -42,6 +43,11 @@ export interface IRepository {
   listTenant: ListFn<TenantClient["list"], Tenant>;
   updateTenant: SingularFn<TenantClient["update"], Tenant>;
   requestTenantActivation: Mutations["requestTenantActivation"];
+
+  getTenantByUserAttributes: (
+    fetchUserAttributesFn: typeof fetchUserAttributes,
+    getTenantFn: IRepository["getTenant"]
+  ) => Promise<Tenant>;
 
   createSpot: SingularFn<SpotClient["create"], Spot>;
   getSpot: SingularFn<SpotClient["get"], Spot>;

@@ -8,15 +8,24 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import type { Route } from "./+types/dashboard";
 import type { RootContext } from "../lib/domain/model/context";
 import { fetchUserAttributes, signOut } from "../lib/domain/model/auth";
-import { getTenantByUserAttributes } from "../lib/domain/service/get-tenant-by-user-attributes";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 
-export default function DashboardLayout({}: Route.ComponentProps) {
-  const { authUser, setTenant, tenant, repository } = useOutletContext<
-    Omit<RootContext, "repository"> & {
-      repository: Pick<IRepository, "getTenant">;
-    }
-  >();
+export type Context = Pick<RootContext, "authUser" | "setTenant" | "tenant"> & {
+  repository: Pick<IRepository, "getTenant" | "getTenantByUserAttributes">;
+};
+
+export const clientLoader = () => {
+  return {
+    useOutletContext: () => useOutletContext<Context>(),
+  };
+};
+export default function DashboardLayout({
+  loaderData,
+}: Pick<Route.ComponentProps, "loaderData">) {
+  // const { authUser, setTenant, tenant, repository } =
+  //   useOutletContext<Context>();
+  const { authUser, setTenant, tenant, repository } =
+    loaderData.useOutletContext();
   const [session, setSession] = React.useState<Session | null>({
     user: {
       id: authUser?.userId ?? null,
@@ -39,7 +48,7 @@ export default function DashboardLayout({}: Route.ComponentProps) {
   ];
   React.useEffect(() => {
     const f = async () => {
-      const tenant = await getTenantByUserAttributes(
+      const tenant = await repository.getTenantByUserAttributes(
         fetchUserAttributes,
         repository.getTenant
       );
