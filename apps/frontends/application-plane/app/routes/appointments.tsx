@@ -25,7 +25,11 @@ import {
 } from "@toolpad/core/useDialogs";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { DataGrid, type GridRowSelectionModel } from "@mui/x-data-grid";
-import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
+import type {
+  Appointment,
+  Tenant,
+  User,
+} from "@intersection/backend/lib/domain/model/data";
 import { useOutletContext } from "react-router";
 import type { RootContext } from "../lib/domain/model/context";
 
@@ -141,32 +145,48 @@ const userIdsCodec: Codec<string[]> = {
 };
 
 export type Context = Pick<RootContext, "tenant" | "authUser"> & {
-  repository: Pick<IRepository, "listAppointments" | "getUser">;
+  repository: Pick<IRepository, "listAppointments" | "getUser" | "create">;
 };
 export const clientLoader = () => {
   return {
     useOutletContext: () => useOutletContext<Context>(),
   };
 };
+
+type Event = ProcessedEvent & {
+  spot: string;
+  madeBy: string;
+  madeWith: string;
+  status: Appointment["status"];
+};
+/**
+ * react-schduler内でユーザIDと予約IDとのマッピングを管理出来るようにユーザID列を別名で設ける
+ */
+type SelectedUser = User & {
+  madeBy: string;
+};
 export default function Appointments({
   loaderData,
 }: Pick<Route.ComponentProps, "loaderData">) {
   const { tenant, repository, authUser } = loaderData.useOutletContext();
+  // ログインしている自分自身のユーザID
+  const me = authUser!.userId;
+
+  // ローカルストレージに保存するステート情報
   const [mode, setMode] = useLocalStorageState<"default" | "tabs">(
     "mode",
     "default"
   );
-  // ローカルストレージに保存する情報
-  // ※ユーザーデータ自体を保存するとlazyLoaderメソッドが使用不能になるためID(文字列)のみ保存する
+  // ユーザー情報そのものをシリアライズして保存すると、デシリアライズ時にlazyLoaderメソッドが使用不能になるためID(文字列)のリストのみ保存する
   const [selectedUserIds, setSelectedUserIds] = useLocalStorageState<string[]>(
     "selectedUserIds",
     [],
     { codec: userIdsCodec }
   );
-  const [selectedUsers, setSelectedUsers] = useState<
-    (User & { userId: string })[]
-  >([]);
-  const [events, setEvents] = useState<ProcessedEvent[]>([]);
+
+  // 現在選択中のユーザリスト
+  const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
 
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
@@ -179,13 +199,14 @@ export default function Appointments({
 
   useEffect(() => {
     const f = async () => {
-      const users = await Promise.all(
+      const users: SelectedUser[] = await Promise.all(
         (selectedUserIds ?? []).map(async (id) => {
           const res = await repository.getUser({ id });
-          return { ...res.data!, userId: res.data!.id };
+          return { ...res.data!, madeBy: res.data!.id };
         })
       );
       setSelectedUsers(users);
+      calendarRef.current?.scheduler.handleState(selectedUsers, "resources");
     };
     f();
   }, [selectedUserIds]);
@@ -199,14 +220,30 @@ export default function Appointments({
           return (await u.appointmentMadeBy()).data;
         })
       );
-      const events: ProcessedEvent[] = await appointments.flat().map((a) => ({
-        event_id: a.id,
-        title: a.description,
-        start: new Date(a.datetimeFrom),
-        end: new Date(a.datetimeTo),
-        subtitle: undefined,
-        userId: a.userIdMadeBy,
-      }));
+      const events: Event[] = await appointments.flat().map((a) => {
+        let color: "red" | "blue" | "green";
+        switch (a.status) {
+          case "approved":
+            color = "green";
+            break;
+          case "requested":
+            color = "blue";
+            break;
+          case "rejected":
+            color = "red";
+        }
+        return {
+          event_id: a.id,
+          title: a.description,
+          start: new Date(a.datetimeFrom),
+          end: new Date(a.datetimeTo),
+          madeBy: a.userIdMadeBy,
+          madeWith: a.userIdMadeWith,
+          status: a.status,
+          spot: a.spotId!,
+          color,
+        };
+      });
       console.log(events);
       setEvents(events);
 
@@ -278,13 +315,6 @@ export default function Appointments({
                   );
                   console.log(newSelectedUsers);
                   setSelectedUserIds(newSelectedUsers.map((u) => u.id));
-                  setSelectedUsers(
-                    newSelectedUsers.map((u) => ({ ...u, userId: u.id }))
-                  );
-                  calendarRef.current?.scheduler.handleState(
-                    selectedUsers,
-                    "resources"
-                  );
                 }}
               >
                 SELECT USERS
@@ -295,12 +325,12 @@ export default function Appointments({
               resources={selectedUsers!}
               resourceFields={
                 {
-                  idField: "userId",
+                  idField: "madeBy",
                   textField: "name",
                   subTextField: "email",
                   avatarField: "name",
                   // colorField: "color",
-                } //as { [key in keyof ResourceFields]: keyof User }
+                } as { [key in keyof ResourceFields]: keyof SelectedUser }
               }
               fields={[
                 {
@@ -319,73 +349,41 @@ export default function Appointments({
                   },
                 },
                 {
-                  name: "makeWith",
+                  name: "madeWith",
                   type: "select",
-                  options: [{ id: 1, text: "hoge", value: "fuga" }],
+                  // 自分以外のユーザのみ選択可能にする
+                  options: selectedUsers
+                    .filter((u) => u.id !== me)
+                    .map((u) => ({
+                      id: u.id,
+                      text: `${u.name} (${u.email})`,
+                      value: u.id,
+                    })),
                   config: {
-                    label: "Make with",
+                    label: "Select the user make this appointment with.",
                   },
                 },
                 {
-                  name: "makeBy",
+                  name: "madeBy",
                   type: "hidden",
-                  default: "ffffffffffffffffffffffffff",
+                  default: me,
                 },
                 {
                   name: "status",
                   type: "hidden",
-                  default: "",
+                  default: "requested" satisfies Event["status"],
                 },
               ]}
               onCellClick={(...args) => console.log(args)}
               onConfirm={async (...args) => {
                 console.log(args);
+                repository.
                 return {
                   ...args[0],
                   userId: "47948a28-9001-704e-30a6-fcd81e564041",
                 };
               }}
-              // getRemoteEvents={async () => {
-              //   // const appointments = await Promise.all(
-              //   //   (selectedUsers ?? []).map(async (u) => {
-              //   //     console.log(u);
-              //   //     return (await u.appointmentMadeBy()).data;
-              //   //   })
-              //   // );
-              //   // return appointments.flat().map((a) => ({
-              //   //   event_id: a.id,
-              //   //   title: a.description,
-              //   //   start: new Date(a.datetimeFrom),
-              //   //   end: new Date(a.datetimeTo),
-              //   // }));
-              // }}
               events={events}
-              // viewerExtraComponent={(fields, event) => {
-              //   return (
-              //     <div>
-              //       {fields.map((field, i) => {
-              //         if (field.name === "admin_id") {
-              //           const admin = field.options?.find(
-              //             (fe) => fe.id === event["admin_id"]
-              //           );
-              //           return (
-              //             <Typography
-              //               key={i}
-              //               style={{ display: "flex", alignItems: "center" }}
-              //               color="textSecondary"
-              //               variant="caption"
-              //               noWrap
-              //             >
-              //               <PersonRoundedIcon /> {admin?.text}
-              //             </Typography>
-              //           );
-              //         } else {
-              //           return "";
-              //         }
-              //       })}
-              //     </div>
-              //   );
-              // }}
             />
           </Stack>
         </PageContainer>
