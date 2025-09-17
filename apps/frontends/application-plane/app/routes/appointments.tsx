@@ -30,6 +30,7 @@ import { useOutletContext } from "react-router";
 import type { RootContext } from "../lib/domain/model/context";
 
 import type {
+  ProcessedEvent,
   ResourceFields,
   SchedulerRef,
 } from "@aldabil/react-scheduler/types";
@@ -134,13 +135,13 @@ export const SelectUsersDiablog = ({
   );
 };
 
-const usersCodec: Codec<User[]> = {
+const userIdsCodec: Codec<string[]> = {
   parse: (value) => JSON.parse(value),
   stringify: (value) => JSON.stringify(value),
 };
 
 export type Context = Pick<RootContext, "tenant" | "authUser"> & {
-  repository: Pick<IRepository, "listAppointments">;
+  repository: Pick<IRepository, "listAppointments" | "getUser">;
 };
 export const clientLoader = () => {
   return {
@@ -155,13 +156,15 @@ export default function Appointments({
     "mode",
     "default"
   );
-  const [selectedUsers, setSelectedUsers] = useLocalStorageState<User[]>(
-    "selectedUsers",
+  // ローカルストレージに保存する情報
+  // ※ユーザーデータ自体を保存するとlazyLoaderメソッドが使用不能になるためID(文字列)のみ保存する
+  const [selectedUserIds, setSelectedUserIds] = useLocalStorageState<string[]>(
+    "selectedUserIds",
     [],
-    {
-      codec: usersCodec,
-    }
+    { codec: userIdsCodec }
   );
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [events, setEvents] = useState<ProcessedEvent[]>([]);
 
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
@@ -171,6 +174,42 @@ export default function Appointments({
       dark: true,
     },
   });
+
+  useEffect(() => {
+    const f = async () => {
+      const users = await Promise.all(
+        (selectedUserIds ?? []).map(async (id) => {
+          const res = await repository.getUser({ id });
+          return res.data!;
+        })
+      );
+      setSelectedUsers(users);
+    };
+    f();
+  }, [selectedUserIds]);
+
+  useEffect(() => {
+    const f = async () => {
+      const appointments = await Promise.all(
+        (selectedUsers ?? []).map(async (u) => {
+          console.log(u);
+          return (await u.appointmentMadeBy()).data;
+        })
+      );
+      const events = await appointments.flat().map((a) => ({
+        event_id: a.id,
+        title: a.description,
+        start: new Date(a.datetimeFrom),
+        end: new Date(a.datetimeTo),
+      }));
+      console.log(events);
+      setEvents(events);
+
+      calendarRef.current?.scheduler.handleState(events, "events");
+    };
+    f();
+  }, [selectedUsers]);
+
   return (
     // このコンポーネントはtoolpadのコンポーネントでは無いため明示的にカラーモードを設定する
     <ThemeProvider theme={theme}>
@@ -228,14 +267,14 @@ export default function Appointments({
                     SelectUsersDiablog,
                     {
                       tenant: tenant!,
-                      selectedUserIds: selectedUsers
-                        ? selectedUsers.map((u) => u.id)
-                        : [],
+                      selectedUserIds: selectedUserIds ?? [],
                     }
                   );
+                  console.log(newSelectedUsers);
+                  setSelectedUserIds(newSelectedUsers.map((u) => u.id));
                   setSelectedUsers(newSelectedUsers);
                   calendarRef.current?.scheduler.handleState(
-                    newSelectedUsers,
+                    selectedUsers,
                     "resources"
                   );
                 }}
@@ -255,19 +294,23 @@ export default function Appointments({
                   // colorField: "color",
                 } as { [key in keyof ResourceFields]: keyof User }
               }
-              getRemoteEvents={async () => {
-                const appointments = await Promise.all(
-                  (selectedUsers ?? []).map(async (u) => {
-                    return (await u.appointmentMadeBy()).data;
-                  })
-                );
-                return appointments.flat().map((a) => ({
-                  event_id: a.id,
-                  title: a.description,
-                  start: new Date(2025, 9, 17),
-                  end: new Date(2025, 9, 17),
-                }));
-              }}
+              onCellClick={(...args) => console.log(args)}
+              eventRenderer={}
+              // getRemoteEvents={async () => {
+              //   // const appointments = await Promise.all(
+              //   //   (selectedUsers ?? []).map(async (u) => {
+              //   //     console.log(u);
+              //   //     return (await u.appointmentMadeBy()).data;
+              //   //   })
+              //   // );
+              //   // return appointments.flat().map((a) => ({
+              //   //   event_id: a.id,
+              //   //   title: a.description,
+              //   //   start: new Date(a.datetimeFrom),
+              //   //   end: new Date(a.datetimeTo),
+              //   // }));
+              // }}
+              events={events}
               // viewerExtraComponent={(fields, event) => {
               //   return (
               //     <div>
