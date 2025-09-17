@@ -17,7 +17,8 @@ export const schemaFactory = (handlers: Handlers) => ({
   Appointment: a.model({
     id: a.id().required(),
     description: a.string().required(),
-    datetime: a.datetime().required(),
+    datetimeFrom: a.datetime().required(),
+    datetimeTo: a.datetime().required(),
     status: a.ref("AppointmentStatus").required(),
 
     userIdMadeBy: a.id().required(),

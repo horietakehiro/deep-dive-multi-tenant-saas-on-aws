@@ -1,5 +1,4 @@
 import { generateClient } from "aws-amplify/api";
-import { NotImplementedError } from "../domain/model/error";
 import type {
   IRepository,
   IRepositoryFactory,
@@ -8,10 +7,6 @@ import type { Schema } from "../domain/model/data";
 import { getTenantByUserAttributes } from "../domain/service/get-tenant-by-user-attributes";
 
 export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
-  if (c.type === "NO_AMPLIFY") {
-    throw new NotImplementedError();
-  }
-
   await c.amplifyConfigFn();
   const ac = generateClient<Schema>();
   return {
@@ -33,5 +28,7 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
     createCognitoUser: ac.mutations.createCognitoUser,
     deleteCognitoUser: ac.mutations.deleteCognitoUser,
     listUserRoles: ac.enums.UserRole.values,
+
+    listAppointments: ac.models.Appointment.list,
   } satisfies IRepository;
 };

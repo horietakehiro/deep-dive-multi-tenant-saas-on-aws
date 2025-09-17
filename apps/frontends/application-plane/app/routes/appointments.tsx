@@ -151,7 +151,6 @@ export default function Appointments({
   loaderData,
 }: Pick<Route.ComponentProps, "loaderData">) {
   const { tenant, repository, authUser } = loaderData.useOutletContext();
-  authUser?.userId;
   const [mode, setMode] = useLocalStorageState<"default" | "tabs">(
     "mode",
     "default"
@@ -164,7 +163,6 @@ export default function Appointments({
     }
   );
 
-  repository.listAppointments({ filter: {} });
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
 
@@ -257,11 +255,18 @@ export default function Appointments({
                   // colorField: "color",
                 } as { [key in keyof ResourceFields]: keyof User }
               }
-              getRemoteEvents={async (params) => {
-                (selectedUsers ?? []).map(async (u) => {
-                  const appointments = u.appointmentMadeBy();
-                  return {};
-                });
+              getRemoteEvents={async () => {
+                const appointments = await Promise.all(
+                  (selectedUsers ?? []).map(async (u) => {
+                    return (await u.appointmentMadeBy()).data;
+                  })
+                );
+                return appointments.flat().map((a) => ({
+                  event_id: a.id,
+                  title: a.description,
+                  start: new Date(2025, 9, 17),
+                  end: new Date(2025, 9, 17),
+                }));
               }}
               // viewerExtraComponent={(fields, event) => {
               //   return (
