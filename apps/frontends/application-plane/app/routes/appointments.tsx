@@ -163,7 +163,9 @@ export default function Appointments({
     [],
     { codec: userIdsCodec }
   );
-  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<
+    (User & { userId: string })[]
+  >([]);
   const [events, setEvents] = useState<ProcessedEvent[]>([]);
 
   const dialogs = useDialogs();
@@ -180,7 +182,7 @@ export default function Appointments({
       const users = await Promise.all(
         (selectedUserIds ?? []).map(async (id) => {
           const res = await repository.getUser({ id });
-          return res.data!;
+          return { ...res.data!, userId: res.data!.id };
         })
       );
       setSelectedUsers(users);
@@ -190,22 +192,26 @@ export default function Appointments({
 
   useEffect(() => {
     const f = async () => {
+      // TODO: イベントの時刻フィルタリング
       const appointments = await Promise.all(
         (selectedUsers ?? []).map(async (u) => {
           console.log(u);
           return (await u.appointmentMadeBy()).data;
         })
       );
-      const events = await appointments.flat().map((a) => ({
+      const events: ProcessedEvent[] = await appointments.flat().map((a) => ({
         event_id: a.id,
         title: a.description,
         start: new Date(a.datetimeFrom),
         end: new Date(a.datetimeTo),
+        subtitle: undefined,
+        userId: a.userIdMadeBy,
       }));
       console.log(events);
       setEvents(events);
 
       calendarRef.current?.scheduler.handleState(events, "events");
+      calendarRef.current?.scheduler.handleState(selectedUsers, "resources");
     };
     f();
   }, [selectedUsers]);
@@ -272,7 +278,9 @@ export default function Appointments({
                   );
                   console.log(newSelectedUsers);
                   setSelectedUserIds(newSelectedUsers.map((u) => u.id));
-                  setSelectedUsers(newSelectedUsers);
+                  setSelectedUsers(
+                    newSelectedUsers.map((u) => ({ ...u, userId: u.id }))
+                  );
                   calendarRef.current?.scheduler.handleState(
                     selectedUsers,
                     "resources"
@@ -287,15 +295,56 @@ export default function Appointments({
               resources={selectedUsers!}
               resourceFields={
                 {
-                  idField: "id",
+                  idField: "userId",
                   textField: "name",
                   subTextField: "email",
                   avatarField: "name",
                   // colorField: "color",
-                } as { [key in keyof ResourceFields]: keyof User }
+                } //as { [key in keyof ResourceFields]: keyof User }
               }
+              fields={[
+                {
+                  // サブタイトルの入力項目は表示されないようにする
+                  name: "subtitle",
+                  type: "hidden",
+                  default: undefined,
+                },
+                {
+                  name: "description",
+                  type: "input",
+                  config: {
+                    label: "Description",
+                    rows: 4,
+                    multiline: true,
+                  },
+                },
+                {
+                  name: "makeWith",
+                  type: "select",
+                  options: [{ id: 1, text: "hoge", value: "fuga" }],
+                  config: {
+                    label: "Make with",
+                  },
+                },
+                {
+                  name: "makeBy",
+                  type: "hidden",
+                  default: "ffffffffffffffffffffffffff",
+                },
+                {
+                  name: "status",
+                  type: "hidden",
+                  default: "",
+                },
+              ]}
               onCellClick={(...args) => console.log(args)}
-              eventRenderer={}
+              onConfirm={async (...args) => {
+                console.log(args);
+                return {
+                  ...args[0],
+                  userId: "47948a28-9001-704e-30a6-fcd81e564041",
+                };
+              }}
               // getRemoteEvents={async () => {
               //   // const appointments = await Promise.all(
               //   //   (selectedUsers ?? []).map(async (u) => {
