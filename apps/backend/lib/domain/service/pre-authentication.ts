@@ -11,7 +11,9 @@ export const preAuthentication = async (event: Event) => {
   console.log(event);
 
   // アプリケーションプレーンへのサインインであれば何もしない
-  const { appType } = event.request?.validationData as ClientMetadata;
+  const { appType } = (event.request?.validationData as ClientMetadata) ?? {
+    appType: "application-plane",
+  };
   if (appType === "application-plane") {
     return event;
   }
