@@ -23,7 +23,7 @@ export const schemaFactory = (handlers: Handlers) => ({
     userIdMadeBy: a.id().required(),
     userMadeBy: a.belongsTo("User", "userIdMadeBy"),
 
-    userIdsMadeWith: a.string().array().required(),
+    userIdMadeWith: a.string().required(),
     userMadeWith: a.belongsTo("User", "userIdMadeWith"),
 
     spotId: a.id(),
