@@ -24,7 +24,7 @@ export const schemaFactory = (handlers: Handlers) => ({
     userMadeBy: a.belongsTo("User", "userIdMadeBy"),
 
     userIdsMadeWith: a.string().array().required(),
-    // userMadeWith: a.belongsTo("User", "userIdMadeWith"),
+    userMadeWith: a.belongsTo("User", "userIdMadeWith"),
 
     spotId: a.id(),
     spot: a.belongsTo("Spot", "spotId"),
@@ -51,7 +51,7 @@ export const schemaFactory = (handlers: Handlers) => ({
     tenant: a.belongsTo("Tenant", "tenantId"),
 
     appointmentMadeBy: a.hasMany("Appointment", "userIdMadeBy"),
-    // appointmentMadeWith: a.hasMany("Appointment", "userIdMadeWith"),
+    appointmentMadeWith: a.hasMany("Appointment", "userIdMadeWith"),
   }),
 
   TenantStatus: a.enum([
