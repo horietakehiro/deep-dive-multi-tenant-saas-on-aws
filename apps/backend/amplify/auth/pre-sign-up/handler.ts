@@ -5,11 +5,12 @@ import { env } from "$amplify/env/pre-sign-up";
 
 import { amplifyRepositoryFactory } from "../../../lib/adaptor/repository";
 import type { IRepositoryFactory } from "../../../lib/domain/port/repository";
-import { createTenantIdentityFactory } from "../../../lib/domain/service/create-tenant-identity";
+import { onboardTenantFactory } from "../../../lib/domain/service/onboard-tenant-process";
 
-export const handler = createTenantIdentityFactory(
+export const handler = onboardTenantFactory(
   {
     type: "PRODUCTION",
+    appType: "control-plane",
     amplifyConfigFn: async () => {
       const { resourceConfig, libraryOptions } =
         await getAmplifyDataClientConfig(env);
@@ -17,5 +18,5 @@ export const handler = createTenantIdentityFactory(
       return resourceConfig;
     },
   },
-  amplifyRepositoryFactory as IRepositoryFactory<"createTenant">
+  amplifyRepositoryFactory as IRepositoryFactory<"createTenant" | "createUser">
 );

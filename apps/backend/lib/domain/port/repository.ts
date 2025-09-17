@@ -4,7 +4,7 @@ import type {
   SingularReturnValue,
 } from "@aws-amplify/data-schema/runtime";
 import type { Config } from "../model/config";
-import type { Schema, Spot, Tenant, User } from "../model/data";
+import type { Appointment, Schema, Spot, Tenant, User } from "../model/data";
 import type { fetchUserAttributes } from "aws-amplify/auth";
 
 export type Client = AmplifyClient<Schema>;
@@ -13,6 +13,7 @@ export type TenantClient = Client["models"]["Tenant"];
 export type SpotClient = Client["models"]["Spot"];
 export type UserClient = Client["models"]["User"];
 export type Mutations = Client["mutations"];
+export type AppointmentClient = Client["models"]["Appointment"];
 
 // FIXME: 複雑なモデルでselectionSetをそのままにしておくとtscの処理が激重になるので
 // インターフェース化する際は一旦無効化する
@@ -61,6 +62,8 @@ export interface IRepository {
   listUserRoles: () => Schema["UserRole"]["type"][];
   createCognitoUser: Mutations["createCognitoUser"];
   deleteCognitoUser: Mutations["deleteCognitoUser"];
+
+  listAppointments: ListFn<AppointmentClient["list"], Appointment>;
 }
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
   c: Config

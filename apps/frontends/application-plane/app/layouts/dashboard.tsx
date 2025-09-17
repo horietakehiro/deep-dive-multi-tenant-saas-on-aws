@@ -33,6 +33,7 @@ export default function DashboardLayout({
       email: authUser?.signInDetails?.loginId ?? null,
     },
   });
+  console.log(authUser);
 
   const branding: Branding = {
     title: `Intersection - Controle Plane / ${tenant?.name}`,

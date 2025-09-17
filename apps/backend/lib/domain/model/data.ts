@@ -116,3 +116,4 @@ export type Schema = ClientSchema<typeof schema>;
 export type Tenant = Schema["Tenant"]["type"];
 export type Spot = Schema["Spot"]["type"];
 export type User = Schema["User"]["type"];
+export type Appointment = Schema["Appointment"]["type"];

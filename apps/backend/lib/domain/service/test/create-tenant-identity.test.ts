@@ -1,7 +1,7 @@
 import { generateClient } from "aws-amplify/api";
 import type { CustomUserAttributes } from "@intersection/backend/lib/domain/model/user";
 import type { IRepository } from "../../port/repository";
-import { createTenantIdentityFactory } from "../create-tenant-identity";
+import { onboardTenantFactory } from "../onboard-tenant-process";
 import type { Schema } from "@intersection/backend/lib/domain/model/data";
 
 const clientForType = async () => {
@@ -24,7 +24,7 @@ describe("サインアップ前プロセス", () => {
       "custom:tenantName": "dummy-name",
       "custom:tenantRole": "ADMIN",
     } satisfies CustomUserAttributes;
-    const service = createTenantIdentityFactory(
+    const service = onboardTenantFactory(
       {
         type: "NO_AMPLIFY",
         dummyUserAttributes: userAttributes,

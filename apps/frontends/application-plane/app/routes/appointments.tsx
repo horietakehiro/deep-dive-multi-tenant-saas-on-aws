@@ -14,12 +14,10 @@ import {
   RadioGroup,
   Stack,
   Switch,
-  Typography,
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { PageContainer, useLocalStorageState, type Codec } from "@toolpad/core";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import {
   DialogsProvider,
   useDialogs,
@@ -31,8 +29,13 @@ import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
 import { useOutletContext } from "react-router";
 import type { RootContext } from "../lib/domain/model/context";
 
-import type { SchedulerRef } from "@aldabil/react-scheduler/types";
+import type {
+  ResourceFields,
+  SchedulerRef,
+} from "@aldabil/react-scheduler/types";
 import { Scheduler } from "@aldabil/react-scheduler";
+import type { Route } from "./+types/appointments";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 type SelectUsersProps = {
   tenant: Tenant;
   selectedUserIds: string[];
@@ -131,32 +134,37 @@ export const SelectUsersDiablog = ({
   );
 };
 
-const users_codec: Codec<User[]> = {
+const usersCodec: Codec<User[]> = {
   parse: (value) => JSON.parse(value),
   stringify: (value) => JSON.stringify(value),
 };
 
-export type Context = Pick<RootContext, "tenant">;
-/**
- * TODO:
- *  - メンバを動的に追加出来るようにする
- *  - ビューモードの切替とメンバの追加状況を永続化
- * @returns
- */
-export default function Appointments() {
-  const { tenant } = useOutletContext<Context>();
+export type Context = Pick<RootContext, "tenant" | "authUser"> & {
+  repository: Pick<IRepository, "listAppointments">;
+};
+export const clientLoader = () => {
+  return {
+    useOutletContext: () => useOutletContext<Context>(),
+  };
+};
+export default function Appointments({
+  loaderData,
+}: Pick<Route.ComponentProps, "loaderData">) {
+  const { tenant, repository, authUser } = loaderData.useOutletContext();
+  authUser?.userId;
   const [mode, setMode] = useLocalStorageState<"default" | "tabs">(
     "mode",
     "default"
   );
   const [selectedUsers, setSelectedUsers] = useLocalStorageState<User[]>(
-    "resources",
+    "selectedUsers",
     [],
     {
-      codec: users_codec,
+      codec: usersCodec,
     }
   );
 
+  repository.listAppointments({ filter: {} });
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
 
@@ -218,67 +226,69 @@ export default function Appointments() {
                   height: "75%",
                 }}
                 onClick={async () => {
-                  const selectedUsers = await dialogs.open(SelectUsersDiablog, {
-                    tenant: tenant!,
-                    selectedUserIds: [],
-                  });
-                  console.log(selectedUsers);
-                  setSelectedUsers(selectedUsers);
+                  const newSelectedUsers = await dialogs.open(
+                    SelectUsersDiablog,
+                    {
+                      tenant: tenant!,
+                      selectedUserIds: selectedUsers
+                        ? selectedUsers.map((u) => u.id)
+                        : [],
+                    }
+                  );
+                  setSelectedUsers(newSelectedUsers);
                   calendarRef.current?.scheduler.handleState(
-                    selectedUsers,
+                    newSelectedUsers,
                     "resources"
                   );
                 }}
               >
                 SELECT USERS
               </Button>
-              {/* </div> */}
             </Stack>
             <Scheduler
               ref={calendarRef}
               resources={selectedUsers!}
-              // resources={RESOURCES}
-              // resources={[{}]}
-              hourFormat="24"
-              day={{
-                startHour: 0,
-                endHour: 23,
-                step: 30,
+              resourceFields={
+                {
+                  idField: "id",
+                  textField: "name",
+                  subTextField: "email",
+                  avatarField: "name",
+                  // colorField: "color",
+                } as { [key in keyof ResourceFields]: keyof User }
+              }
+              getRemoteEvents={async (params) => {
+                (selectedUsers ?? []).map(async (u) => {
+                  const appointments = u.appointmentMadeBy();
+                  return {};
+                });
               }}
-              // week={}
-              resourceFields={{
-                idField: "admin_id",
-                textField: "title",
-                subTextField: "mobile",
-                avatarField: "title",
-                colorField: "color",
-              }}
-              viewerExtraComponent={(fields, event) => {
-                return (
-                  <div>
-                    {fields.map((field, i) => {
-                      if (field.name === "admin_id") {
-                        const admin = field.options?.find(
-                          (fe) => fe.id === event["admin_id"]
-                        );
-                        return (
-                          <Typography
-                            key={i}
-                            style={{ display: "flex", alignItems: "center" }}
-                            color="textSecondary"
-                            variant="caption"
-                            noWrap
-                          >
-                            <PersonRoundedIcon /> {admin?.text}
-                          </Typography>
-                        );
-                      } else {
-                        return "";
-                      }
-                    })}
-                  </div>
-                );
-              }}
+              // viewerExtraComponent={(fields, event) => {
+              //   return (
+              //     <div>
+              //       {fields.map((field, i) => {
+              //         if (field.name === "admin_id") {
+              //           const admin = field.options?.find(
+              //             (fe) => fe.id === event["admin_id"]
+              //           );
+              //           return (
+              //             <Typography
+              //               key={i}
+              //               style={{ display: "flex", alignItems: "center" }}
+              //               color="textSecondary"
+              //               variant="caption"
+              //               noWrap
+              //             >
+              //               <PersonRoundedIcon /> {admin?.text}
+              //             </Typography>
+              //           );
+              //         } else {
+              //           return "";
+              //         }
+              //       })}
+              //     </div>
+              //   );
+              // }}
             />
           </Stack>
         </PageContainer>

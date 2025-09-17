@@ -25,6 +25,22 @@ export default function Authenticator() {
             order: 1,
             placeholder: "tenant-xxxx",
           },
+          [CUSTOM_USER_ATTRIBUTES.OWNER_NAME]: {
+            label: "Tenant Owner Name",
+            isRequired: true,
+            order: 2,
+            placeholder: "John Doe",
+          },
+          [CUSTOM_USER_ATTRIBUTES.OWNER_DEPARTMENT_NAME]: {
+            label: "Tenant Owner's Department Name",
+            isRequired: false,
+            order: 3,
+          },
+          [CUSTOM_USER_ATTRIBUTES.OWNER_TEAM_NAME]: {
+            label: "Tenant Owner's Team Name",
+            isRequired: false,
+            order: 4,
+          },
         },
       }}
     >

@@ -29,6 +29,18 @@ export const auth = defineAuth({
       dataType: "String",
       mutable: true,
     },
+    [CUSTOM_USER_ATTRIBUTES.OWNER_NAME]: {
+      dataType: "String",
+      mutable: true,
+    },
+    [CUSTOM_USER_ATTRIBUTES.OWNER_DEPARTMENT_NAME]: {
+      dataType: "String",
+      mutable: true,
+    },
+    [CUSTOM_USER_ATTRIBUTES.OWNER_TEAM_NAME]: {
+      dataType: "String",
+      mutable: true,
+    },
   },
   triggers: {
     preSignUp,
