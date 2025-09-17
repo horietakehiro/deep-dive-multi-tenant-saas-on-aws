@@ -30,18 +30,6 @@ export const signInFactory = (
 export const getCurrentUserFactory = (
   config: Config
 ): typeof amplifyGetCurrentUser => {
-  if (config.type === "NO_AMPLIFY") {
-    return () => {
-      return Promise.resolve({
-        userId: "dummy-id",
-        username: "dummy-name",
-        signInDetails: {
-          authFlowType: "USER_SRP_AUTH",
-          loginId: "dummy@example.com",
-        },
-      });
-    };
-  }
   return amplifyGetCurrentUser;
 };
 

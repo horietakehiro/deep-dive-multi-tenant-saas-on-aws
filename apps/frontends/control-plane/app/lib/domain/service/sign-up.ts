@@ -3,6 +3,7 @@ import {
   CUSTOM_USER_ATTRIBUTES,
   type SignupUserAttributes,
 } from "@intersection/backend/lib/domain/model/user";
+import type { ClientMetadata } from "@intersection/backend/lib/domain/model/auth";
 
 export const signUpFactory = (
   signUpFn: typeof amplifySignUp,
@@ -33,6 +34,9 @@ export const signUpFactory = (
         clientMetadata: {
           hoge: "fuga",
         },
+        validationData: {
+          appType: "control-plane",
+        } satisfies ClientMetadata,
       },
     });
   };
