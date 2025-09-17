@@ -2,11 +2,14 @@ import { useOutletContext } from "react-router";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 import type { RootContext } from "../lib/domain/model/context";
 import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
-import { Crud, type DataSource } from "@toolpad/core";
+import {
+  Crud,
+  type DataFieldRenderFormField,
+  type DataSource,
+} from "@toolpad/core";
 import { createUserIdentity } from "../lib/domain/service/create-user-identity";
 import FormControl from "@mui/material/FormControl";
 import { TextField } from "@mui/material";
-import { notImplementedFn } from "@intersection/backend/lib/util";
 
 type Repository = Pick<
   IRepository,
@@ -33,19 +36,26 @@ const usersDataSourceFactory: (
         field: "email",
         headerName: "Email",
         // Emailは後から更新出来ないようにする
-        renderFormField: ({ value, onChange, error }) => {
-          const onCreate = value === null; // 値が未設定≒新規作成時と判断する
-          return (
-            <FormControl error={!!error} fullWidth>
-              <TextField
-                value={value?.toString()}
-                label={"Email"}
-                disabled={!onCreate}
-                onChange={(event) => onChange(event.target.value)}
-              />
-            </FormControl>
-          );
-        },
+        renderFormField: (() => {
+          let onCreate = false;
+          const f: DataFieldRenderFormField = ({ value, onChange, error }) => {
+            if (value === null) {
+              onCreate = true; // 初回レンダリング時に値が未設定≒新規作成時と判断する
+            }
+            console.log(value);
+            return (
+              <FormControl error={!!error} fullWidth>
+                <TextField
+                  value={value}
+                  label={"Email"}
+                  disabled={!onCreate}
+                  onChange={(event) => onChange(event.target.value)}
+                />
+              </FormControl>
+            );
+          };
+          return f;
+        })(),
       },
       {
         field: "role",
@@ -101,6 +111,7 @@ const usersDataSourceFactory: (
       }
       return res.data;
     },
+    // TODO:
     deleteOne: async (...args) => {},
   };
 };

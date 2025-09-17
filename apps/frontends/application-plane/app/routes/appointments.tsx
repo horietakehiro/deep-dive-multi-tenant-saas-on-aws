@@ -27,6 +27,7 @@ import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { DataGrid, type GridRowSelectionModel } from "@mui/x-data-grid";
 import type {
   Appointment,
+  Spot,
   Tenant,
   User,
 } from "@intersection/backend/lib/domain/model/data";
@@ -34,6 +35,7 @@ import { useOutletContext } from "react-router";
 import type { RootContext } from "../lib/domain/model/context";
 
 import type {
+  FieldProps,
   ProcessedEvent,
   ResourceFields,
   SchedulerRef,
@@ -145,7 +147,10 @@ const userIdsCodec: Codec<string[]> = {
 };
 
 export type Context = Pick<RootContext, "tenant" | "authUser"> & {
-  repository: Pick<IRepository, "listAppointments" | "getUser" | "create">;
+  repository: Pick<
+    IRepository,
+    "listAppointments" | "getUser" | "createAppoinment" | "listSpots"
+  >;
 };
 export const clientLoader = () => {
   return {
@@ -169,8 +174,6 @@ export default function Appointments({
   loaderData,
 }: Pick<Route.ComponentProps, "loaderData">) {
   const { tenant, repository, authUser } = loaderData.useOutletContext();
-  // ログインしている自分自身のユーザID
-  const me = authUser!.userId;
 
   // ローカルストレージに保存するステート情報
   const [mode, setMode] = useLocalStorageState<"default" | "tabs">(
@@ -184,9 +187,13 @@ export default function Appointments({
     { codec: userIdsCodec }
   );
 
-  // 現在選択中のユーザリスト
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [spots, setSpots] = useState<Spot[]>([]);
+
+  // 予約の作成者≒ログインしている自分自身のユーザID
+  const madeBy = authUser!.userId;
+  const [madeWith, setMadeWith] = useState<string | undefined>(undefined);
 
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
@@ -196,6 +203,19 @@ export default function Appointments({
       dark: true,
     },
   });
+
+  useEffect(() => {
+    if (tenant === undefined) {
+      return;
+    }
+    const f = async () => {
+      const res = await tenant.spots();
+      console.log(res);
+      setSpots(res.data);
+    };
+    f();
+    calendarRef.current?.scheduler.handleState(mode, "resourceViewMode");
+  }, [tenant]);
 
   useEffect(() => {
     const f = async () => {
@@ -252,6 +272,78 @@ export default function Appointments({
     };
     f();
   }, [selectedUsers]);
+
+  useEffect(() => {
+    // APIで取得したデータをオプションとして利用出来るようフォームフィールドを更新する
+    const fields = [
+      {
+        // サブタイトルの入力項目は表示されないようにする
+        name: "subtitle",
+        type: "hidden",
+        default: undefined,
+      },
+      {
+        name: "description",
+        type: "input",
+        config: {
+          label: "Description",
+          rows: 4,
+          multiline: true,
+        },
+      },
+      {
+        name: "madeWith",
+        type: "select",
+        // 自分以外のユーザのみ選択可能にする
+        options:
+          madeWith !== madeBy
+            ? selectedUsers
+                .filter((u) => u.id === madeWith)
+                .map((u) => ({
+                  id: u.id,
+                  text: `${u.name} (${u.email})`,
+                  value: u.id,
+                }))
+            : selectedUsers
+                .filter((u) => u.id !== madeBy)
+                .map((u) => ({
+                  id: u.id,
+                  text: `${u.name} (${u.email})`,
+                  value: u.id,
+                })),
+        config: {
+          label: "Select the user make this appointment with.",
+          // disabled: ,
+        },
+        // TODO: デフォルト値の設定がうまく行かない
+        // default: ,
+      },
+      {
+        name: "spot",
+        type: "select",
+        options: spots.map((s) => ({
+          id: s.id,
+          text: s.name,
+          value: s.id,
+        })),
+        config: {
+          label: "Spot",
+        },
+      },
+      {
+        name: "madeBy",
+        type: "hidden",
+        default: madeBy,
+      },
+      {
+        name: "status",
+        type: "hidden",
+        default: "requested" satisfies Event["status"],
+      },
+    ] satisfies FieldProps[];
+
+    calendarRef.current?.scheduler.handleState(fields, "fields");
+  }, [madeWith, spots, selectedUsers]);
 
   return (
     // このコンポーネントはtoolpadのコンポーネントでは無いため明示的にカラーモードを設定する
@@ -332,52 +424,12 @@ export default function Appointments({
                   // colorField: "color",
                 } as { [key in keyof ResourceFields]: keyof SelectedUser }
               }
-              fields={[
-                {
-                  // サブタイトルの入力項目は表示されないようにする
-                  name: "subtitle",
-                  type: "hidden",
-                  default: undefined,
-                },
-                {
-                  name: "description",
-                  type: "input",
-                  config: {
-                    label: "Description",
-                    rows: 4,
-                    multiline: true,
-                  },
-                },
-                {
-                  name: "madeWith",
-                  type: "select",
-                  // 自分以外のユーザのみ選択可能にする
-                  options: selectedUsers
-                    .filter((u) => u.id !== me)
-                    .map((u) => ({
-                      id: u.id,
-                      text: `${u.name} (${u.email})`,
-                      value: u.id,
-                    })),
-                  config: {
-                    label: "Select the user make this appointment with.",
-                  },
-                },
-                {
-                  name: "madeBy",
-                  type: "hidden",
-                  default: me,
-                },
-                {
-                  name: "status",
-                  type: "hidden",
-                  default: "requested" satisfies Event["status"],
-                },
-              ]}
-              onCellClick={(...args) => console.log(args)}
+              onCellClick={(...args) => {
+                setMadeWith(String(args[3]) as string);
+              }}
               onConfirm={async (...args) => {
                 console.log(args);
-                repository.
+                repository;
                 return {
                   ...args[0],
                   userId: "47948a28-9001-704e-30a6-fcd81e564041",

@@ -54,6 +54,7 @@ export interface IRepository {
   getSpot: SingularFn<SpotClient["get"], Spot>;
   updateSpot: SingularFn<SpotClient["update"], Spot>;
   deleteSpot: SingularFn<SpotClient["delete"], Spot>;
+  listSpots: ListFn<SpotClient["list"], Spot>;
 
   createUser: SingularFn<UserClient["create"], User>;
   getUser: SingularFn<UserClient["get"], User>;
@@ -64,6 +65,7 @@ export interface IRepository {
   deleteCognitoUser: Mutations["deleteCognitoUser"];
 
   listAppointments: ListFn<AppointmentClient["list"], Appointment>;
+  createAppoinment: SingularFn<AppointmentClient["create"], Appointment>;
 }
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
   c: Config

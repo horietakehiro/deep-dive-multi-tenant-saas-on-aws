@@ -20,6 +20,7 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
     getSpot: ac.models.Spot.get,
     updateSpot: ac.models.Spot.update,
     deleteSpot: ac.models.Spot.delete,
+    listSpots: ac.models.Spot.list,
 
     getUser: ac.models.User.get,
     updateUser: ac.models.User.update,
@@ -30,5 +31,6 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
     listUserRoles: ac.enums.UserRole.values,
 
     listAppointments: ac.models.Appointment.list,
+    createAppoinment: ac.models.Appointment.create,
   } satisfies IRepository;
 };
