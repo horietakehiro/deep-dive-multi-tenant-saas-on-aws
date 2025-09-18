@@ -194,6 +194,7 @@ export default function Appointments({
   // 予約の作成者≒ログインしている自分自身のユーザID
   const madeBy = authUser!.userId;
   const [madeWith, setMadeWith] = useState<string | undefined>(undefined);
+  const [fields, setFields] = useState<FieldProps[]>([]);
 
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
@@ -205,16 +206,17 @@ export default function Appointments({
   });
 
   useEffect(() => {
+    calendarRef.current?.scheduler.handleState(mode, "resourceViewMode");
+  }, []);
+  useEffect(() => {
     if (tenant === undefined) {
       return;
     }
     const f = async () => {
       const res = await tenant.spots();
-      console.log(res);
       setSpots(res.data);
     };
     f();
-    calendarRef.current?.scheduler.handleState(mode, "resourceViewMode");
   }, [tenant]);
 
   useEffect(() => {
@@ -236,21 +238,20 @@ export default function Appointments({
       // TODO: イベントの時刻フィルタリング
       const appointments = await Promise.all(
         (selectedUsers ?? []).map(async (u) => {
-          console.log(u);
           return (await u.appointmentMadeBy()).data;
         })
       );
       const events: Event[] = await appointments.flat().map((a) => {
-        let color: "red" | "blue" | "green";
+        let color: "#ff0000" | "#00d9ff" | "#008053";
         switch (a.status) {
           case "approved":
-            color = "green";
+            color = "#008053";
             break;
           case "requested":
-            color = "blue";
+            color = "#00d9ff";
             break;
           case "rejected":
-            color = "red";
+            color = "#ff0000";
         }
         return {
           event_id: a.id,
@@ -264,7 +265,6 @@ export default function Appointments({
           color,
         };
       });
-      console.log(events);
       setEvents(events);
 
       calendarRef.current?.scheduler.handleState(events, "events");
@@ -294,29 +294,24 @@ export default function Appointments({
       {
         name: "madeWith",
         type: "select",
-        // 自分以外のユーザのみ選択可能にする
-        options:
-          madeWith !== madeBy
-            ? selectedUsers
-                .filter((u) => u.id === madeWith)
-                .map((u) => ({
-                  id: u.id,
-                  text: `${u.name} (${u.email})`,
-                  value: u.id,
-                }))
-            : selectedUsers
-                .filter((u) => u.id !== madeBy)
-                .map((u) => ({
-                  id: u.id,
-                  text: `${u.name} (${u.email})`,
-                  value: u.id,
-                })),
+        options: selectedUsers
+          .filter((u) =>
+            madeWith !== madeBy && madeWith !== undefined
+              ? u.id === madeWith
+              : u.id !== madeBy
+          )
+          .map((u) => ({
+            id: u.id,
+            text: `${u.name} (${u.email})`,
+            value: u.id,
+          })),
         config: {
           label: "Select the user make this appointment with.",
           // disabled: ,
         },
         // TODO: デフォルト値の設定がうまく行かない
-        // default: ,
+        // default:
+        //   madeWith !== madeBy && madeWith !== undefined ? madeWith : undefined,
       },
       {
         name: "spot",
@@ -341,9 +336,15 @@ export default function Appointments({
         default: "requested" satisfies Event["status"],
       },
     ] satisfies FieldProps[];
-
-    calendarRef.current?.scheduler.handleState(fields, "fields");
+    setFields(fields.map((f) => ({ ...f })));
   }, [madeWith, spots, selectedUsers]);
+
+  useEffect(() => {
+    calendarRef.current?.scheduler.handleState(
+      fields.map((f) => ({ ...f })),
+      "fields"
+    );
+  }, [fields]);
 
   return (
     // このコンポーネントはtoolpadのコンポーネントでは無いため明示的にカラーモードを設定する
@@ -405,7 +406,6 @@ export default function Appointments({
                       selectedUserIds: selectedUserIds ?? [],
                     }
                   );
-                  console.log(newSelectedUsers);
                   setSelectedUserIds(newSelectedUsers.map((u) => u.id));
                 }}
               >
@@ -421,18 +421,30 @@ export default function Appointments({
                   textField: "name",
                   subTextField: "email",
                   avatarField: "name",
-                  // colorField: "color",
                 } as { [key in keyof ResourceFields]: keyof SelectedUser }
               }
+              fields={fields}
               onCellClick={(...args) => {
-                setMadeWith(String(args[3]) as string);
+                if (args[3] !== undefined) {
+                  setMadeWith(args[3] as string);
+                }
               }}
               onConfirm={async (...args) => {
-                console.log(args);
-                repository;
+                if (args[1] === "create") {
+                  const event = args[0];
+                  const res = await repository.createAppoinment({
+                    userIdMadeBy: event["madeBy"],
+                    userIdMadeWith: event["madeWith"],
+                    datetimeFrom: event.start.toISOString(),
+                    datetimeTo: event.end.toISOString(),
+                    status: event["status"],
+                    description: event["title"]?.toString()!,
+                    spotId: event["spot"],
+                  });
+                  console.log(res);
+                }
                 return {
                   ...args[0],
-                  userId: "47948a28-9001-704e-30a6-fcd81e564041",
                 };
               }}
               events={events}
