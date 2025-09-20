@@ -81,9 +81,6 @@ export default function Appointments({
   //     },
   //   }
   // );
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
-    searchParams.getAll("selected-user-ids" satisfies SearchParams)
-  );
 
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -93,6 +90,16 @@ export default function Appointments({
   const madeBy = authUser!.userId;
   const [madeWith, setMadeWith] = useState<string | undefined>(undefined);
   const [fields, setFields] = useState<FieldProps[]>([]);
+
+  // 必ず自分自身のユーザIDを加える
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    Array.from(
+      new Set([
+        madeBy,
+        ...searchParams.getAll("selected-user-ids" satisfies SearchParams),
+      ])
+    )
+  );
 
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
@@ -104,8 +111,10 @@ export default function Appointments({
 
   // 選択されたユーザIDでサーチパラムを更新
   useEffect(() => {
+    // 自分自身のユーザIDは除外する
     setSearchParams({
-      "selected-user-ids": selectedUserIds ?? [],
+      "selected-user-ids":
+        selectedUserIds.filter((uid) => uid !== madeBy) ?? [],
     });
   }, [selectedUserIds]);
 
