@@ -18,7 +18,7 @@ import type {
   Spot,
   User,
 } from "@intersection/backend/lib/domain/model/data";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useSearchParams } from "react-router";
 import type { RootContext } from "../lib/domain/model/context";
 
 import type {
@@ -31,20 +31,18 @@ import { Scheduler } from "@aldabil/react-scheduler";
 import type { Route } from "./+types/appointments";
 import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
 import { SelectUsersDiablog } from "./appointments/select-users-dialog";
-const userIdsCodec: Codec<string[]> = {
-  parse: (value) => JSON.parse(value),
-  stringify: (value) => JSON.stringify(value),
-};
-
 export type Context = Pick<RootContext, "tenant" | "authUser"> & {
   repository: Pick<
     IRepository,
     "listAppointments" | "getUser" | "createAppoinment" | "listSpots"
   >;
 };
+type SearchParams = "selected-user-ids" | "event-id";
+
 export const clientLoader = () => {
   return {
-    useOutletContext: () => useOutletContext<Context>(),
+    useOutletContext: useOutletContext<Context>,
+    useSearchParams,
   };
 };
 
@@ -64,17 +62,27 @@ export default function Appointments({
   loaderData,
 }: Pick<Route.ComponentProps, "loaderData">) {
   const { tenant, repository, authUser } = loaderData.useOutletContext();
+  //
+  const [searchParams, setSearchParams] = loaderData.useSearchParams();
 
-  // ローカルストレージに保存するステート情報
   const [mode, setMode] = useLocalStorageState<"default" | "tabs">(
     "mode",
     "default"
   );
-  // ユーザー情報そのものをシリアライズして保存すると、デシリアライズ時にlazyLoaderメソッドが使用不能になるためID(文字列)のリストのみ保存する
-  const [selectedUserIds, setSelectedUserIds] = useLocalStorageState<string[]>(
-    "selectedUserIds",
-    [],
-    { codec: userIdsCodec }
+  // // ユーザー情報そのものをシリアライズして保存するとデシリアライズ時に
+  // // lazyLoaderメソッドが使用不能になるためID(文字列)のリストのみ保存する
+  // const [selectedUserIds, setSelectedUserIds] = useLocalStorageState<string[]>(
+  //   "selectedUserIds",
+  //   [],
+  //   {
+  //     codec: {
+  //       parse: JSON.parse,
+  //       stringify: JSON.stringify,
+  //     },
+  //   }
+  // );
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    searchParams.getAll("selected-user-ids" satisfies SearchParams)
   );
 
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
@@ -89,15 +97,19 @@ export default function Appointments({
   const dialogs = useDialogs();
   const calendarRef = useRef<SchedulerRef>(null);
 
-  const theme = createTheme({
-    colorSchemes: {
-      dark: true,
-    },
-  });
-
+  // ビューモードを更新
   useEffect(() => {
     calendarRef.current?.scheduler.handleState(mode, "resourceViewMode");
-  }, []);
+  }, [mode]);
+
+  // 選択されたユーザIDでサーチパラムを更新
+  useEffect(() => {
+    setSearchParams({
+      "selected-user-ids": selectedUserIds ?? [],
+    });
+  }, [selectedUserIds]);
+
+  // テナントに登録されたスポット一覧を取得
   useEffect(() => {
     if (tenant === undefined) {
       return;
@@ -109,6 +121,7 @@ export default function Appointments({
     f();
   }, [tenant]);
 
+  // 選択されたユーザの情報を取得
   useEffect(() => {
     const f = async () => {
       const users: SelectedUser[] = await Promise.all(
@@ -123,6 +136,7 @@ export default function Appointments({
     f();
   }, [selectedUserIds]);
 
+  // 選択されたユーザの予約情報を取得
   useEffect(() => {
     const f = async () => {
       // TODO: イベントの時刻フィルタリング
@@ -163,6 +177,7 @@ export default function Appointments({
     f();
   }, [selectedUsers]);
 
+  // 予約情報のフォーム設定を更新
   useEffect(() => {
     // APIで取得したデータをオプションとして利用出来るようフォームフィールドを更新する
     const fields = [
@@ -238,7 +253,13 @@ export default function Appointments({
 
   return (
     // このコンポーネントはtoolpadのコンポーネントでは無いため明示的にカラーモードを設定する
-    <ThemeProvider theme={theme}>
+    <ThemeProvider
+      theme={createTheme({
+        colorSchemes: {
+          dark: true,
+        },
+      })}
+    >
       <DialogsProvider>
         <PageContainer>
           <Stack direction={"column"}>
@@ -263,10 +284,6 @@ export default function Appointments({
                   onChange={(event) => {
                     const value = event.target.value as "tabs" | "default";
                     setMode(value);
-                    calendarRef.current?.scheduler.handleState(
-                      value,
-                      "resourceViewMode"
-                    );
                   }}
                 >
                   <FormControlLabel
@@ -320,6 +337,7 @@ export default function Appointments({
                 }
               }}
               onConfirm={async (...args) => {
+                // TODO: リファクタリング
                 if (args[1] === "create") {
                   const event = args[0];
                   const res = await repository.createAppoinment({
