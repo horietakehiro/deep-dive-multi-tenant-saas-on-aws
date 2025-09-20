@@ -9,7 +9,7 @@ import {
   Stack,
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { PageContainer, useLocalStorageState, type Codec } from "@toolpad/core";
+import { PageContainer, useLocalStorageState } from "@toolpad/core";
 import { useEffect, useRef, useState } from "react";
 import { DialogsProvider, useDialogs } from "@toolpad/core/useDialogs";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
