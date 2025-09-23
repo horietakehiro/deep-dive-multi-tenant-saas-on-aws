@@ -130,7 +130,7 @@ export const dummyRepository = new Repository({
 ```js: TS2322エラーが発生する実装例
 type Client = ReturnType<typeof generateClient<Schema>>;
 export interface IClient {
-  // :warning: 問題の箇所
+  // ⚠ 問題の箇所
   getTenant: Client["models"]["Tenant"]["get"];
 }
 export class Repository {
@@ -148,11 +148,11 @@ export class Repository {
 }
 
 const client = generateClient<Schema>();
-// :white_check_mark: これはOK
+// ✅ これはOK
 export const productionRepository = new Repository({
   getTenant: client.models.Tenant.get,
 })
-// :x: これがNG
+// ❌ これがNG
 export const dummyRepository = new Repository({
   getTenant: async (...args) => ({
     data: {
@@ -178,7 +178,9 @@ index.d.ts(340, 5): The expected type comes from the return type of this signatu
 
 ### 原因
 
-[イシュー](https://github.com/aws-amplify/amplify-data/issues/625)として問い合わせてみたところ、「**amplify-dataの型情報を生成する`ModelTypesClient`型は、複雑なジェネリクス型によって動的に型を生成しているため、手動で型をモック化することが不可能**」旨の回答が得られました。
+イシューとして問い合わせてみたところ、「**amplify-dataの型情報を生成する`ModelTypesClient`型は、複雑なジェネリクス型によって動的に型を生成しているため、手動で型をモック化することが不可能**」旨の回答が得られました。
+
+https://github.com/aws-amplify/amplify-data/issues/625
 
 その為結論としては、少なくとも現状のライブラリのバージョンでは、上記のようにシンプルに型情報をインターフェース化して再利用することは不可能となります。
 
