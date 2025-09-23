@@ -3,7 +3,7 @@ title: "amplify-dataから生成される型情報をインターフェース化
 # emoji: "🤿"
 type: "tech"
 topics: ["AWS", "Amplify", "TypeScript"]
-published: false
+published: true
 ---
 
 ## 要約
