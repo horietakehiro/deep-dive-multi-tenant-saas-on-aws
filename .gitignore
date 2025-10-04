@@ -15,3 +15,5 @@ amplify_outputs*
 amplifyconfiguration*
 
 .env
+
+.venv

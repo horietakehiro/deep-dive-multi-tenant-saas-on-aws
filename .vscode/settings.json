@@ -1,5 +1,8 @@
 {
   "editor.formatOnSave": true,
   "files.autoSave": "off",
-  "typescript.reportStyleChecksAsWarnings": false
+  "typescript.reportStyleChecksAsWarnings": false,
+
+  "python.defaultInterpreterPath": "${workspaceFolder}/samples/python/.venv",
+  "python.analysis.typeCheckingMode": "basic"
 }

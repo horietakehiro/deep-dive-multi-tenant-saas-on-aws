@@ -79,3 +79,204 @@ published: false
 ![](../images/09/monitoring-with-tenant-context.drawio.png)
 
 ## マルチテナントサービスの内部
+
+ここまででマルチテナントサービスを構築するうえで考慮すべき事項を確認しました。次に、サービスマルチテナントであることが実装においてすることの意味を持つのかを見ていきます。ここで述べられるのは開発者がマルチテナントであることを可能な限り意識せずにコーディング出来るように努力するのが重要であるという点です。
+
+例えば以下のような、テナントの概念を全くサポートしていないサービスのコードから始めます。
+
+```python: テナントの概念が全くないコード
+  def query_orders(self, status:str):
+    """特定のステータスに一致するすべての注文を取得するメソッド"""
+    # DynamoDBデータベースクライアントを取得
+    ddb = boto3.client(("dynamodb"))
+
+    # 特定のステータスに一致する注文を取得する
+    logging.info(("Querying orders with the status of %s", status))
+    try:
+      response = ddb.query(
+        TableName="order_table",
+        KeyConditionExpression=Key("status").eq(status),
+      )
+    except ddb.exceptions.ClientError as err:
+      logging.error((
+        "Find order error, status %s. Info: %s: %s",
+        status,
+        err.response["Error"]["Code"],
+        err.response["Error"]["Message"],
+      ))
+      raise
+    else:
+      return response["Items"]
+```
+
+ここではテナントの概念が導入されていないので、ログデータやデータのアクセスはテナント、つまりこのコードを呼び出す人が誰であるかを考慮する必要がありませんん。
+マルチテナントのアーキテクチャでは、開発者に余計な負担を掛けることなくテナントコンテキストを導入し、このコードと同程度のわかりやすさに保つことが大切です。
+
+### テナントコンテキストの抽出
+
+テナントコンテキストを導入することで、コードがどの様に変化していくかを見ていきます。
+[４章](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-06)では、テナントコンテキストが個々のユーザに割り当てられ、サービスにJWTとして渡される様が紹介されました。ここでは、そのトークンを活用していきます。
+
+```bash: JWTトークンはHTTPリクエストヘッダにベアラートークンとして埋め込まれる
+GET /api/orders HTTP/1.1
+Authorization: Bearer <JWT>
+```
+
+このトークンに埋め込まれているテナントコンテキストにアクセスするためには以下のようなコードをサービスに追加する必要があります。
+
+```python: テナントコンテキストの抽出
+  def query_orders(self, status:str):
+    """特定のステータスに一致するすべての注文を取得するメソッド"""
+    # テナントコンテキストを抽出する
+    auth_header = request.headers.get("Authorization")
+    token = auth_header.split((" "))
+    if token[0] != "Bearer":
+      raise Exception("No bearer token in request")
+    bearer_token = token[1]
+    decoded_jwt = jwt.decode(bearer_token, "secret", algorithms=["HS256"])
+    tenant_id = decoded_jwt["tenantId"]
+    tenant_tier = decoded_jwt["tenantTier"]
+
+    # DynamoDBデータベースクライアントを取得
+    ddb = boto3.client(("dynamodb"))
+    ...
+```
+
+ここでは各サービスのコードがトークンをデコードする責務を追っていますが、他にも選択肢はあります。例えば前段にAPI Gatewayを配置し、そこでJWTのデコードを行ってサービスのコードには復号されたテナントコンテキストを渡すといった具合です。
+いずれの場合でも、JWTからテナントコンテキストを抽出することで、このサービスは後続の処理でテナントコンテキストにアクセスしてマルチテナントに対応した処理を行うことが出来るようになりました。
+
+### テナントコンテキストを用いたログとメトリクス
+
+ログはマルチテナントサービスでテナントコンテキストを利用する基本的な領域の一つです。
+マルチテナントサービスにおいて、特定のテナントと特定のイベントを関連付けたり、特定のテナントのアクティビティを集約したりといった運用が不可欠です。そのために、例えば以下のようにログやメトリクスにテナントコンテキストを埋め込むことが重要です。
+
+```python: テナントコンテキストのログへの埋め込み
+  def query_orders(self, status:str):
+    """特定のステータスに一致するすべての注文を取得するメソッド"""
+    # テナントコンテキストを抽出する
+    auth_header = request.headers.get("Authorization")
+    token = auth_header.split((" "))
+    if token[0] != "Bearer":
+      raise Exception("No bearer token in request")
+    bearer_token = token[1]
+    decoded_jwt = jwt.decode(bearer_token, "secret", algorithms=["HS256"])
+    tenant_id = decoded_jwt["tenantId"]
+    tenant_tier = decoded_jwt["tenantTier"]
+
+    # 特定のステータスに一致する注文を取得する
+    logging.info(("Tenant: %s, Tier: %s, Querying orders with the status of %s",
+                  tenant_id, tenant_tier, status))
+    ...
+```
+
+全てのログに上記のようにテナントコンテキストを埋め込むことで、テナント個別の洞察をこれらのログデータから得ることが可能になります。
+同様のことを、メトリクスやアクティビティの収集においても適用します。
+
+```python: テナントコンテキストのメトリクスへの埋め込み
+  def query_orders(self, status:str):
+    """特定のステータスに一致するすべての注文を取得するメソッド"""
+    ...
+    tenant_id = decoded_jwt["tenantId"]
+    tenant_tier = decoded_jwt["tenantTier"]
+
+    # 特定のステータスに一致する注文を取得する
+    logging.info(("Tenant: %s, Tier: %s, Querying orders with the status of %s",
+                  tenant_id, tenant_tier, status))
+    try:
+      start_time = time.time()
+      response = ddb.query(
+        TableName="order_table",
+        KeyConditionExpression=Key("status").eq(status),
+      )
+      duration = (time.time() - start_time)
+      message = {
+        "tenantId": tenant_id, "tier": tenant_tier,
+        "service": "order",
+        "operation": "query_orders",
+        "duration": duration,
+      }
+      firehose = boto3.client("firehose")
+      firehose.put_record(
+        DeliveryName="saas_metrics",
+        Record=message
+      )
+    except ddb.exceptions.ClientError as err:
+      ...
+```
+
+### テナントコンテキストを用いたデータへのアクセス
+
+次に、テナントコンテキストが個々のテナントのデータアクセス方法にどの様に影響するかを見ていきます。
+現在のコードはテナントの区別なく全ての注文データを取得しています。それを、呼び出し元のテナントのみに紐づく注文データのみを取得するように変えなければいけません。
+
+例えばデータベースがプール化されている場合の簡単な方法の一つは、以下のように検索パラメータにテナントを追加することです。
+
+```python: 検索パラメータにテナントを追加
+      response = ddb.query(
+        TableName="order_table",
+        KeyConditionExpression=Key("TenantId").eq(tenant_id),
+        FilterExpression=Attr("status").eq(status)
+      )
+```
+
+では、例えばプレミアムティアはデータベースがサイロ化され、ベーシックティアはプール化されているような、少々複雑な構成の場合はどうでしょう。以下のような、テナントのティアに基づいてアクセス先のテーブルを判断するヘルパー関数が必要になるかも知れません。
+
+```python: ヘルパー関数でアクセスするテーブル名を生成
+    try:
+      start_time = time.time()
+      response = ddb.query(
+        TableName=get_tenant_order_table_name((tenant_id, tenant_tier)),
+        KeyConditionExpression=Key("status").eq(status),
+        FilterExpression=
+      )
+      ...
+def get_tenant_order_table_name(tenant_id: str, tenant_tier:str):
+  if tenant_tier == "BASICT_TIER":
+    table_name = "pooled_order_table"
+  elif tenant_tier == "PREMIUM_TIER":
+    table_name = "order_table_" + tenant_id
+  return table_name
+```
+
+### テナント分離のサポート
+
+マルチテナントサービスにおいて、テナント分離(他のテナントからアクセスされないこと)は不可欠です。開発者は意図的にせよ非意図的にせよ、テナントの境界を超えたデータアクセスを行わないようにコードを保護する必要があります。
+ここでは、コードがリソースにアクセスする前に何らかの方法で分離のコンテキストを取得し、それによってテナントアクセスが制限されるという状態を目標にしたいと思います。
+
+DynamoDBを使用してデータにアクセスしている今回のサンプルコードでは、テナントコンテキストに基づいてデータアクセスを制限する一連の資格情報でセッションを構成することで、この目標を実現してみます。
+具体的には以下のように、注文取得のリクエストごとに呼び出し元のテナントコンテキストを用いてデータアクセスのクライアントを初期化していきます。
+
+```python:
+  def query_orders(self, status:str):
+    """特定のステータスに一致するすべての注文を取得するメソッド"""
+    ...
+    tenant_id = decoded_jwt["tenantId"]
+    tenant_tier = decoded_jwt["tenantTier"]
+
+    # テナントにスコープが絞られえた資格情報を用いてデータベースクライアントを取得する
+    sts = boto3.client("sts")
+    # テナントスコープポリシーに基づいて資格情報を取得する
+    tenant_credentials = sts.assume_role(
+      RoleArn=os.environ["IDENTITY_ROLE"],
+      RoleSessionName=tenant_id,
+      Policy=scoped_policy,
+      DurationSeconds=600,
+    )
+
+    # 指定したロールの資格情報を用いてスコープが絞られたセッションを取得する
+    tenant_scoped_session = boto3.Session(
+      aws_access_key_id=tenant_credentials["Credentials"]["AccessKeyId"],
+      aws_secret_access_key=tenant_credentials["Credentials"]["SecretAccessKey"],
+      aws_session_token=tenant_credentials["Credentials"]["SessionToken"],
+    )
+
+    # テナントスコープから絞られた資格情報を用いてデータベースクライアントを取得する
+    ddb = tenant_scoped_session.client(("dynamodb"))
+```
+
+ここではAWS Security Tokens Serviceを利用して、指定されたテナントIDと対応するデータベース内のアイテムにのみアクセスが制限された一時的な資格情報を取得し、それを用いてデータベースクライアントを初期化しています。詳細はここでは省略しますが、具体的には変数`scoped_policy`にて、アクセス許可スコープを特定テナントに限定したインラインポリシーを構成して資格情報を払い出すという仕組みです。
+
+## マルチテナントの詳細の隠蔽と一元化
+
+ここまではマルチテナントサービスのコードでテナントコンテキストをどの様に活用するかを見ていきました。しかし先に挙げた実装例では、開発者にテナントコンテキストを意識させたりコードを複雑化させたりすることなくマルチテナントを導入するという目標が達成出来ていません。
+そこで次は、ここまで紹介した概念の詳細を元のサービスから隠蔽して活用出来るようにするための方法を見ていきます。
