@@ -62,25 +62,12 @@ export default function Appointments({
   loaderData,
 }: Pick<Route.ComponentProps, "loaderData">) {
   const { tenant, repository, authUser } = loaderData.useOutletContext();
-  //
   const [searchParams, setSearchParams] = loaderData.useSearchParams();
 
   const [mode, setMode] = useLocalStorageState<"default" | "tabs">(
     "mode",
     "default"
   );
-  // // ユーザー情報そのものをシリアライズして保存するとデシリアライズ時に
-  // // lazyLoaderメソッドが使用不能になるためID(文字列)のリストのみ保存する
-  // const [selectedUserIds, setSelectedUserIds] = useLocalStorageState<string[]>(
-  //   "selectedUserIds",
-  //   [],
-  //   {
-  //     codec: {
-  //       parse: JSON.parse,
-  //       stringify: JSON.stringify,
-  //     },
-  //   }
-  // );
 
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -151,7 +138,10 @@ export default function Appointments({
       // TODO: イベントの時刻フィルタリング
       const appointments = await Promise.all(
         (selectedUsers ?? []).map(async (u) => {
+          // const appointmentsMadeBy = (await u.appointmentMadeBy()).data;
+          // const appointmentsMadeWith = (await u.appointmentMadeWith()).data;
           return (await u.appointmentMadeBy()).data;
+          // return appointmentsMadeBy.concat(appointmentsMadeWith);
         })
       );
       const events: Event[] = await appointments.flat().map((a) => {
@@ -166,8 +156,9 @@ export default function Appointments({
           case "rejected":
             color = "#ff0000";
         }
+        // TODO: 予約したユーザと予約されたユーザ両方のビューにイベントを表示する
         return {
-          event_id: a.id,
+          event_id: `${a.id}`,
           title: a.description,
           start: new Date(a.datetimeFrom),
           end: new Date(a.datetimeTo),
@@ -188,6 +179,7 @@ export default function Appointments({
 
   // 予約情報のフォーム設定を更新
   useEffect(() => {
+    console.log(madeBy);
     // APIで取得したデータをオプションとして利用出来るようフォームフィールドを更新する
     const fields = [
       {
@@ -341,6 +333,7 @@ export default function Appointments({
               }
               fields={fields}
               onCellClick={(...args) => {
+                console.log(madeBy);
                 if (args[3] !== undefined) {
                   setMadeWith(args[3] as string);
                 }
@@ -349,8 +342,10 @@ export default function Appointments({
                 // TODO: リファクタリング
                 if (args[1] === "create") {
                   const event = args[0];
+                  console.log(event);
                   const res = await repository.createAppoinment({
-                    userIdMadeBy: event["madeBy"],
+                    // userIdMadeBy: event["madeBy"],
+                    userIdMadeBy: madeBy,
                     userIdMadeWith: event["madeWith"],
                     datetimeFrom: event.start.toISOString(),
                     datetimeTo: event.end.toISOString(),
