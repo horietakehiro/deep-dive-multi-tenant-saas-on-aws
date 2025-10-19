@@ -57,6 +57,7 @@ type Event = ProcessedEvent & {
  */
 type SelectedUser = User & {
   madeBy: string;
+  a: string;
 };
 export default function Appointments({
   loaderData,
@@ -123,7 +124,9 @@ export default function Appointments({
       const users: SelectedUser[] = await Promise.all(
         (selectedUserIds ?? []).map(async (id) => {
           const res = await repository.getUser({ id });
-          return { ...res.data!, madeBy: res.data!.id };
+          const data = res.data!;
+          const a = data.id;
+          return { ...data, madeBy: data.id, a: a };
         })
       );
       setSelectedUsers(users);
@@ -166,10 +169,11 @@ export default function Appointments({
           madeWith: a.userIdMadeWith,
           status: a.status,
           spot: a.spotId!,
+          a: madeBy,
           color,
         };
       });
-      setEvents(events);
+      setEvents([...events, ...events.map((e) => ({ ...e, a: e.madeWith }))]);
 
       calendarRef.current?.scheduler.handleState(events, "events");
       calendarRef.current?.scheduler.handleState(selectedUsers, "resources");
@@ -201,11 +205,13 @@ export default function Appointments({
         name: "madeWith",
         type: "select",
         options: selectedUsers
-          .filter((u) =>
-            madeWith !== madeBy && madeWith !== undefined
+          .filter((u) => {
+            console.log(madeWith);
+            console.log(madeBy);
+            return madeWith !== madeBy && madeWith !== undefined
               ? u.id === madeWith
-              : u.id !== madeBy
-          )
+              : u.id !== madeBy;
+          })
           .map((u) => ({
             id: u.id,
             text: `${u.name} (${u.email})`,
@@ -325,10 +331,10 @@ export default function Appointments({
               resources={selectedUsers!}
               resourceFields={
                 {
-                  idField: "madeBy",
+                  idField: "a",
                   textField: "name",
                   subTextField: "email",
-                  avatarField: "name",
+                  // avatarField: "name",
                 } as { [key in keyof ResourceFields]: keyof SelectedUser }
               }
               fields={fields}
