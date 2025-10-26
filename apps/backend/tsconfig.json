@@ -11,10 +11,10 @@
   "include": [
     "lib",
     "amplify",
-    "./.amplify/**/*",
-    "../frontends/control-plane/app/lib/domain/service/create-user-identity.ts",
-    "../frontends/control-plane/app/lib/domain/service/test/create-user-identity.test.ts",
-    "../frontends/control-plane/app/lib/domain/service/type.ts"
+    "./.amplify/**/*"
+    // "../frontends/control-plane/app/lib/domain/service/create-user-identity.ts",
+    // "../frontends/control-plane/app/lib/domain/service/test/create-user-identity.test.ts",
+    // "../frontends/control-plane/app/lib/domain/service/type.ts"
   ],
   "exclude": [],
   "references": [{ "path": "./tsconfig.node.json" }]

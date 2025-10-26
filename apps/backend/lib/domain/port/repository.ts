@@ -61,8 +61,8 @@ export interface IRepository {
   updateUser: SingularFn<UserClient["update"], User>;
   deleteUser: SingularFn<UserClient["delete"], User>;
   listUserRoles: () => Schema["UserRole"]["type"][];
-  createCognitoUser: Mutations["createCognitoUser"];
-  deleteCognitoUser: Mutations["deleteCognitoUser"];
+  createUserIdentity: Mutations["createUserIdentity"];
+  deleteUserIdentity: Mutations["deleteUserIdentity"];
 
   listAppointments: ListFn<AppointmentClient["list"], Appointment>;
   createAppoinment: SingularFn<AppointmentClient["create"], Appointment>;

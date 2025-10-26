@@ -80,20 +80,22 @@ export const schemaFactory = (handlers: Handlers) => ({
     .returns(a.string())
     .handler(a.handler.function(handlers.requestTenantActivation)),
 
-  createCognitoUser: a
+  createUserIdentity: a
     .mutation()
     .arguments({
       tenantId: a.id().required(),
       email: a.email().required(),
       role: a.ref("UserRole").required(),
+      name: a.string().required(),
     })
     .returns(
-      a.customType({
-        sub: a.id().required(),
-      })
+      // a.customType({
+      //   sub: a.id().required(),
+      // })
+      a.ref("User")
     )
     .handler(a.handler.function(handlers.createCognitoUser)),
-  deleteCognitoUser: a
+  deleteUserIdentity: a
     .mutation()
     .arguments({
       userId: a.id().required(),

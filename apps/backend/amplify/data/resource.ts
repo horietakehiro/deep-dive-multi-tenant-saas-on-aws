@@ -14,6 +14,7 @@ const schema = a.schema(
 schema.authorization((allow) => [
   allow.publicApiKey(),
   allow.resource(preSignUp),
+  allow.resource(createUserIdentity),
 ]);
 export const data = defineData({
   schema,

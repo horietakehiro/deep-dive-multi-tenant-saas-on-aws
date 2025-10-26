@@ -26,8 +26,8 @@ export const amplifyRepositoryFactory: IRepositoryFactory<"*"> = async (c) => {
     updateUser: ac.models.User.update,
     deleteUser: ac.models.User.delete,
     createUser: ac.models.User.create,
-    createCognitoUser: ac.mutations.createCognitoUser,
-    deleteCognitoUser: ac.mutations.deleteCognitoUser,
+    createUserIdentity: ac.mutations.createUserIdentity,
+    deleteUserIdentity: ac.mutations.deleteUserIdentity,
     listUserRoles: ac.enums.UserRole.values,
 
     listAppointments: ac.models.Appointment.list,

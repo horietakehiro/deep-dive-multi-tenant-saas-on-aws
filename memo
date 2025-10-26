@@ -1,0 +1,5 @@
+- ネイティブ方針
+  - OpenTelemetru
+- マネージド方針
+  - Embed Metrics
+  - Xray

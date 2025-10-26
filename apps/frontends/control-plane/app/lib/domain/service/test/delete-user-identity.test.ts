@@ -14,7 +14,7 @@ describe("ユーザーアイデンティティの削除", () => {
           email: "test@example.com",
         } as User,
       }),
-      deleteCognitoUser: async () => ({ data: null }),
+      deleteUserIdentity: async () => ({ data: null }),
     });
 
     expect(res.result).toBe("OK");
@@ -28,7 +28,7 @@ describe("ユーザーアイデンティティの削除", () => {
         data: null,
       }),
       createUser: notImplementedFn,
-      deleteCognitoUser: notImplementedFn,
+      deleteUserIdentity: notImplementedFn,
     });
     expect(res.result).toBe("NG");
     expect(res.message).toMatch(/failed/);
@@ -41,7 +41,7 @@ describe("ユーザーアイデンティティの削除", () => {
       deleteUser: async ({ id }) => ({
         data: { id, name: "test-name", email: "test@example.com" } as User,
       }),
-      deleteCognitoUser: async () => ({
+      deleteUserIdentity: async () => ({
         data: null,
         errors: [{ errorInfo: {}, errorType: "", message: "" }],
       }),

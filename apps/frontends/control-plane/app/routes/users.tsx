@@ -7,7 +7,6 @@ import {
   type DataFieldRenderFormField,
   type DataSource,
 } from "@toolpad/core";
-import { createUserIdentity } from "../lib/domain/service/create-user-identity";
 import FormControl from "@mui/material/FormControl";
 import { TextField } from "@mui/material";
 
@@ -18,8 +17,8 @@ type Repository = Pick<
   | "deleteUser"
   | "updateUser"
   | "listUserRoles"
-  | "createCognitoUser"
-  | "deleteCognitoUser"
+  | "createUserIdentity"
+  | "deleteUserIdentity"
 >;
 export type Context = Pick<RootContext, "tenant"> & {
   repository: Repository;
@@ -86,17 +85,23 @@ const usersDataSourceFactory: (
       return res.data;
     },
     createOne: async (props) => {
-      const res = await createUserIdentity(
-        tenant,
-        {
-          email: props.email!,
-          role: props.role!,
-          name: props.name!,
-        },
-        repository
-      );
+      // const res = await createUserIdentity(
+      //   tenant,
+      //   {
+      //     email: props.email!,
+      //     role: props.role!,
+      //     name: props.name!,
+      //   },
+      //   repository
+      // );
+      const res = await repository.createUserIdentity({
+        tenantId: tenant.id,
+        email: props.email!,
+        role: props.role!,
+        name: props.name!,
+      });
       console.log(res);
-      if (res.result === "NG") {
+      if (res.data === null || res.data === undefined) {
         throw Error("create user failed");
       }
       return res.data;
@@ -112,7 +117,9 @@ const usersDataSourceFactory: (
       return res.data;
     },
     // TODO:
-    deleteOne: async (...args) => {},
+    deleteOne: async (...args) => {
+      console.log(args);
+    },
   };
 };
 export default function Users() {

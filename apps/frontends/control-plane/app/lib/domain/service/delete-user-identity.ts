@@ -7,7 +7,7 @@ import type { ServiceResponse } from "./type";
 export const deleteUserIdentity = async (
   userId: string,
   {
-    deleteCognitoUser,
+    deleteUserIdentity: deleteCognitoUser,
     createUser,
     deleteUser,
   }: Pick<IRepository, "createUser" | "deleteCognitoUser" | "deleteUser">
