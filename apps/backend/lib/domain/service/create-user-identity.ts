@@ -27,32 +27,29 @@ type CreateUserIdentity = (
     "arguments"
   >
 ) => ReturnType<Schema["createUserIdentity"]["functionHandler"]>;
+
+export interface CreateUserIdentityProps {
+  userPoolId: string;
+  createCognitoUser: CreateCognitoUser;
+  generatePassword: GeneratePassword;
+  repositoryFactory: IRepositoryFactory<"createUser">;
+  deleteCognitoUser: DeleteCognitoUser;
+  config: Config;
+}
 /**
  * CognitoユーザープールとDynamoDB上にユーザーアイデンティティを作成する
  * @returns
  */
 export const createUserIdentityFactory: (
-  userPoolId: string,
-  createCognitoUser: CreateCognitoUser,
-  generatePassword: GeneratePassword,
-  repositoryFactory: IRepositoryFactory<"createUser">,
-  deleteCognitoUser: DeleteCognitoUser,
-  config: Config
-) => CreateUserIdentity = (
-  userPoolId,
-  createCognitoUser,
-  generatePassowrd,
-  repositoryFactory,
-  deleteCognitoUser,
-  config
-) => {
+  props: CreateUserIdentityProps
+) => CreateUserIdentity = (props: CreateUserIdentityProps) => {
   return async ({ arguments: args }) => {
     console.log(args);
 
     // 最初にCognito上にユーザを作成する
     // ※初期パスワードはランダムで作成
-    const createCognitoUserRes = await createCognitoUser({
-      UserPoolId: userPoolId,
+    const createCognitoUserRes = await props.createCognitoUser({
+      UserPoolId: props.userPoolId,
       Username: args.email,
       UserAttributes: [
         {
@@ -69,7 +66,7 @@ export const createUserIdentityFactory: (
         },
       ],
       TemporaryPassword: (
-        await generatePassowrd({
+        await props.generatePassword({
           PasswordLength: 12,
         })
       ).RandomPassword,
@@ -83,7 +80,7 @@ export const createUserIdentityFactory: (
     }
 
     // 次にDynamoDB上にユーザを作成する
-    const repository = await repositoryFactory(config);
+    const repository = await props.repositoryFactory(props.config);
     const createDynamoUserRes = await repository.createUser({
       id: sub[0]?.Value,
       tenantId: args.tenantId,
@@ -97,8 +94,8 @@ export const createUserIdentityFactory: (
       createDynamoUserRes.data === null
     ) {
       // DynamoDB上へのユーザ作成に失敗した場合はロールバックする
-      await deleteCognitoUser({
-        UserPoolId: userPoolId,
+      await props.deleteCognitoUser({
+        UserPoolId: props.userPoolId,
         Username: sub[0]?.Value,
       });
     }

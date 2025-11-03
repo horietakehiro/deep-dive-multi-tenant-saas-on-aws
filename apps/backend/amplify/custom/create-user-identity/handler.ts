@@ -16,13 +16,17 @@ import { getAmplifyDataClientConfig } from "@aws-amplify/backend/function/runtim
 import type { IRepositoryFactory } from "lib/domain/port/repository";
 const cognitoClient = new CognitoIdentityProviderClient({});
 const smClient = new SecretsManagerClient({});
-export const handler = createUserIdentityFactory(
-  env.USER_POOL_ID,
-  async (args) => await cognitoClient.send(new AdminCreateUserCommand(args)),
-  async (args) => await smClient.send(new GetRandomPasswordCommand(args)),
-  amplifyRepositoryFactory as IRepositoryFactory<"createUser">,
-  async (args) => await cognitoClient.send(new AdminDeleteUserCommand(args)),
-  {
+export const handler = createUserIdentityFactory({
+  userPoolId: env.USER_POOL_ID,
+  createCognitoUser: async (args) =>
+    await cognitoClient.send(new AdminCreateUserCommand(args)),
+  generatePassword: async (args) =>
+    await smClient.send(new GetRandomPasswordCommand(args)),
+  repositoryFactory:
+    amplifyRepositoryFactory as IRepositoryFactory<"createUser">,
+  deleteCognitoUser: async (args) =>
+    await cognitoClient.send(new AdminDeleteUserCommand(args)),
+  config: {
     type: "PRODUCTION",
     appType: "control-plane",
     amplifyConfigFn: async () => {
@@ -31,5 +35,5 @@ export const handler = createUserIdentityFactory(
       Amplify.configure(resourceConfig, libraryOptions);
       return resourceConfig;
     },
-  }
-);
+  },
+});

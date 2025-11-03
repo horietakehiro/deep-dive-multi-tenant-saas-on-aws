@@ -1,37 +1,46 @@
 import type { User } from "../../../domain/model/data";
-import { createUserIdentityFactory } from "../create-user-identity";
+import {
+  createUserIdentityFactory,
+  type CreateUserIdentityProps,
+} from "../create-user-identity";
 import { notImplementedFn } from "../../../util";
 
 describe("ユーザーアイデンティティの作成", () => {
+  const expectedUserId = "test-id";
+  const props: CreateUserIdentityProps = {
+    userPoolId: "",
+    createCognitoUser: async (args) => {
+      console.log(args);
+      return {
+        User: {
+          Attributes: [{ Name: "sub", Value: expectedUserId }],
+        },
+        $metadata: {},
+      };
+    },
+    generatePassword: async (args) => {
+      console.debug(args);
+      return {
+        RandomPassword: "password",
+        $metadata: {},
+      };
+    },
+    deleteCognitoUser: notImplementedFn,
+    config: {
+      appType: "control-plane",
+      type: "PRODUCTION",
+      amplifyConfigFn: notImplementedFn,
+    },
+    repositoryFactory: async () => {
+      return {
+        createUser: async () => ({
+          data: { id: expectedUserId } as User,
+        }),
+      };
+    },
+  };
   test("CognitoとDynamoDBにユーザーアイデンティティを作成出来る", async () => {
-    const expectedUserId = "test-id";
-    const f = createUserIdentityFactory(
-      "",
-      async (args) => {
-        console.log(args);
-        return {
-          User: {
-            Attributes: [{ Name: "sub", Value: expectedUserId }],
-          },
-          $metadata: {},
-        };
-      },
-      async (args) => {
-        console.debug(args);
-        return {
-          RandomPassword: "password",
-          $metadata: {},
-        };
-      },
-      async (args) => {
-        return {
-          data: {
-            id: args.id,
-          } as User,
-        };
-      },
-      notImplementedFn
-    );
+    const f = createUserIdentityFactory(props);
     const res = await f({
       arguments: {
         email: "test@example.com",
@@ -40,12 +49,11 @@ describe("ユーザーアイデンティティの作成", () => {
         name: "test-name",
       },
     });
-
     expect(res!.id).toBe(expectedUserId);
   });
   test("ユーザーアイデンティティにはランダムパスワードが仮パスワードとして設定される", async () => {
     const mockCreateCognitoUser = vi.fn<
-      Parameters<typeof createUserIdentityFactory>["1"]
+      CreateUserIdentityProps["createCognitoUser"]
     >(async (args) => {
       console.debug(args);
       return {
@@ -55,19 +63,17 @@ describe("ユーザーアイデンティティの作成", () => {
         $metadata: {},
       };
     });
-    const f = createUserIdentityFactory(
-      "",
-      mockCreateCognitoUser,
-      async (args) => {
+    const f = createUserIdentityFactory({
+      ...props,
+      createCognitoUser: mockCreateCognitoUser,
+      generatePassword: async (args) => {
         console.debug(args);
         return {
           RandomPassword: "random-password",
           $metadata: {},
         };
       },
-      async () => ({ data: { id: "test-id" } as User }),
-      notImplementedFn
-    );
+    });
     await f({
       arguments: {
         email: "test@example.com",
@@ -85,7 +91,7 @@ describe("ユーザーアイデンティティの作成", () => {
 
   test("DynamoDB上へのユーザの作成に失敗した場合はロールバックする", async () => {
     const mockDeleteCognitoUser = vi.fn<
-      Parameters<typeof createUserIdentityFactory>["4"]
+      CreateUserIdentityProps["deleteCognitoUser"]
     >(async (args) => {
       console.debug(args);
       return {
@@ -93,34 +99,15 @@ describe("ユーザーアイデンティティの作成", () => {
       };
     });
 
-    const f = createUserIdentityFactory(
-      "",
-      async (args) => {
-        console.log(args);
+    const f = createUserIdentityFactory({
+      ...props,
+      repositoryFactory: async () => {
         return {
-          User: {
-            Attributes: [{ Name: "sub", Value: "test-id" }],
-          },
-          $metadata: {},
+          createUser: async () => ({ data: null }),
         };
       },
-      async (args) => {
-        console.debug(args);
-        return {
-          RandomPassword: "password",
-          $metadata: {},
-        };
-      },
-      async (args) => {
-        console.log(args);
-        return {
-          data: null,
-          errors: [],
-        };
-      },
-      mockDeleteCognitoUser
-    );
-
+      deleteCognitoUser: mockDeleteCognitoUser,
+    });
     const res = await f({
       arguments: {
         email: "test@example.com",
