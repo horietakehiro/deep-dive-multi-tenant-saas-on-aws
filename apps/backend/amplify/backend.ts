@@ -19,10 +19,18 @@ backend.createUserIdentity.resources.lambda.addToRolePolicy(
     actions: [
       "cognito-idp:AdminCreateUser",
       "secretsmanager:GetRandomPassword",
+      "xray:PutTelemetryRecords",
+      "xray:PutTraceSegments",
+      "cloudwatch:PutMetricData",
     ],
     resources: ["*"],
   })
 );
+const { cfnFunction } = backend.createUserIdentity.resources.cfnResources;
+cfnFunction.tracingConfig = {
+  mode: "Active",
+};
+
 backend.deleteUserIdentity.addEnvironment("USER_POOL_ID", userPoolId);
 backend.deleteUserIdentity.resources.lambda.addToRolePolicy(
   new iam.PolicyStatement({

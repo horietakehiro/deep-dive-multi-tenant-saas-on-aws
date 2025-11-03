@@ -4,6 +4,9 @@ import {
   type CreateUserIdentityProps,
 } from "../create-user-identity";
 import { notImplementedFn } from "../../../util";
+import { Tracer } from "@aws-lambda-powertools/tracer";
+import { Logger } from "@aws-lambda-powertools/logger";
+import { Metrics } from "@aws-lambda-powertools/metrics";
 
 describe("ユーザーアイデンティティの作成", () => {
   const expectedUserId = "test-id";
@@ -38,6 +41,9 @@ describe("ユーザーアイデンティティの作成", () => {
         }),
       };
     },
+    tracer: new Tracer(),
+    logger: new Logger(),
+    metrics: new Metrics(),
   };
   test("CognitoとDynamoDBにユーザーアイデンティティを作成出来る", async () => {
     const f = createUserIdentityFactory(props);
