@@ -31,7 +31,7 @@ type CreateUserIdentity = (
   >
 ) => ReturnType<Schema["createUserIdentity"]["functionHandler"]>;
 
-export interface CreateUserIdentityProps {
+export interface CreateUserIdentityFactoryProps {
   userPoolId: string;
   createCognitoUser: CreateCognitoUser;
   generatePassword: GeneratePassword;
@@ -47,8 +47,8 @@ export interface CreateUserIdentityProps {
  * @returns
  */
 export const createUserIdentityFactory: (
-  props: CreateUserIdentityProps
-) => CreateUserIdentity = (props: CreateUserIdentityProps) => {
+  props: CreateUserIdentityFactoryProps
+) => CreateUserIdentity = (props: CreateUserIdentityFactoryProps) => {
   return async ({ arguments: args }) => {
     try {
       props.logger.appendKeys({ tenantId: args.tenantId });

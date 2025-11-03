@@ -39,3 +39,30 @@ backend.deleteUserIdentity.resources.lambda.addToRolePolicy(
     resources: ["*"],
   })
 );
+
+// const dataMonitoringStack = backend.createStack("DataMonitoringStack");
+// const role = new iam.Role(dataMonitoringStack, "Role", {
+//   assumedBy: new iam.ServicePrincipal("appsync.amazonaws.com"),
+//   inlinePolicies: {
+//     root: new iam.PolicyDocument({
+//       statements: [
+//         new iam.PolicyStatement({
+//           effect: iam.Effect.ALLOW,
+//           actions: [
+//             "logs:CreateLogGroup",
+//             "logs:CreateLogStream",
+//             "logs:PutLogEvents",
+//           ],
+//           resources: ["*"],
+//         }),
+//       ],
+//     }),
+//   },
+// });
+// const { cfnGraphqlApi } = backend.data.resources.cfnResources;
+// cfnGraphqlApi.xrayEnabled = true;
+// cfnGraphqlApi.logConfig = {
+//   fieldLogLevel: "ALL",
+//   excludeVerboseContent: false,
+//   cloudWatchLogsRoleArn: role.roleArn,
+// };

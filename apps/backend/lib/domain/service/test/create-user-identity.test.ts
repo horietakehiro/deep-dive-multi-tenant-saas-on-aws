@@ -1,7 +1,7 @@
 import type { User } from "../../../domain/model/data";
 import {
   createUserIdentityFactory,
-  type CreateUserIdentityProps,
+  type CreateUserIdentityFactoryProps,
 } from "../create-user-identity";
 import { notImplementedFn } from "../../../util";
 import { Tracer } from "@aws-lambda-powertools/tracer";
@@ -10,7 +10,7 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 
 describe("ユーザーアイデンティティの作成", () => {
   const expectedUserId = "test-id";
-  const props: CreateUserIdentityProps = {
+  const props: CreateUserIdentityFactoryProps = {
     userPoolId: "",
     createCognitoUser: async (args) => {
       console.log(args);
@@ -59,7 +59,7 @@ describe("ユーザーアイデンティティの作成", () => {
   });
   test("ユーザーアイデンティティにはランダムパスワードが仮パスワードとして設定される", async () => {
     const mockCreateCognitoUser = vi.fn<
-      CreateUserIdentityProps["createCognitoUser"]
+      CreateUserIdentityFactoryProps["createCognitoUser"]
     >(async (args) => {
       console.debug(args);
       return {
@@ -97,7 +97,7 @@ describe("ユーザーアイデンティティの作成", () => {
 
   test("DynamoDB上へのユーザの作成に失敗した場合はロールバックする", async () => {
     const mockDeleteCognitoUser = vi.fn<
-      CreateUserIdentityProps["deleteCognitoUser"]
+      CreateUserIdentityFactoryProps["deleteCognitoUser"]
     >(async (args) => {
       console.debug(args);
       return {
