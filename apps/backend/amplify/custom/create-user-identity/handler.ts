@@ -14,6 +14,10 @@ import { amplifyRepositoryFactory } from "lib/adaptor/repository";
 import { Amplify } from "aws-amplify";
 import { getAmplifyDataClientConfig } from "@aws-amplify/backend/function/runtime";
 import type { IRepositoryFactory } from "lib/domain/port/repository";
+
+import { trace } from "@opentelemetry/api";
+
+const tracer = trace.getTracer("create-user-identity");
 const cognitoClient = new CognitoIdentityProviderClient({});
 const smClient = new SecretsManagerClient({});
 export const handler = createUserIdentityFactory({
@@ -36,4 +40,5 @@ export const handler = createUserIdentityFactory({
       return resourceConfig;
     },
   },
+  tracer: tracer,
 });

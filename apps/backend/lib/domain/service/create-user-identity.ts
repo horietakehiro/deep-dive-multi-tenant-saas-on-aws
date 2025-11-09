@@ -12,6 +12,7 @@ import type {
 } from "@aws-sdk/client-secrets-manager";
 import type { IRepositoryFactory } from "../port/repository";
 import type { Config } from "../model/config";
+import { type Tracer } from "@opentelemetry/api";
 type CreateCognitoUser = (
   input: AdminCreateUserCommandInput
 ) => Promise<AdminCreateUserCommandOutput>;
@@ -35,6 +36,7 @@ export interface CreateUserIdentityProps {
   repositoryFactory: IRepositoryFactory<"createUser">;
   deleteCognitoUser: DeleteCognitoUser;
   config: Config;
+  tracer: Tracer;
 }
 /**
  * CognitoユーザープールとDynamoDB上にユーザーアイデンティティを作成する
@@ -45,6 +47,9 @@ export const createUserIdentityFactory: (
 ) => CreateUserIdentity = (props: CreateUserIdentityProps) => {
   return async ({ arguments: args }) => {
     console.log(args);
+    console.log(props.tracer);
+    const span = props.tracer.startSpan("main");
+    span.setAttribute("tenantId", args.tenantId);
 
     // 最初にCognito上にユーザを作成する
     // ※初期パスワードはランダムで作成
@@ -100,6 +105,7 @@ export const createUserIdentityFactory: (
       });
     }
 
+    span.end();
     return createDynamoUserRes.data;
   };
 };
