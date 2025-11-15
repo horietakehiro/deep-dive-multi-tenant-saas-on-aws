@@ -1,5 +1,5 @@
 ---
-title: "【第09回】Deep Dive マルチテナントSaaS on AWS - 第7章幕間：テナントコンテキストと監視"
+title: "【第10回】Deep Dive マルチテナントSaaS on AWS - 第7章幕間：テナントコンテキストと監視"
 emoji: "🤿"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas", "Lambda", "TypeScript"]
