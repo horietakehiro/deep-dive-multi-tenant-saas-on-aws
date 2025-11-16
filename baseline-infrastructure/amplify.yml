@@ -8,6 +8,7 @@ applications:
       phases:
         build:
           commands:
+            - ls 
             - aws codeartifact login --tool npm --domain ht-burdock --domain-owner 382098889955 --repository react-scheduler
             - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline
             - npm run -w ${W} ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
