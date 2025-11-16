@@ -26,7 +26,8 @@ applications:
         build:
           commands:
             # ルートディレクトリからコマンドを実行する
-            - cd ../../
+            - pwd
+            # - cd ../../
             - npm ci -w ${W}
             - npm run ampx -w ${W} -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 
