@@ -8,8 +8,8 @@ applications:
       phases:
         build:
           commands:
-            - npm run ca:login
-            - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
+            - aws codeartifact login --tool npm --domain ht-burdock --domain-owner 382098889955 --repository react-scheduler
+            - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline
             - npm run -w ${W} ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
     frontend:
       buildPath: apps/backend
@@ -50,7 +50,7 @@ applications:
   #     phases:
   #       build:
   #         commands:
-  #           - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
+  #           - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline
   #           - npm run -w ${W} ampx -- generate outputs --branch $AWS_BRANCH --app-id $AWS_APP_ID
   # - appRoot: apps/application-plane
   #   env:
@@ -80,7 +80,7 @@ applications:
   #         commands:
 
   #           - npm ci --cache .npm --prefer-offlinei -w ${W}
-  #           - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
+  #           - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline
   #           - sudo dnf install -y jq
   #           # # リソースを共有したい、作成済みのコントロールプレーン側のリソース設定をエクスポートする
   #           # コントロールプレーンのバックエンドスタックが更新中の場合はoutputsファイルを生成できないため、更新が完了するまで待機する
