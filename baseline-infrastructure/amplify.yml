@@ -16,8 +16,9 @@ applications:
             # - echo //ht-burdock-382098889955.d.codeartifact.ap-northeast-1.amazonaws.com/npm/react-scheduler/:_authToken=$(aws codeartifact get-authorization-token --domain ht-burdock --domain-owner 382098889955  --query authorizationToken --output text) >> .npmrc
             # # - aws codeartifact login --tool npm --domain ht-burdock --domain-owner 382098889955 --repository react-scheduler
             # - cat .npmrc
-            - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline --loglevel verbose
-            - npm run -w ${W} ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+            # - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline --loglevel verbose
+            - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --loglevel verbose
+            - npm run ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
     frontend:
       buildPath: apps/backend
       phases:
