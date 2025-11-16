@@ -4,63 +4,63 @@ applications:
       variables:
         W: apps/backend
     backend:
+      # 何故かバックエンドのビルド時には効かない…?
       buildPath: /
+      phases:
+        build:
+          commands:
+            # ルートディレクトリからコマンドを実行する
+            - cd ../../
+            - npm ci -w ${W}
+            - npm run ampx -w ${W} -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+    # フロントエンドのセクションを省略することはできないので、空ページを適当にデプロイする
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - echo "preBuild"
+        # フロントエンドを空のフロントエンドをデプロイする
+        build:
+          commands:
+            - mkdir dist && touch dist/index.html
+      artifacts:
+        files:
+            - index.html
+        baseDirectory: dist
+
+  - appRoot: apps/frontends/control-plane
+    env:
+      variables:
+        W: apps/frontends/control-plane
+    frontend:
+      buildPath: '/'
+      phases:
+        preBuild:
+          commands:
+            - pwd
+            - npm -D install
+            - npm ci -w ${W} --cache .npm --prefer-offline
+        build:
+          commands:
+            - npm run build -w ${W}
+      artifacts:
+        baseDirectory: apps/frontends/control-plane/build/client
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - .npm/**/*
+          - node_modules/**/*
+    backend:
+      buildPath: "/"
       phases:
         build:
           commands:
             - pwd
             - cd ../../
-            # - ls -a
-            # - echo "" >> .npmrc
-            # - echo "registry=https://ht-burdock-382098889955.d.codeartifact.ap-northeast-1.amazonaws.com/npm/react-scheduler/" >> .npmrc
-            # - echo //ht-burdock-382098889955.d.codeartifact.ap-northeast-1.amazonaws.com/npm/react-scheduler/:_authToken=$(aws codeartifact get-authorization-token --domain ht-burdock --domain-owner 382098889955  --query authorizationToken --output text) >> .npmrc
-            # # - aws codeartifact login --tool npm --domain ht-burdock --domain-owner 382098889955 --repository react-scheduler
-            # - cat .npmrc
-            - npm ci -w ${W}
-            # - npm install -w ${W} @aws-amplify/backend @aws-amplify/backend-cli tsx --cache .npm --prefer-offline
-            # - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --loglevel verbose
-            - npm run ampx -w ${W} -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
-    frontend:
-      buildPath: apps/backend
-      phases:
-        preBuild:
-          commands:
-            - echo "preBuild"
-        build:
-          commands:
-            - mmkdir dist && touch dist/index.html
-      artifacts:
-        files:
-            - index.html
-        baseDirectory: dist
-  # - appRoot: apps/frontends/control-plane
-  #   env:
-  #     variables:
-  #       W: apps/frontends/control-plane
-  #   frontend:
-  #     buildPath: '/'
-  #     phases:
-  #       preBuild:
-  #         commands:
-  #           - npm install -w ${W}
-  #       build:
-  #         commands:
-  #           - npm run build -w ${W}
-  #     artifacts:
-  #       baseDirectory: apps/frontends/control-plane/build/client
-  #       files:
-  #         - "**/*"
-  #     cache:
-  #       paths:
-  #         - .npm/**/*
-  #         - node_modules/**/*
-  #   backend:
-  #     buildPath: "/"
-  #     phases:
-  #       build:
-  #         commands:
-  #           - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offline
-  #           - npm run -w ${W} ampx -- generate outputs --branch $AWS_BRANCH --app-id $AWS_APP_ID
+            - npm ci -w ${W} --cache .npm --prefer-offline
+            - npm run -w ${W} ampx -- generate outputs --branch $AWS_BRANCH --app-id $BACKEND_APP_ID
+
   # - appRoot: apps/application-plane
   #   env:
   #     variables:

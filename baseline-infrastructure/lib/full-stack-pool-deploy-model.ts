@@ -8,14 +8,15 @@ import {
   aws_route53 as route53,
 } from "aws-cdk-lib";
 import * as path from "node:path";
-export interface ControlPlaneProps {
+export interface BackendProps {
   certArn: string;
   branch: string;
   accessToken: string;
   appRoot: string;
 }
-export class AmplifyApp extends Construct {
-  constructor(scope: Construct, id: string, props: ControlPlaneProps) {
+export class Backend extends Construct {
+  public readonly appId: string;
+  constructor(scope: Construct, id: string, props: BackendProps) {
     super(scope, id);
     const serviceRole = new iam.Role(this, "ServiceRole", {
       assumedBy: new iam.ServicePrincipal("amplify.amazonaws.com"),
@@ -88,7 +89,111 @@ export class AmplifyApp extends Construct {
       branchName: props.branch,
       stage: "PRODUCTION",
       enableAutoBuild: true,
-      // framework: "web",
+      framework: "web",
+    });
+
+    this.appId = app.attrAppId;
+  }
+}
+
+interface ControlPlaneProps extends BackendProps {
+  backendAppId: string;
+}
+export class ControlPlane extends Construct {
+  constructor(scope: Construct, id: string, props: ControlPlaneProps) {
+    super(scope, id);
+    const serviceRole = new iam.Role(this, "ServiceRole", {
+      assumedBy: new iam.ServicePrincipal("amplify.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          "service-role/AmplifyBackendDeployFullAccess"
+        ),
+        iam.ManagedPolicy.fromAwsManagedPolicyName("ReadOnlyAccess"),
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          "AWSCodeArtifactAdminAccess"
+        ),
+      ],
+      inlinePolicies: {
+        root: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups",
+              ],
+              resources: ["*"],
+            }),
+          ],
+        }),
+      },
+    });
+    const app = new amplify.CfnApp(this, "App", {
+      name: "full-stack-pool-deploy-model-frontend-control-plane",
+      accessToken: props.accessToken,
+      autoBranchCreationConfig: {
+        enableAutoBranchCreation: false,
+      },
+      basicAuthConfig: {
+        enableBasicAuth: false,
+      },
+      buildSpec: fs
+        .readFileSync(path.join(__dirname, "..", "amplify.yml"))
+        .toString("utf-8"),
+      cacheConfig: {
+        type: "AMPLIFY_MANAGED_NO_COOKIES",
+      },
+      customRules: [
+        {
+          source: "/<*>",
+          target: "/index.html",
+          status: "404-200",
+        },
+      ],
+      enableBranchAutoDeletion: false,
+      environmentVariables: [
+        {
+          name: "AMPLIFY_DIFF_DEPLOY",
+          value: "false",
+        },
+        {
+          name: "AMPLIFY_MONOREPO_APP_ROOT",
+          value: props.appRoot,
+        },
+        {
+          name: "BACKEND_APP_ID",
+          value: props.backendAppId,
+        },
+      ],
+      iamServiceRole: serviceRole.roleArn,
+      repository:
+        "https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws",
+    });
+
+    new amplify.CfnBranch(this, "Branch", {
+      appId: app.attrAppId,
+      branchName: props.branch,
+      stage: "PRODUCTION",
+      enableAutoBuild: true,
+      framework: "web",
+    });
+
+    new amplify.CfnDomain(this, "Domain", {
+      appId: app.attrAppId,
+      domainName: "ht-burdock.com",
+      subDomainSettings: [
+        {
+          branchName: props.branch,
+          prefix: "control-plane",
+        },
+      ],
+      autoSubDomainCreationPatterns: [],
+      certificateSettings: {
+        certificateType: "CUSTOM",
+        customCertificateArn: props.certArn,
+      },
     });
   }
 }
@@ -109,11 +214,19 @@ export class FullStackPoolDeployModelStack extends cdk.Stack {
       type: "String",
     });
 
-    new AmplifyApp(this, "Backend", {
+    const backend = new Backend(this, "Backend", {
       accessToken: accessToken.valueAsString,
       branch: props.branch,
       certArn: props.cert.certificateArn,
       appRoot: "apps/backend",
+    });
+
+    new ControlPlane(this, "ControlPlane", {
+      accessToken: accessToken.valueAsString,
+      branch: props.branch,
+      certArn: props.cert.certificateArn,
+      appRoot: "apps/frontends/control-plane",
+      backendAppId: backend.appId,
     });
 
     // new AmplifyApp(this, "ControlPlane", {
