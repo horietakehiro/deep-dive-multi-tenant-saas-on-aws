@@ -11,7 +11,19 @@ applications:
             # - npm install --save-dev @aws-amplify/backend @aws-amplify/backend-cli --cache .npm --prefer-offlinei
             # - npm run -w ${W} ampx -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
             - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
-
+    frontend:
+      buildPath: apps/backend
+      phases:
+        preBuild:
+          commands:
+            - echo "preBuild"
+        build:
+          commands:
+            - mmkdir dist && touch dist/index.html
+      artifacts:
+        files:
+            - index.html
+        baseDirectory: dist
   # - appRoot: apps/frontends/control-plane
   #   env:
   #     variables:
