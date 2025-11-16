@@ -7,6 +7,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "aws-cdk": "^2.1031.2",
     "aws-cdk-lib": "^2.212.0",
     "constructs": "^10.4.2"
   }
