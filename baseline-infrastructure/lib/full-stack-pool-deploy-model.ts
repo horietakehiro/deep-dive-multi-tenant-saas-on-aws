@@ -72,7 +72,7 @@ export class Backend extends Construct {
       environmentVariables: [
         {
           name: "AMPLIFY_DIFF_DEPLOY",
-          value: "false",
+          value: "true",
         },
         {
           name: "AMPLIFY_MONOREPO_APP_ROOT",
