@@ -3,6 +3,21 @@ applications:
     env:
       variables:
         W: apps/backend
+    # フロントエンドのセクションを省略することはできないので、空ページを適当にデプロイする
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - echo "preBuild"
+        # フロントエンドを空のフロントエンドをデプロイする
+        build:
+          commands:
+            - pwd
+            - mkdir dist && touch dist/index.html
+      artifacts:
+        files:
+            - "**/*"
+        # baseDirectory: dist
     backend:
       # 何故かバックエンドのビルド時には効かない…?
       buildPath: /
@@ -13,20 +28,6 @@ applications:
             - cd ../../
             - npm ci -w ${W}
             - npm run ampx -w ${W} -- pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
-    # フロントエンドのセクションを省略することはできないので、空ページを適当にデプロイする
-    frontend:
-      phases:
-        preBuild:
-          commands:
-            - echo "preBuild"
-        # フロントエンドを空のフロントエンドをデプロイする
-        build:
-          commands:
-            - mkdir dist && touch dist/index.html
-      artifacts:
-        files:
-            - index.html
-        baseDirectory: dist
 
   - appRoot: apps/frontends/control-plane
     env:
@@ -52,12 +53,12 @@ applications:
           - .npm/**/*
           - node_modules/**/*
     backend:
-      buildPath: "/"
+      buildPath: /
       phases:
         build:
           commands:
             - pwd
-            - cd ../../
+            # - cd ../../
             - npm ci -w ${W} --cache .npm --prefer-offline
             - npm run -w ${W} ampx -- generate outputs --branch $AWS_BRANCH --app-id $BACKEND_APP_ID
 
