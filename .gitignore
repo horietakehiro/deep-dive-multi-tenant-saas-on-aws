@@ -17,3 +17,4 @@ amplifyconfiguration*
 .env
 
 .venv
+.npm
