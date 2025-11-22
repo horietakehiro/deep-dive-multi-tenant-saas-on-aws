@@ -39,6 +39,7 @@ type ListFn<
 ) => ListReturnValue<Type>;
 
 export interface IRepository {
+  // テナントデータの操作メソッド
   createTenant: SingularFn<TenantClient["create"], Tenant>;
   getTenant: SingularFn<TenantClient["get"], Tenant>;
   listTenant: ListFn<TenantClient["list"], Tenant>;
@@ -56,6 +57,7 @@ export interface IRepository {
   deleteSpot: SingularFn<SpotClient["delete"], Spot>;
   listSpots: ListFn<SpotClient["list"], Spot>;
 
+  // ユーザデータの操作メソッド
   createUser: SingularFn<UserClient["create"], User>;
   getUser: SingularFn<UserClient["get"], User>;
   updateUser: SingularFn<UserClient["update"], User>;
@@ -67,6 +69,10 @@ export interface IRepository {
   listAppointments: ListFn<AppointmentClient["list"], Appointment>;
   createAppoinment: SingularFn<AppointmentClient["create"], Appointment>;
 }
+
+/**
+ * 一部のメソッドのみ選択してこのリポジトリ仕様を参照出来るようにする。
+ */
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
   c: Config
 ) => [T] extends "*"

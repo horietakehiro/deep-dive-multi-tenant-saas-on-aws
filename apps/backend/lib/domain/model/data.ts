@@ -115,6 +115,7 @@ const schema = a.schema(
     requestTenantActivation: h,
   })
 );
+// 各種データモデルは参照しやすいように個別にエクスポートする
 export type Schema = ClientSchema<typeof schema>;
 export type Tenant = Schema["Tenant"]["type"];
 export type Spot = Schema["Spot"]["type"];
