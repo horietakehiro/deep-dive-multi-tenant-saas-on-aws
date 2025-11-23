@@ -9,6 +9,7 @@ import {
 } from "@toolpad/core";
 import FormControl from "@mui/material/FormControl";
 import { TextField } from "@mui/material";
+import type { Route } from "./+types/users";
 
 type Repository = Pick<
   IRepository,
@@ -122,8 +123,16 @@ const usersDataSourceFactory: (
     },
   };
 };
-export default function Users() {
-  const { tenant, repository } = useOutletContext<Context>();
+
+export const clientLoader = () => {
+  return {
+    useOutletContext: () => useOutletContext<Context>(),
+  };
+};
+export default function Users({
+  loaderData,
+}: Pick<Route.ComponentProps, "loaderData">) {
+  const { tenant, repository } = loaderData.useOutletContext();
   if (tenant === undefined) {
     return <></>;
   }

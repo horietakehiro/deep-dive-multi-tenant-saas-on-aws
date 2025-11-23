@@ -15,9 +15,6 @@ import "./styles/app.css";
 import "./styles/amplify.css";
 import { config } from "./lib/domain/model/config";
 import { amplifyRepositoryFactory } from "@intersection/backend/lib/adaptor/repository";
-// import type { RootContext } from "./lib/domain/model/context";
-// import { repository } from "./lib/adaptor/repository";
-// import { signUp } from "./lib/domain/model/auth";
 
 export const clientLoader = async () => {
   if (config.type === "PRODUCTION") {

@@ -6,9 +6,16 @@ import { Outlet, useOutletContext } from "react-router";
 import { CUSTOM_USER_ATTRIBUTES } from "@intersection/backend/lib/domain/model/user";
 import { signUp as amplifySignUp } from "aws-amplify/auth";
 import { signIn } from "../lib/domain/model/auth";
+import type { Route } from "./+types/auth";
 
-export default function Authenticator() {
-  const context = useOutletContext<RootContext>();
+export const clientLoader = async () => {
+  return {
+    useOutletContext: () => useOutletContext<RootContext>(),
+  };
+};
+
+export default function Authenticator({ loaderData }: Route.ComponentProps) {
+  const context = loaderData.useOutletContext();
   const signUp = signUpFactory(amplifySignUp, uuidv4);
 
   return (

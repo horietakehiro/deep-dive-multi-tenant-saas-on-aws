@@ -1,4 +1,4 @@
-# 「マルチテナントSaaSアーキテクチャの構築」の実践
+# マルチテナントSaaS × Amplify × React × クリーンアーキテクチャ
 
 TODO: アドカレ用の挨拶
 
@@ -7,7 +7,7 @@ TODO: アドカレ用の挨拶
 今年度を通して、「Deep Dive マルチテナントSaaS on AWS(https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-00)」という取り組みを行っています。
 内容としては、今年の始めにオライリー社より出版された書籍「マルチテナント SaaS アーキテクチャの構築 ― 原則、ベストプラクティス、AWS アーキテクチャパターン(https://www.oreilly.co.jp/books/9784814401017/)」の内容を振返り、自分でマルチテナントSaaSアプリケーションを実装することを通して理解と実践力を深めるというものです。
 
-この記事では、ここまで実装したマルチテナントアプリケーションのリポジトリをツアーしながら、実装の過程で私が考えたことや挑戦したこと、苦戦したことを振返り、ノウハウとして共有していきたいと思います。
+この記事は、ここまで実装したマルチテナントアプリケーションのリポジトリをツアーしながら、実装の過程で私が考えたことや挑戦したことを振返って行く、備忘録的な記事となります。
 
 ## 前提
 
@@ -27,6 +27,11 @@ TODO: アドカレ用の挨拶
 ![アプリの画面イメージ](../images/99/advent-calendar/app-sample-image.png)
 
 ## リポジトリツアー
+
+それでは、現在のアプリケーションリポジトリの中身をツアーしていきます。フォーカスする内容は主に以下の2点です。
+
+- Amplifyを使用したマルチテナントSaaSアプリケーションを単一リポジトリ(モノレポ)として管理するにあたっての適切なリポジトリ構成について。
+- Ampplifyを使用したマルチテナントSaaSアプリケーションをヘキサゴナルアーキテクチャで実現し、テストや改修が容易なように依存注入を実践出来るようにするためのコードのアーキテクチャについて。
 
 ### リポジトリ構成
 
@@ -261,12 +266,6 @@ applications:
 │   │   │   │       ├── create-user-identity.ts
 │   │   │   │       └── test
 │   │   │   │           └── create-user-identity.test.ts
-│   │   │   └── util.ts
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   ├── tsconfig.node.json
-│   │   ├── vite.config.ts
-│   │   └── vitest.config.ts
 ```
 
 下記のファイルについて、以降で更に深掘りしていきます。
@@ -437,10 +436,8 @@ export interface IRepository {
 
 }
 
-//TODO: 下記の記載を省略するか否か検討
 /**
  * 一部のメソッドのみ選択してこのリポジトリ仕様を参照出来るようにする。
- * ※具体的な使用イメージは後述
  */
 export type IRepositoryFactory<T extends keyof IRepository | "*" = "*"> = (
   c: Config
@@ -851,8 +848,6 @@ export const handler = createUserIdentityFactory({
 
 コントロールプレーンのフォルダ構成は以下のようになりました。
 
-TODO: フォルダ構成の抜粋から検討
-
 ```bash: コントロールプレーンのフォルダ構成(一部抜粋)
 ├── apps
 │   └── frontends
@@ -864,64 +859,454 @@ TODO: フォルダ構成の抜粋から検討
 │           │   │   └── test
 │           │   │       └── auth.test.tsx
 │           │   ├── lib
-│           │   │   ├── adaptor
-│           │   │   │   └── repository.ts
 │           │   │   └── domain
-│           │   │       ├── model
-│           │   │       │   ├── auth.ts
-│           │   │       │   ├── config.ts
-│           │   │       │   └── context.ts
-│           │   │       └── service
-│           │   │           ├── activate-tenant.ts
-│           │   │           ├── create-user-identity.ts
-│           │   │           ├── delete-user-identity.ts
-│           │   │           ├── sign-up.ts
-│           │   │           ├── test
-│           │   │           │   ├── activate-tenant.test.ts
-│           │   │           │   ├── create-user-identity.test.ts
-│           │   │           │   ├── delete-user-identity.test.ts
-│           │   │           │   └── sign-up.test.ts
-│           │   │           └── type.ts
+│           │   │       └── model
+│           │   │           └── context.ts
 │           │   ├── root.tsx
 │           │   ├── routes
-│           │   │   ├── home.tsx
-│           │   │   ├── spots.tsx
-│           │   │   ├── tenant-edit.tsx
-│           │   │   ├── tenant.tsx
 │           │   │   ├── test
-│           │   │   │   ├── home.test.tsx
-│           │   │   │   ├── spots.test.tsx
-│           │   │   │   ├── tenant-edit.test.tsx
-│           │   │   │   ├── tenant.test.tsx
 │           │   │   │   └── users.test.tsx
 │           │   │   └── users.tsx
 │           │   ├── routes.ts
 │           │   └── styles
 │           │       ├── amplify.css
 │           │       └── app.css
-│           ├── build
-│           │   └── client
-│           │       ├── assets
-│           │       │   └── root-DEMXLGal.css
-│           │       └── index.html
-│           ├── package.json
-│           ├── react-router.config.ts
-│           ├── setupTests.ts
-│           ├── tsconfig.json
-│           ├── tsconfig.node.json
-│           ├── vite.config.ts
-│           └── vitest.config.ts
 ```
 
-<!--
-#### Amplifyデータモデルの置き場所
+下記のファイルについて、以降で更に深掘りしていきます。
 
-### テストコード
+- `apps/frontends/control-plane/app/root.tsx` : React Routerのルート(root)コンポーネント。全ての子コンポーネントに必要な依存の合成基点。
+- `apps/frontends/control-plane/app/layouts/auth.tsx` : 認証コンポーネント
+- `apps/frontends/control-plane/app/layouts/dashboard.tsx` : アプリケーションをダッシュボード風のレイアウトにするコンポーネント
+- `apps/frontends/control-plane/app/routes/users.tsx` : ユーザ管理画面のコンポーネント
 
-TODO:
+##### `apps/frontends/control-plane/app/root.tsx`
 
-## アプリケーションの構成
+React Routerにおけるルート(root)コンポーネントがこのファイルになるため、子コンポーネントが必要とする全ての依存関係はこのコンポーネントから以下のように注入します。
 
-今回登場させるアプリケーションコンポーネントは以下の 3 つです。
+```js: apps/frontends/control-plane/app/root.tsx
+import React from "react";
+import {
+  isRouteErrorResponse,
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+} from "react-router";
+import type { Route } from "./+types/root";
+import type { RootContext } from "./lib/domain/model/context";
+import "@aws-amplify/ui-react/styles.css";
+import "./styles/app.css";
+import "./styles/amplify.css";
+import { config } from "./lib/domain/model/config";
+import { amplifyRepositoryFactory } from "@intersection/backend/lib/adaptor/repository";
 
-上記 3 種類のアプリケーションを以下のようなモノレポ構成で管理していきます。 -->
+export const clientLoader = async () => {
+  // バックエンドで定義したリポジトリを初期化
+  const repository = await amplifyRepositoryFactory(config);
+  return { config, repository };
+};
+export default function App({
+  loaderData: { repository },
+}: Route.ComponentProps) {
+  // 子コンポーネントで必要なステート(ここではテナント情報)を初期化
+  const [tenant, setTenant] = React.useState<RootContext["tenant"]>(undefined);
+  return (
+    <React.StrictMode>
+      <Outlet
+        context={
+          {
+            // 子コンポーネントに全ての依存を注入
+            tenant,
+            setTenant,
+            repository,
+          } as RootContext
+        }
+      />
+    </React.StrictMode>
+  );
+}
+
+```
+
+##### `apps/frontends/control-plane/app/layouts/auth.tsx`
+
+コントロールプレーンのルーティング設定は以下の通りなので、上記で注入した依存が直下の子コンポーネントである、認証コンポーネントに渡されます。
+
+```js apps/frontends/control-plane/app/routes.ts
+import {
+  type RouteConfig,
+  index,
+  layout,
+  route,
+} from "@react-router/dev/routes";
+
+export default [
+  layout("./layouts/auth.tsx", [
+    layout("./layouts/dashboard.tsx", [
+      route("users/*", "routes/users.tsx"),
+    ]),
+  ]),
+] satisfies RouteConfig;
+```
+
+認証コンポーネントでは、[Amplifyの認証コンポーネント](https://ui.docs.amplify.aws/react/connected-components/authenticator)を使用し、親コンポーネントから渡された情報と認証されたユーザ情報を子コンポーネントに渡します。
+
+```js: apps/frontends/control-plane/app/layouts/auth.tsx
+import { Authenticator as AmplifyAuthenticator } from "@aws-amplify/ui-react";
+import type { RootContext } from "../lib/domain/model/context";
+import { Outlet, useOutletContext } from "react-router";
+import type { Route } from "./+types/auth";
+
+export const clientLoader = async () => {
+  return {
+    useOutletContext: () => useOutletContext<RootContext>(),
+  };
+};
+
+/**
+ * 子コンポーネントをAmplifyの認証コンポーネントで囲む
+ */
+export default function Authenticator({ loaderData }: Route.ComponentProps) {
+  // 親コンポーネントからのコンテキストを取得する
+  const context = loaderData.useOutletContext();
+  return (
+    <AmplifyAuthenticator>
+      {({ user }) => {
+        if (user === undefined) {
+          return <></>;
+        }
+        return (
+          <Outlet
+            context={{
+              // 親コンポーネントから渡された情報を子コンポーネントに渡す
+              ...context,
+              // 認証されたユーザ情報を子コンポーネントに渡す
+              authUser: user,
+            }}
+          />
+        );
+      }}
+    </AmplifyAuthenticator>
+  );
+}
+
+```
+
+###### `apps/frontends/control-plane/app/layouts/dashboard.tsx`
+
+ダッシュボードコンポーネントでは、[toolpad/coreのダッシュボードレイアウト](https://mui.com/toolpad/core/react-dashboard-layout/)を使用して、アプリケーション全体でダッシュボード画面風の画面レイアウトを構成します。
+
+```js: apps/frontends/control-plane/app/layouts/dashboard.tsx
+import { ReactRouterAppProvider } from "@toolpad/core/react-router";
+import { DashboardLayout as ToolpadDashboardLayout } from "@toolpad/core/DashboardLayout";
+import { Outlet, useOutletContext } from "react-router";
+import React from "react";
+
+import type { Route } from "./+types/dashboard";
+import type { RootContext } from "../lib/domain/model/context";
+import { fetchUserAttributes, signOut } from "../lib/domain/model/auth";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
+
+export type Context = Pick<RootContext, "authUser" | "setTenant" | "tenant"> & {
+  repository: Pick<IRepository, "getTenant" | "getTenantByUserAttributes">;
+};
+
+export const clientLoader = () => {
+  return {
+    useOutletContext: () => useOutletContext<Context>(),
+  };
+};
+
+/**
+ * toolpad/coreのダッシュボードレイアウトを使用して子コンポーネントを囲む
+ */
+export default function DashboardLayout({
+  loaderData,
+}: Pick<Route.ComponentProps, "loaderData">) {
+  const { authUser, setTenant, tenant, repository } =
+    loaderData.useOutletContext();
+  const [session, setSession] = React.useState<Session | null>({
+    user: {
+      id: authUser?.userId ?? null,
+      name: authUser?.signInDetails?.loginId ?? null,
+      email: authUser?.signInDetails?.loginId ?? null,
+    },
+  });
+
+  React.useEffect(() => {
+    // 認証されたユーザに紐づくテナント情報を取得する
+    const f = async () => {
+      const tenant = await repository.getTenantByUserAttributes(
+        fetchUserAttributes,
+        repository.getTenant
+      );
+      setTenant(tenant);
+    };
+    f();
+  }, []);
+  // 取得したテナント情報を更に子のコンポーネントに渡す
+  return (
+    <ReactRouterAppProvider>
+      <ToolpadDashboardLayout>
+        <Outlet context={{ authUser, tenant, setTenant, repository }} />
+      </ToolpadDashboardLayout>
+    </ReactRouterAppProvider>
+  );
+}
+```
+
+##### `apps/frontends/control-plane/app/routes/users.tsx`
+
+前述したコンポーネントを経由して、最終的にユーザ管理画面のコンポーネントが下図のようにレンダリングされます。
+
+![](./../images/99/advent-calendar/users.png)
+
+このコンポーネントの実装は以下の通りです。
+
+```js: apps/frontends/control-plane/app/routes/users.tsx
+import { useOutletContext } from "react-router";
+import type { IRepository } from "@intersection/backend/lib/domain/port/repository";
+import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
+import type { RootContext } from "../lib/domain/model/context";
+import {
+  Crud,
+  type DataFieldRenderFormField,
+  type DataSource,
+} from "@toolpad/core";
+import FormControl from "@mui/material/FormControl";
+import { TextField } from "@mui/material";
+import type { Route } from "./+types/users";
+
+type Repository = Pick<
+  IRepository,
+  | "createUserIdentity"
+>;
+// ルート(root)コンポーネントで定義されたデータのうち、
+// このコンポーネントに必要なデータだけ確実に受け取れるようにする
+export type Context = Pick<RootContext, "tenant"> & {
+  repository: Repository;
+};
+// toolpad/coreのCRUDコンポーネントに必要なデータソースのファクトリ関数
+const usersDataSourceFactory: (
+  tenant: Tenant,
+  repository: Repository
+) => DataSource<User> = (tenant, repository) => {
+  return {
+    fields: [
+      { field: "id", headerName: "ID" },
+      { field: "name", headerName: "Name" },
+      // 以下省略
+    ],
+    getMany: async () => {
+      // テナントに属するユーザのみリストする
+      const res = await tenant.users();
+      if (res.data === null || res.errors !== undefined) {
+        console.error(res.errors);
+        throw Error("list users failed");
+      }
+      return {
+        items: res.data,
+        itemCount: res.data.length,
+      };
+    },
+    createOne: async (props) => {
+      // バックエンドロジックのユーザアイデンティティ作成ロジックを呼び出す
+      const res = await repository.createUserIdentity({
+        tenantId: tenant.id,
+        email: props.email!,
+        role: props.role!,
+        name: props.name!,
+      });
+      console.log(res);
+      if (res.data === null || res.data === undefined) {
+        throw Error("create user failed");
+      }
+      return res.data;
+    },
+  };
+};
+
+export const clientLoader = () => {
+  return {
+    // 親コンポーネントからのコンテキストの取得関数もコンポーネント外から依存注入する
+    useOutletContext: () => useOutletContext<Context>(),
+  };
+};
+export default function Users({ loaderData }: Route.ComponentProps) {
+  const { tenant, repository } = loaderData.useOutletContext();
+  if (tenant === undefined) {
+    return <></>;
+  }
+  const usersDataSource = usersDataSourceFactory(tenant, repository);
+  return (
+    // toolpad/coreのCRUDコンポーネントを使用することで、
+    // データのCRUD画面が簡単に作れる
+    <Crud<User>
+      dataSource={usersDataSource}
+      rootPath="/users"
+      pageTitles={{
+        list: "Users",
+        show: "Detail",
+        create: "Create new user",
+        edit: "Edit user",
+      }}
+    />
+  );
+}
+```
+
+コンポーネントに必要な依存をコンテキストとしてコンポーネント外から受け取れるように構成したことで、以下のように、任意のテストデータを簡単に用意してコンポーネントをスモールテストすることが可能になります。
+
+```js: apps/frontends/control-plane/app/routes/test/users.test.tsx
+import type { Context } from "../users";
+import { createRoutesStub } from "react-router";
+import Users from "../users";
+import type { Tenant, User } from "@intersection/backend/lib/domain/model/data";
+import { render, waitFor, screen } from "@testing-library/react";
+import { ReactRouterAppProvider } from "@toolpad/core/react-router";
+describe("ユーザー一覧画面", () => {
+  test("テナントに紐づくユーザーの一覧を表示出来る", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/users",
+        Component: () => {
+          return (
+            <ReactRouterAppProvider>
+              <Users
+                // コンポーネントのレンダリング時に、
+                // テストに必要な任意のデータを返すように
+                // コンテストをカスタマイズする
+                loaderData={{
+                  useOutletContext: () => ({
+                    tenant: {
+                      id: "test-id",
+                      users: async () => ({
+                        data: [
+                          {
+                            id: "id-1",
+                            name: "name-1",
+                            role: "ADMIN",
+                            email: "email-1@example.com",
+                          },
+                          {
+                            id: "id-2",
+                            name: "name-2",
+                            role: "ADMIN",
+                            email: "email-2@example.com",
+                          },
+                        ],
+                      }),
+                    } as Tenant,
+                    repository: {
+                      listUserRoles: () => ["ADMIN"],
+                    } as Context["repository"],
+                  }),
+                }}
+              />
+            </ReactRouterAppProvider>
+          );
+        },
+      },
+    ]);
+
+    render(<Stub initialEntries={["/users"]} />);
+
+    await waitFor(() => screen.findByText("name-1"));
+    await waitFor(() => screen.findByText("name-2"));
+  });
+});
+describe("ユーザー作成画面", () => {
+  test("ユーザー新規作成時にはEmailアドレスを設定出来る", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/users/new",
+        Component: () => (
+          <ReactRouterAppProvider>
+            <Users
+              loaderData={{
+                useOutletContext: () => ({
+                  tenant: {
+                    id: "test-id",
+                    users: async () => ({
+                      data: [] as User[],
+                    }),
+                  } as Tenant,
+                  repository: {
+                    listUserRoles: () => ["ADMIN"],
+                  } as Context["repository"],
+                }),
+              }}
+            />
+          </ReactRouterAppProvider>
+        ),
+      },
+    ]);
+
+    render(<Stub initialEntries={["/users/new"]} />);
+
+    const textBox = await waitFor(() =>
+      screen.getByRole("textbox", { name: "Email" })
+    );
+    screen.debug();
+    expect(textBox).not.toBeDisabled();
+    expect(textBox.textContent).toBe("");
+  });
+});
+
+describe("ユーザー作成画面", () => {
+  test("既存ユーザー編集時にはEmailアドレスを編集出来ない", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/users/user-1/edit",
+        Component: () => (
+          <ReactRouterAppProvider>
+            <Users
+              loaderData={{
+                useOutletContext: () => ({
+                  tenant: {
+                    id: "test-id",
+                    users: async () => ({
+                      data: [] as User[],
+                    }),
+                  } as Tenant,
+                  repository: {
+                    getUser: async (args) => ({
+                      data: {
+                        id: args.id,
+                        name: "test-name",
+                        email: "test@example.com",
+                      },
+                    }),
+                    listUserRoles: () => ["ADMIN"],
+                  } as Context["repository"],
+                }),
+              }}
+            />
+          </ReactRouterAppProvider>
+        ),
+      },
+    ]);
+
+    render(<Stub initialEntries={["/users/user-1/edit"]} />);
+
+    const textBox = await waitFor(() =>
+      screen.getByRole("textbox", { name: "Email" })
+    );
+    expect(textBox).toBeDisabled();
+    screen.debug();
+    expect(textBox).toHaveValue("test@example.com");
+  });
+});
+```
+
+## 終わりに
+
+最後に、「Deep Dive マルチテナントSaaS on AWS」を約8カ月継続し、ここまで感じたことについて語ります。
+アプリケーションをAWS上に構築するための具体的なフレームワークの１つとしてAmplify Gen2を選択し色々と試行錯誤してきたわけですが、その過程でAmplifyでも実現出来る範囲と、Amplifyでは実現出来ない(難しい)範囲についての勘所が良く分かるようになったと感じます。
+例えば本記事で紹介したような、モノレポ構成のアプリケーションの管理や、コードのヘキサゴナルアーキテクチャ化等は(多少の妥協点はありつつも)Amplifyで実現出来そうだなと感じました。
+一方で、例えば「Deep Dive...」の取り組みの方で登場する、サイロ型デプロイモデルのアプリケーションアーキテクチャの実現等はAmplifyでは困難だなと感じます。
+「Deep Dive...」の取り組みは少なくとも年度中は継続していくので、AWS上でのマルチテナントSaaSアプリケーションの実現ノウハウを引き続き深めていきたいと思います。
+
+私の記事は以上になります。次回は[TODO: ]さんの発表になります。お楽しみに。
