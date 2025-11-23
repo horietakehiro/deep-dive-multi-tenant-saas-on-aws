@@ -1,19 +1,20 @@
-# マルチテナントSaaS × Amplify × React × クリーンアーキテクチャ
-
 この記事は、[NTTテクノクロス Advent Calendar 2025 シリーズ1](TODO:正しいリンク貼る)の3日目の記事になります。
 
 皆さんこんにちは。NTTテクノクロスの堀江です。普段はAWSやAzure上でのシステム設計、構築や実装、調査検証系の案件を幅広く担当しています。
 
-## はじめに
+# はじめに
 
-今年度を通して、「Deep Dive マルチテナントSaaS on AWS(https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-00)」という取り組みを行っています。
-内容としては、今年の始めにオライリー社より出版された書籍「マルチテナント SaaS アーキテクチャの構築 ― 原則、ベストプラクティス、AWS アーキテクチャパターン(https://www.oreilly.co.jp/books/9784814401017/)」の内容を振返り、自分でマルチテナントSaaSアプリケーションを実装することを通して理解と実践力を深めるというものです。
+今年度を通して、「Deep Dive マルチテナントSaaS on AWS」という取り組みを行っています。
+
+https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-00
+
+内容としては、今年の始めにオライリー社より出版された書籍「[マルチテナント SaaS アーキテクチャの構築 ― 原則、ベストプラクティス、AWS アーキテクチャパターン](https://www.oreilly.co.jp/books/9784814401017/)」の内容を振返り、自分でマルチテナントSaaSアプリケーションを実装することを通して理解と実践力を深めるというものです。
 
 この記事は、ここまで実装したマルチテナントアプリケーションのリポジトリをツアーしながら、実装の過程で私が考えたことや挑戦したことを振返って行く、備忘録的な記事となります。
 
-## 前提
+# 前提
 
-### 使用しているライブラリ・フレームワーク
+## 使用しているライブラリ・フレームワーク
 
 マルチテナントアプリケーションを実装するにあたって、以下の技術スタックを使用しています。
 
@@ -21,21 +22,21 @@
 - React Router v7
 - Toolpad Core(Material UI)
 
-### アプリケーションの概要
+## アプリケーションの概要
 
 この取り組みで私が作成しようとしているアプリケーションは、`intersection`と名付けた、社内交流アプリケーションです。
 簡単にいえば、社員同士で気軽に雑談の場を予約し合ったり、趣味や話題の会う社員を見つけたり出来る機能を提供するアプリケーションです。
 
-![アプリの画面イメージ](../images/99/advent-calendar/app-sample-image.png)
+![app-sample-image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/199e0ab2-7d65-4831-8f95-32ff7ae23acb.png)
 
-## リポジトリツアー
+# リポジトリツアー
 
 それでは、現在のアプリケーションリポジトリの中身をツアーしていきます。フォーカスする内容は主に以下の2点です。
 
 - Amplifyを使用したマルチテナントSaaSアプリケーションを単一リポジトリ(モノレポ)として管理するにあたっての適切なリポジトリ構成について。
 - Ampplifyを使用したマルチテナントSaaSアプリケーションをヘキサゴナルアーキテクチャで実現し、テストや改修が容易なように依存注入を実践出来るようにするためのコードのアーキテクチャについて。
 
-### リポジトリ構成
+## リポジトリ構成
 
 現在のリポジトリ構成は以下のように、複数種類のアプリケーションを単一のリポジトリに集約したモノリポ構成となっています。
 
@@ -63,7 +64,7 @@
 コントロールプレーンとは、マルチテナントのSaaS環境の基盤となる要件(テナントのオンボーディングや請求等)を司るコンポーネントであり、エンドユーザが使用するアプリケーションプレーンとは異なる要素であると書籍では紹介されています。そのため、コントロールプレーンとアプリケーションプレーンは上記のようにフロントエンドを分割するという設計に至りました。
 一方で、それらが使用するバックエンドロジック及びリソースは、下図のように共通化する必要がありました。イメージとしては、コントロールプレーン上でテナント情報を更新したり、テナントにユーザを追加したりして、アプリケーションプレーンではそのテナント情報を参照したり、ユーザの認証を行ったりといったイメージです。
 
-![](../images/99/advent-calendar/2frontend-1backend.drawio.png)
+![2frontend-1backend.drawio.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/84a906a1-7ca5-4828-9589-80646c5d70d9.png)
 
 複数のTypeScriptアプリケーションをモノリポ構成を実現するにあたっては、[npmのワークスペース機能](https://docs.npmjs.com/cli/v7/using-npm/workspaces)と[tsconfigのプロジェクト参照機能](https://typescriptbook.jp/reference/advanced-topics/project-references)を活用しました。
 
@@ -232,14 +233,14 @@ applications:
 
 これによって、複数のプロジェクトを効率的に管理するためのモノレポ構成が出来上がりました。
 
-### アーキテクチャ
+## アーキテクチャ
 
 次に、アプリケーションのアーキテクチャについて見ていきます。
 前述のように複数のアプリケーションが関係する複雑な構成でもあることから、コード間の依存関係をクリアにし、テストも実施しやすくなるようにヘキサゴナルアーキテクチャを採用しました。
 
 ここでは、コントロールプレーン上のユーザ管理画面、及びそこから呼び出されるバックエンドロジックを例にして具体的なファイル構成とコードを見ていきます。
 
-#### バックエンドアプリケーション
+### バックエンドアプリケーション
 
 まずはバックエンドアプリケーションのフォルダ構成の詳細について見ていきます。
 
@@ -278,13 +279,13 @@ applications:
 - `apps/backend/lib/domain/service/create-user-identity.ts` : ユーザアイデンティティを作成する一連の処理を実行するバックエンドロジック
 - `apps/backend/amplify/custom/create-user-identity/handler.ts` : AWS Lambda上で上記のユーザアイデンティティ作成ロジックを実行するための設定
 
-##### `apps/backend/lib/domain/model/data.ts`
+#### `apps/backend/lib/domain/model/data.ts`
 
 [Amplifyのチュートリアル](https://docs.amplify.aws/react/build-a-backend/data/set-up-data/)等では、データモデル及びそれにアクセスするためのデータクライアントを定義する場所は通常、`apps/backend/amplify/data/resource.ts`であると相場が決まっています。
 しかしこれは問題だと私は考えました。なぜならこのデータモデルとデータクライアントは、バックエンド・フロントエンド問わずアプリケーションの各所から使用される(≒依存される)重要な存在であり、`apps/backend/amplify/data/resource.ts`という、アダプタ的な存在の位置に定義されると下図左のように依存関係がグチャグチャになると考えたためです。
 そうではなく、ヘキサゴナルアーキテクチャの方針に従って下図右のようなスッキリとした依存関係を実現するために、データモデルを、バックエンドアプリケーションの中心(ドメイン層)である`apps/backend/lib/domain/model/data.ts`に配置するに至りました。その実装内容は以下のようになりました。
 
-![](./../images/99/default-dependencies.drawio.png)
+![default-dependencies.drawio.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/5dc19787-e305-4939-ab66-5ce40514098f.png)
 
 ```js: apps/backend/lib/domain/model/data.ts(一部抜粋)
 import { a, defineFunction, type ClientSchema } from "@aws-amplify/backend";
@@ -379,7 +380,7 @@ export const data = defineData({
 });
 ```
 
-##### `apps/backend/lib/domain/port/repository.ts`
+#### `apps/backend/lib/domain/port/repository.ts`
 
 データモデルの定義と同様の理由で、データアクセスのためのクライアントも、バックエンドアプリケーションのドメイン層にリポジトリとして仕様(インターフェース)を定義し、アダプタ層に実装を定義する構成としました。
 
@@ -465,7 +466,7 @@ export interface IRepository {
 
 https://zenn.dev/horietakehiro/articles/amplify-data-client-interface
 
-##### `apps/backend/lib/adaptor/repository.ts`
+#### `apps/backend/lib/adaptor/repository.ts`
 
 前述のリポジトリインターフェースを満たした実装は以下のようになりました。
 
@@ -544,7 +545,7 @@ test("テスト", async () => {
 });
 ```
 
-##### `apps/backend/lib/domain/service/create-user-identity.ts`
+#### `apps/backend/lib/domain/service/create-user-identity.ts`
 
 次に、バックエンドロジックの一つを具体的に見ていきます。
 ここでは以下のような仕様の、ユーザアイデンティティ作成ロジックをピックします。
@@ -846,7 +847,7 @@ export const handler = createUserIdentityFactory({
 
 ここまで、バックエンドアプリケーション上のデータモデルやリポジトリ、ロジックをAWS(Amplify)に直接依存させずに定義することが出来ました。次はフロントエンド(コントロールプレーン)のコード構成及び、フロントエンドアプリケーションからバックエンドアプリケーションをどの様に利用していくのかを見ていきます。
 
-#### フロントエンドアプリケーション(コントロールプレーン)
+### フロントエンドアプリケーション(コントロールプレーン)
 
 コントロールプレーンのフォルダ構成は以下のようになりました。
 
@@ -882,7 +883,7 @@ export const handler = createUserIdentityFactory({
 - `apps/frontends/control-plane/app/layouts/dashboard.tsx` : アプリケーションをダッシュボード風のレイアウトにするコンポーネント
 - `apps/frontends/control-plane/app/routes/users.tsx` : ユーザ管理画面のコンポーネント
 
-##### `apps/frontends/control-plane/app/root.tsx`
+#### `apps/frontends/control-plane/app/root.tsx`
 
 React Routerにおけるルート(root)コンポーネントがこのファイルになるため、子コンポーネントが必要とする全ての依存関係はこのコンポーネントから以下のように注入します。
 
@@ -932,7 +933,7 @@ export default function App({
 
 ```
 
-##### `apps/frontends/control-plane/app/layouts/auth.tsx`
+#### `apps/frontends/control-plane/app/layouts/auth.tsx`
 
 コントロールプレーンのルーティング設定は以下の通りなので、上記で注入した依存が直下の子コンポーネントである、認証コンポーネントに渡されます。
 
@@ -996,7 +997,7 @@ export default function Authenticator({ loaderData }: Route.ComponentProps) {
 
 ```
 
-###### `apps/frontends/control-plane/app/layouts/dashboard.tsx`
+#### `apps/frontends/control-plane/app/layouts/dashboard.tsx`
 
 ダッシュボードコンポーネントでは、[toolpad/coreのダッシュボードレイアウト](https://mui.com/toolpad/core/react-dashboard-layout/)を使用して、アプリケーション全体でダッシュボード画面風の画面レイアウトを構成します。
 
@@ -1059,11 +1060,11 @@ export default function DashboardLayout({
 }
 ```
 
-##### `apps/frontends/control-plane/app/routes/users.tsx`
+#### `apps/frontends/control-plane/app/routes/users.tsx`
 
 前述したコンポーネントを経由して、最終的にユーザ管理画面のコンポーネントが下図のようにレンダリングされます。
 
-![](./../images/99/advent-calendar/users.png)
+![users.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/3f37cb03-0a13-41c2-a083-4383f33fa214.png)
 
 このコンポーネントの実装は以下の通りです。
 
@@ -1303,7 +1304,7 @@ describe("ユーザー作成画面", () => {
 });
 ```
 
-## 終わりに
+# 終わりに
 
 最後に、「Deep Dive マルチテナントSaaS on AWS」を約8カ月継続し、ここまで感じたことについて語ります。
 アプリケーションをAWS上に構築するための具体的なフレームワークの１つとしてAmplify Gen2を選択し色々と試行錯誤してきたわけですが、その過程でAmplifyでも実現出来る範囲と、Amplifyでは実現出来ない(難しい)範囲についての勘所が良く分かるようになったと感じます。
