@@ -56,4 +56,7 @@ published: true
 - [【第 03 回】Deep Dive マルチテナント SaaS on AWS - 第 2 章幕間：初期環境構築](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-03)
 - [【第 04 回】Deep Dive マルチテナント SaaS on AVS - 第 3 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-04)
 - [【第 05 回】Deep Dive マルチテナント SaaS on AVS - 第 4 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-05)
-- [【第06回】Deep Dive マルチテナントSaaS on AWS - 第4章幕間：デプロイモデルとオンボーディングの実践](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-06)
+- [【第 06 回】Deep Dive マルチテナント SaaS on AWS - 第 4 章幕間：デプロイモデルとオンボーディングの実践](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-06)
+- [【第 07 回】Deep Dive マルチテナント SaaS on AWS - 第 5 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-07)
+- [【第 08 回】Deep Dive マルチテナント SaaS on AWS - 第 6 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-08)
+- [【第 09 回】Deep Dive マルチテナント SaaS on AWS - 第 7 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-09)
