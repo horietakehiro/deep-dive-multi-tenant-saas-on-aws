@@ -10,6 +10,7 @@ import {
 import FormControl from "@mui/material/FormControl";
 import { TextField } from "@mui/material";
 import type { Route } from "./+types/users";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 type Repository = Pick<
   IRepository,
@@ -86,21 +87,21 @@ const usersDataSourceFactory: (
       return res.data;
     },
     createOne: async (props) => {
-      // const res = await createUserIdentity(
-      //   tenant,
-      //   {
-      //     email: props.email!,
-      //     role: props.role!,
-      //     name: props.name!,
-      //   },
-      //   repository
-      // );
-      const res = await repository.createUserIdentity({
-        tenantId: tenant.id,
-        email: props.email!,
-        role: props.role!,
-        name: props.name!,
-      });
+      const res = await repository.createUserIdentity(
+        {
+          tenantId: tenant.id,
+          email: props.email!,
+          role: props.role!,
+          name: props.name!,
+        },
+        {
+          headers: {
+            "jwt-id-token": (
+              await fetchAuthSession()
+            ).tokens?.idToken?.toString()!,
+          },
+        }
+      );
       console.log(res);
       if (res.data === null || res.data === undefined) {
         throw Error("create user failed");

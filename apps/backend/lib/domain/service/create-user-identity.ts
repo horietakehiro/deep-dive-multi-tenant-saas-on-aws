@@ -1,3 +1,4 @@
+import { decodeJWT } from "aws-amplify/auth";
 import type { Schema } from "../model/data";
 import type {
   AdminCreateUserCommandInput,
@@ -21,12 +22,13 @@ type DeleteCognitoUser = (
 type GeneratePassword = (
   input: GetRandomPasswordCommandInput
 ) => Promise<GetRandomPasswordCommandOutput>;
-type CreateUserIdentity = (
-  args: Pick<
-    Parameters<Schema["createUserIdentity"]["functionHandler"]>["0"],
-    "arguments"
-  >
-) => ReturnType<Schema["createUserIdentity"]["functionHandler"]>;
+// type CreateUserIdentity = (
+//   args: Pick<
+//     Parameters<Schema["createUserIdentity"]["functionHandler"]>["0"],
+//     "arguments"
+//   >
+// ) => ReturnType<Schema["createUserIdentity"]["functionHandler"]>;
+type CreateUserIdentity = Schema["createUserIdentity"]["functionHandler"];
 
 export interface CreateUserIdentityProps {
   userPoolId: string;
@@ -43,8 +45,18 @@ export interface CreateUserIdentityProps {
 export const createUserIdentityFactory: (
   props: CreateUserIdentityProps
 ) => CreateUserIdentity = (props: CreateUserIdentityProps) => {
-  return async ({ arguments: args }) => {
-    console.log(args);
+  return async ({ arguments: args, request }) => {
+    // ヘッダに設定されたJWT(IDトークン)をデコードする
+    const idToken = decodeJWT(request.headers["jwt-id-token"]!);
+    // JWTからテナントIDを取得する
+    const tenantId = idToken.payload["custom:tenantId"];
+
+    // テナント分離に必要な検証等を行う。
+    // JWTに設定されているテナントIDとリクエストペイロードとして
+    // 渡されたテナントIDが一致することを確認する
+    if (tenantId !== args.tenantId) {
+      throw Error("invalid tenant id provided");
+    }
 
     // 最初にCognito上にユーザを作成する
     // ※初期パスワードはランダムで作成
