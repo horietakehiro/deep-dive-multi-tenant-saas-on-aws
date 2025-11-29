@@ -287,7 +287,7 @@ applications:
 しかしこれは問題だと私は考えました。なぜならこのデータモデルとデータクライアントは、バックエンド・フロントエンド問わずアプリケーションの各所から使用される(≒依存される)重要な存在であり、`apps/backend/amplify/data/resource.ts`という、アダプタ的な存在の位置に定義されると下図左のように依存関係がグチャグチャになると考えたためです。
 そうではなく、ヘキサゴナルアーキテクチャの方針に従って下図右のようなスッキリとした依存関係を実現するために、データモデルを、バックエンドアプリケーションの中心(ドメイン層)である`apps/backend/lib/domain/model/data.ts`に配置するに至りました。その実装内容は以下のようになりました。
 
-![default-dependencies.drawio.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/5dc19787-e305-4939-ab66-5ce40514098f.png)
+![default-dependencies.drawio.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/b20d77dc-07dd-4cec-bf24-bd2a86d2c14d.png)
 
 ```js: apps/backend/lib/domain/model/data.ts(一部抜粋)
 import { a, defineFunction, type ClientSchema } from "@aws-amplify/backend";
