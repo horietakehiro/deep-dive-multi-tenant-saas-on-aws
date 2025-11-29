@@ -10,7 +10,7 @@ https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-00
 
 https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws
 
-内容としては、今年の始めにオライリー社より出版された書籍「[マルチテナント SaaS アーキテクチャの構築 ― 原則、ベストプラクティス、AWS アーキテクチャパターン](https://www.oreilly.co.jp/books/9784814401017/)」の内容を振返り、自分でマルチテナントSaaSアプリケーションを実装することを通して理解と実践力を深めるというものです。
+内容としては、今年の初めにオライリー社より出版された書籍「[マルチテナント SaaS アーキテクチャの構築 ― 原則、ベストプラクティス、AWS アーキテクチャパターン](https://www.oreilly.co.jp/books/9784814401017/)」の内容を振返り、自分でマルチテナントSaaSアプリケーションを実装することを通して理解と実践力を深めるというものです。
 
 この記事は、ここまで実装したマルチテナントアプリケーションのリポジトリをツアーしながら、実装の過程で私が考えたことや挑戦したことを振返って行く、備忘録的な記事となります。
 
@@ -68,7 +68,7 @@ https://github.com/horietakehiro/deep-dive-multi-tenant-saas-on-aws
 
 ![2frontend-1backend.drawio.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/866958/84a906a1-7ca5-4828-9589-80646c5d70d9.png)
 
-複数のTypeScriptアプリケーションをモノリポ構成を実現するにあたっては、[npmのワークスペース機能](https://docs.npmjs.com/cli/v7/using-npm/workspaces)と[tsconfigのプロジェクト参照機能](https://typescriptbook.jp/reference/advanced-topics/project-references)を活用しました。
+複数のTypeScriptアプリケーションをモノリポ構成として実現するにあたっては、[npmのワークスペース機能](https://docs.npmjs.com/cli/v7/using-npm/workspaces)と[tsconfigのプロジェクト参照機能](https://typescriptbook.jp/reference/advanced-topics/project-references)を活用しました。
 
 ルートレベルの`package.json`及び`tsconfig.json`は以下のようになります。
 
@@ -230,7 +230,7 @@ applications:
           commands:
             # apps/backendでデプロイしたバックエンドの設定ファイルを生成する
             - npm ci -w apps/backend --cache .npm --prefer-offline
-            - NPM RUN -W APPS/BACKEND AMPX -- GENERATE OUTPUTS --BRANCH $AWS_BRANCH --APP-ID $BACKEND_APP_ID
+            - npm run -w apps/backend ampx -- generate outputs --branch $AWS_BRANCH --app-id $BACKEND_APP_ID
 ```
 
 これによって、複数のプロジェクトを効率的に管理するためのモノレポ構成が出来上がりました。
@@ -361,7 +361,7 @@ export type Appointment = Schema["Appointment"]["type"];
 
 なお、この時`apps/backend/amplify/data/resource.ts`の中身は以下のように、上記で定義したデータモデルをAmplifyリソースとしてデプロイするための設定のみを行っています。
 
-```js: apps/backend/lib/domain/port/repository.ts
+```js: apps/backend/amplify/data/resource.ts
 import { a, defineData } from "@aws-amplify/backend";
 import { schemaFactory } from "lib/domain/model/data";
 import { createUserIdentity } from "../custom/create-user-identity/resource";
