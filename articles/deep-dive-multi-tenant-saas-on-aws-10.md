@@ -3,7 +3,7 @@ title: "【第10回】Deep Dive マルチテナントSaaS on AWS - 第7章幕間
 emoji: "🤿"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas", "Lambda", "TypeScript"]
-published: false
+published: true
 ---
 
 ## はじめに

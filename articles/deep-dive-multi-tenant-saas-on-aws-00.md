@@ -60,3 +60,4 @@ published: true
 - [【第 07 回】Deep Dive マルチテナント SaaS on AWS - 第 5 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-07)
 - [【第 08 回】Deep Dive マルチテナント SaaS on AWS - 第 6 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-08)
 - [【第 09 回】Deep Dive マルチテナント SaaS on AWS - 第 7 章振返り](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-09)
+- [【第 10 回】Deep Dive マルチテナント SaaS on AWS - 第 7 章幕間：テナントコンテキストと監視](https://zenn.dev/horietakehiro/articles/deep-dive-multi-tenant-saas-on-aws-10)
