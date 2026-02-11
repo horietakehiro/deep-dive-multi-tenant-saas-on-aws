@@ -157,7 +157,7 @@ export const createUserIdentityFactory: (
 
 最終的にCloudWatch上で上記のメトリクスは以下のように確認出来ます。
 
-![](./../images/10/metrics-with-tenant-id.png)
+![](/images/10/metrics-with-tenant-id.png)
 
 ### トレース
 
@@ -204,7 +204,7 @@ export const createUserIdentityFactory: (
 
 最終的にX-Rayに記録されるトレースは以下のようになります。
 
-![](../images/10/trace-with-tenant-id.png)
+![](/images/10/trace-with-tenant-id.png)
 
 ## (おまけ)OpenTelemetryを使用したトレースの収集とテナントコンテキストの埋め込み
 
@@ -277,7 +277,7 @@ export const createUserIdentityFactory: (
 
 これによって、トレース情報が自動的にX-Rayに収集され、以下のようにテナントIDを含むトレース情報を確認出来ます。
 
-![](../images/10/adot-trace-with-tenant-id.png)
+![](/images/10/adot-trace-with-tenant-id.png)
 
 ## 終わりに
 
