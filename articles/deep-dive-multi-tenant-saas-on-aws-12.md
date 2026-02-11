@@ -3,7 +3,7 @@ title: "【第12回】Deep Dive マルチテナントSaaS on AWS - 第8章振返
 emoji: "🤿"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "saas"]
-published: false
+published: true
 ---
 
 ## はじめに
